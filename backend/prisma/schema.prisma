@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  password           String
+  name               String?
+  role               Role      @default(USER)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  isActive           Boolean   @default(true)
+  plan               PlanType  @default(FREE_TRIAL)
+  subscriptionEndsAt DateTime?
+  mercadopagoCustomerId   String?   @unique
+  mercadopagoSubscriptionId String? @unique
+  bookings           Booking[]
+  venues             Venue[]
+}
+
+model Venue {
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  description String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  fields      Field[]
+  clients     Client[]
+  owner       User     @relation(fields: [ownerId], references: [id])
+}
+
+model Field {
+  id           String    @id @default(uuid())
+  name         String
+  type         String
+  surface      String?
+  pricePerHour Float
+  venueId      String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+  venue        Venue     @relation(fields: [venueId], references: [id])
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  name      String
+  phone     String
+  email     String?
+  notes     String?
+  venueId   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  venue     Venue     @relation(fields: [venueId], references: [id])
+  bookings  Booking[]
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  startTime     DateTime
+  endTime       DateTime
+  totalPrice    Float
+  status        String
+  paymentMethod String?
+  userId        String
+  fieldId       String
+  clientId      String?
+  paymentId     String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  client        Client?  @relation(fields: [clientId], references: [id])
+  field         Field    @relation(fields: [fieldId], references: [id])
+  payment       Payment? @relation(fields: [paymentId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  amount        Float
+  status        String
+  transactionId String?
+  createdAt     DateTime @default(now())
+  booking       Booking?
+}
+
+model AnalyticsLog {
+  id        String   @id @default(uuid())
+  event     String
+  userId    String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  USER
+  SUPER_ADMIN
+}
+
+enum PlanType {
+  FREE_TRIAL
+  BASIC
+  PRO
+  ENTERPRISE
+}
