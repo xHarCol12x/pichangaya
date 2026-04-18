@@ -4,7 +4,7 @@ import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -128,7 +128,7 @@ export class AuthService {
         if (!user) return; // Silent success for security
 
         // Create new token valid for 1 hour
-        const token = uuidv4();
+        const token = randomUUID();
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000); 
 
         // Invalidate previous tokens
