@@ -36,11 +36,11 @@ import {
 
 
 const DEFAULT_LAYOUT = [
-    { i: "kpis", x: 0, y: 0, w: 12, h: 5, minW: 6, minH: 4 },
-    { i: "live", x: 0, y: 5, w: 12, h: 12, minW: 6, minH: 8 },
-    { i: "upcoming", x: 0, y: 17, w: 12, h: 14, minW: 6, minH: 10 },
-    { i: "chart", x: 0, y: 31, w: 8, h: 12, minW: 4, minH: 10 },
-    { i: "ai", x: 8, y: 31, w: 4, h: 12, minW: 3, minH: 10 }
+    { i: "kpis", x: 0, y: 0, w: 12, h: 8, minW: 12, minH: 6 },
+    { i: "live", x: 0, y: 8, w: 12, h: 14, minW: 6, minH: 8 },
+    { i: "upcoming", x: 0, y: 22, w: 12, h: 16, minW: 6, minH: 10 },
+    { i: "chart", x: 0, y: 38, w: 8, h: 16, minW: 4, minH: 10 },
+    { i: "ai", x: 8, y: 38, w: 4, h: 16, minW: 3, minH: 10 }
 ];
 
 
@@ -668,9 +668,10 @@ const DashboardPage = () => {
                             Modo Edición: Arrastra los bordes o títulos para organizar tu tablero.
                         </div>
                     )}
-                    <div ref={containerRef}>
+                    <div ref={containerRef} className="w-full min-h-[800px]">
                         {/* @ts-ignore */}
                         <ResponsiveGridLayout
+                            key={containerWidth}
                             width={containerWidth || 1200}
                             className={`layout ${isEditMode ? 'is-editing' : ''}`}
                             layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
@@ -683,25 +684,25 @@ const DashboardPage = () => {
                             margin={[20, 20]}
                             useCSSTransforms={true}
                         >
-                        <div key="kpis" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'kpis')} className={isEditMode ? "cursor-move glass-hover" : ""}>
-                            <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
-                        </div>
-                        
-                        <div key="live" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'live')} className={isEditMode ? "cursor-move glass-hover" : ""}>
-                            <LiveFieldsWidget liveFields={liveFields} handleLiveAction={handleLiveAction} setShowQuickBooking={setShowQuickBooking} />
-                        </div>
+                            <div key="kpis" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                                <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
+                            </div>
+                            
+                            <div key="live" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                                <LiveFieldsWidget liveFields={liveFields} handleLiveAction={handleLiveAction} setShowQuickBooking={setShowQuickBooking} />
+                            </div>
 
-                        <div key="upcoming" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'upcoming')} className={isEditMode ? "cursor-move glass-hover" : ""}>
-                            <UpcomingBookingsWidget filteredUpcoming={filteredUpcoming} bookingFilter={bookingFilter} setBookingFilter={setBookingFilter} setSelectedBooking={setSelectedBooking} />
-                        </div>
+                            <div key="upcoming" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                                <UpcomingBookingsWidget filteredUpcoming={filteredUpcoming} bookingFilter={bookingFilter} setBookingFilter={setBookingFilter} setSelectedBooking={setSelectedBooking} />
+                            </div>
 
-                        <div key="revenue" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'revenue')} className={isEditMode ? "cursor-move glass-hover" : ""}>
-                            <RevenueChartWidget globalDateRange={globalDateRange} stats={stats} chartData={chartData} />
-                        </div>
+                            <div key="chart" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                                <RevenueChartWidget globalDateRange={globalDateRange} stats={stats} chartData={chartData} />
+                            </div>
 
-                        <div key="ia" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'ia')} className={isEditMode ? "cursor-move glass-hover" : ""}>
-                            <AiInsightWidget plan={plan} prediction={prediction} />
-                        </div>
+                            <div key="ai" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                                <AiInsightWidget plan={plan} prediction={prediction} />
+                            </div>
                         </ResponsiveGridLayout>
                     </div>
                 </div>
