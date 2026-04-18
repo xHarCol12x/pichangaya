@@ -317,7 +317,7 @@ const DashboardPage = () => {
             const overridesParsed = typeof overridesRaw === 'string' ? JSON.parse(overridesRaw) : overridesRaw;
             
             // Force reset if layout is old (to fix mobile distortion for existing users)
-            const LAYOUT_VERSION = "3.2";
+            const LAYOUT_VERSION = "3.3";
             const needsMigration = !overridesParsed.dashboardVersion || overridesParsed.dashboardVersion !== LAYOUT_VERSION;
             
             setFeatureOverrides(overridesParsed);
@@ -682,7 +682,7 @@ const DashboardPage = () => {
                         <p className="text-foreground/40 flex items-center gap-2 text-sm">
                             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                             {todayCapital} · {now.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
-                            <span className="ml-2 text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/20 font-mono">BENTO V3.1</span>
+                            <span className="ml-2 text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/20 font-mono">BENTO V3.3</span>
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
