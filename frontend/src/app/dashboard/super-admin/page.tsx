@@ -124,8 +124,9 @@ function SuperAdminDashboardContent() {
     useEffect(() => {
         if (activeTab === "DIRECTORY") {
             fetchTenants();
+            if (plansData.length === 0) fetchPlans();
         } else if (activeTab === "PLANS") {
-            fetchPlans();
+            if (plansData.length === 0) fetchPlans();
         } else if (activeTab === "AUDIT") {
             fetchAuditLogs();
         }
@@ -538,6 +539,14 @@ function SuperAdminDashboardContent() {
                                         <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Permisos Especiales</h2>
                                         <p className="text-slate-500 text-sm mb-6">Ajusta los módulos disponibles para <strong className="text-accent">{managePermissionsTenant.name}</strong>. Estos valores sobrescriben los atributos por defecto de su plan actual.</p>
 
+                                        {(() => {
+                                            const tenantPlan = plansData.find(p => p.code === managePermissionsTenant.plan);
+                                            const basePerms = typeof tenantPlan?.permissions === 'string' ? JSON.parse(tenantPlan.permissions || '{}') : (tenantPlan?.permissions || {});
+                                            
+                                            const getValue = (key: string) => typeof tempOverrides[key] !== 'undefined' ? tempOverrides[key] : !!basePerms[key];
+                                            const setValue = (key: string, checked: boolean) => setTempOverrides({ ...tempOverrides, [key]: checked });
+
+                                            return (
                                         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                                             <label className="flex items-start justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                                                 <div className="pr-4">
@@ -548,8 +557,8 @@ function SuperAdminDashboardContent() {
                                                     <input
                                                         type="checkbox"
                                                         className="sr-only peer"
-                                                        checked={tempOverrides.canDeleteBookings === true}
-                                                        onChange={(e) => setTempOverrides({ ...tempOverrides, canDeleteBookings: e.target.checked })}
+                                                        checked={getValue('canDeleteBookings')}
+                                                        onChange={(e) => setValue('canDeleteBookings', e.target.checked)}
                                                     />
                                                     <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                                 </div>
@@ -564,8 +573,8 @@ function SuperAdminDashboardContent() {
                                                     <input
                                                         type="checkbox"
                                                         className="sr-only peer"
-                                                        checked={tempOverrides.whatsapp_chat === true}
-                                                        onChange={(e) => setTempOverrides({ ...tempOverrides, whatsapp_chat: e.target.checked })}
+                                                        checked={getValue('whatsapp_chat')}
+                                                        onChange={(e) => setValue('whatsapp_chat', e.target.checked)}
                                                     />
                                                     <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                                 </div>
@@ -580,8 +589,8 @@ function SuperAdminDashboardContent() {
                                                     <input
                                                         type="checkbox"
                                                         className="sr-only peer"
-                                                        checked={tempOverrides.canSendWhatsapp === true}
-                                                        onChange={(e) => setTempOverrides({ ...tempOverrides, canSendWhatsapp: e.target.checked })}
+                                                        checked={getValue('canSendWhatsapp')}
+                                                        onChange={(e) => setValue('canSendWhatsapp', e.target.checked)}
                                                     />
                                                     <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                                 </div>
@@ -596,8 +605,8 @@ function SuperAdminDashboardContent() {
                                                     <input
                                                         type="checkbox"
                                                         className="sr-only peer"
-                                                        checked={tempOverrides.canUsePredictiveAI === true}
-                                                        onChange={(e) => setTempOverrides({ ...tempOverrides, canUsePredictiveAI: e.target.checked })}
+                                                        checked={getValue('canUsePredictiveAI')}
+                                                        onChange={(e) => setValue('canUsePredictiveAI', e.target.checked)}
                                                     />
                                                     <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                                 </div>
@@ -612,8 +621,8 @@ function SuperAdminDashboardContent() {
                                                     <input
                                                         type="checkbox"
                                                         className="sr-only peer"
-                                                        checked={tempOverrides.canExportData === true}
-                                                        onChange={(e) => setTempOverrides({ ...tempOverrides, canExportData: e.target.checked })}
+                                                        checked={getValue('canExportData')}
+                                                        onChange={(e) => setValue('canExportData', e.target.checked)}
                                                     />
                                                     <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                                 </div>
@@ -628,8 +637,8 @@ function SuperAdminDashboardContent() {
                                                     <input
                                                         type="checkbox"
                                                         className="sr-only peer"
-                                                        checked={tempOverrides.canViewCalendar === true}
-                                                        onChange={(e) => setTempOverrides({ ...tempOverrides, canViewCalendar: e.target.checked })}
+                                                        checked={getValue('canViewCalendar')}
+                                                        onChange={(e) => setValue('canViewCalendar', e.target.checked)}
                                                     />
                                                     <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                                 </div>
@@ -644,13 +653,15 @@ function SuperAdminDashboardContent() {
                                                     <input
                                                         type="checkbox"
                                                         className="sr-only peer"
-                                                        checked={tempOverrides.canSetAdvancedPricing === true}
-                                                        onChange={(e) => setTempOverrides({ ...tempOverrides, canSetAdvancedPricing: e.target.checked })}
+                                                        checked={getValue('canSetAdvancedPricing')}
+                                                        onChange={(e) => setValue('canSetAdvancedPricing', e.target.checked)}
                                                     />
                                                     <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                                                 </div>
                                             </label>
                                         </div>
+                                        );
+                                        })()}
 
                                         <div className="mt-8 flex gap-3">
                                             <button

@@ -20,9 +20,8 @@ export class UsersService {
         }) as unknown as Promise<User[]>;
     }
 
-    // Devuelve el perfil del usuario autenticado con plan e isActive
     async findMe(id: string) {
-        return this.prisma.user.findUnique({
+        const user = await this.prisma.user.findUnique({
             where: { id },
             select: {
                 id: true,
@@ -32,8 +31,17 @@ export class UsersService {
                 isActive: true,
                 plan: true,
                 subscriptionEndsAt: true,
+                featureOverrides: true,
             }
         });
+        if (!user) return null;
+
+        const planObj = await this.prisma.subscriptionPlan.findUnique({ where: { code: user.plan } });
+
+        return {
+            ...user,
+            planPermissions: planObj?.permissions || {}
+        };
     }
 
     async findTenants() {
@@ -47,6 +55,7 @@ export class UsersService {
                 plan: true,
                 subscriptionEndsAt: true,
                 createdAt: true,
+                featureOverrides: true,
                 _count: { select: { venues: true } }
             },
             orderBy: { createdAt: 'desc' }

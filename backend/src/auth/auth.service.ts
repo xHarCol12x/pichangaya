@@ -57,6 +57,13 @@ export class AuthService {
             isActive: isActuallyActive,
             subscriptionEndsAt: user.subscriptionEndsAt
         };
+
+        let planObjPermissions = {};
+        try {
+            const planObj = await this.prisma.subscriptionPlan.findUnique({ where: { code: user.plan } });
+            planObjPermissions = planObj?.permissions || {};
+        } catch(e) {}
+
         return {
             access_token: this.jwtService.sign(payload),
             user: {
@@ -66,7 +73,9 @@ export class AuthService {
                 role: user.role,
                 plan: user.plan,
                 isActive: user.isActive,
-                subscriptionEndsAt: user.subscriptionEndsAt
+                subscriptionEndsAt: user.subscriptionEndsAt,
+                featureOverrides: user.featureOverrides || {},
+                planPermissions: planObjPermissions
             },
         };
     }
