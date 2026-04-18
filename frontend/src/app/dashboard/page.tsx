@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 import {
     TrendingUp, TrendingDown, Users, CalendarCheck, CreditCard,
     BrainCircuit, ArrowUpRight, ChevronRight, MoreVertical,
