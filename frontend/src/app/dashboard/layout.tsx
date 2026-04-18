@@ -75,9 +75,9 @@ export default function DashboardLayout({
     }, [router, pathname]);
 
     return (
-        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 selection:bg-accent/30 selection:text-white animate-in fade-in duration-1000 overflow-x-hidden relative w-full">
+        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 selection:bg-accent/30 selection:text-white animate-in fade-in duration-1000 relative w-full">
             <Sidebar />
-            <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative min-w-0 overflow-x-hidden">
+            <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative min-w-0">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-accent/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
 
