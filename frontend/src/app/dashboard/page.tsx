@@ -56,6 +56,20 @@ const DEFAULT_LAYOUT = {
         { i: "upcoming", x: 0, y: 30, w: 6, h: 12 },
         { i: "chart", x: 0, y: 42, w: 6, h: 16 },
         { i: "ai", x: 0, y: 58, w: 6, h: 10 }
+    ],
+    xs: [
+        { i: "kpis", x: 0, y: 0, w: 4, h: 24 },
+        { i: "live", x: 0, y: 24, w: 4, h: 12 },
+        { i: "upcoming", x: 0, y: 36, w: 4, h: 12 },
+        { i: "chart", x: 0, y: 48, w: 4, h: 14 },
+        { i: "ai", x: 0, y: 62, w: 4, h: 10 }
+    ],
+    xxs: [
+        { i: "kpis", x: 0, y: 0, w: 2, h: 32 },
+        { i: "live", x: 0, y: 32, w: 2, h: 12 },
+        { i: "upcoming", x: 0, y: 44, w: 2, h: 12 },
+        { i: "chart", x: 0, y: 56, w: 2, h: 14 },
+        { i: "ai", x: 0, y: 70, w: 2, h: 10 }
     ]
 };
 
@@ -290,8 +304,9 @@ const DashboardPage = () => {
             if (overridesParsed?.dashboardLayouts) {
                 setLayouts(overridesParsed.dashboardLayouts);
             } else if (overridesParsed?.dashboardLayout) {
-                // Backward compatibility
-                setLayouts({ lg: overridesParsed.dashboardLayout });
+                // Backward compatibility: broadcast singular layout to all breakpoints
+                const l = overridesParsed.dashboardLayout;
+                setLayouts({ lg: l, md: l, sm: l, xs: l, xxs: l });
             }
 
             // Load clients for quick booking
@@ -336,11 +351,12 @@ const DashboardPage = () => {
                 const userObj = JSON.parse(userStr);
                 const newOverrides = { ...featureOverrides, dashboardLayouts: layouts };
 
-                await users.updateSettings({ featureOverrides: JSON.stringify(newOverrides) });
+                // Note: The backend usually expects an object for PATCH, which axios stringifies
+                await users.updateSettings({ featureOverrides: newOverrides });
 
                 setFeatureOverrides(newOverrides);
                 localStorage.setItem("fieldiq_user", JSON.stringify({ ...userObj, featureOverrides: newOverrides }));
-                toast.success("Tablero guardado", { id: loadingToast });
+                toast.success("Tablero guardado con éxito", { id: loadingToast });
             }
         } catch (e) {
             toast.error("Error al guardar tablero", { id: loadingToast });
@@ -642,6 +658,7 @@ const DashboardPage = () => {
                         <p className="text-foreground/40 flex items-center gap-2 text-sm">
                             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                             {todayCapital} · {now.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
+                            <span className="ml-2 text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/20 font-mono">BENTO V2.2</span>
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
