@@ -22,22 +22,22 @@ import { Toaster, toast } from "sonner";
 import { Edit3, Check, Lock } from "lucide-react";
 import dynamic from "next/dynamic";
 const ResponsiveGridLayout = dynamic(
-    () => import("react-grid-layout").then((mod: any) => mod.ResponsiveGridLayout), 
+    () => import("react-grid-layout").then((mod: any) => mod.ResponsiveGridLayout),
     { ssr: false }
 );
-import { 
-    KpiStatsWidget, 
-    LiveFieldsWidget, 
-    UpcomingBookingsWidget, 
-    RevenueChartWidget, 
-    AiInsightWidget 
+import {
+    KpiStatsWidget,
+    LiveFieldsWidget,
+    UpcomingBookingsWidget,
+    RevenueChartWidget,
+    AiInsightWidget
 } from "@/components/dashboard/widgets";
 
 
 
 const DEFAULT_LAYOUT = [
-    { i: "kpis", x: 0, y: 0, w: 12, h: 8, minW: 12, minH: 6 },
-    { i: "live", x: 0, y: 8, w: 12, h: 14, minW: 6, minH: 8 },
+    { i: "kpis", x: 0, y: 0, w: 12, h: 6, minW: 6, minH: 6 },
+    { i: "live", x: 0, y: 8, w: 12, h: 8, minW: 8, minH: 8 },
     { i: "upcoming", x: 0, y: 22, w: 12, h: 16, minW: 6, minH: 10 },
     { i: "chart", x: 0, y: 38, w: 8, h: 16, minW: 4, minH: 10 },
     { i: "ai", x: 8, y: 38, w: 4, h: 16, minW: 3, minH: 10 }
@@ -128,7 +128,7 @@ const DashboardPage = () => {
     const [now, setNow] = useState(new Date());
     const [plan, setPlan] = useState<string>("basic");
     const [featureOverrides, setFeatureOverrides] = useState<any>({});
-    
+
     // Bento Box State
     const [isEditMode, setIsEditMode] = useState(false);
     const [layout, setLayout] = useState<any[]>(DEFAULT_LAYOUT);
@@ -141,7 +141,7 @@ const DashboardPage = () => {
         const resizeObserver = new ResizeObserver((entries) => {
             const newWidth = entries[0]?.contentRect?.width;
             if (newWidth && newWidth > 0) {
-                 setContainerWidth(newWidth);
+                setContainerWidth(newWidth);
             }
         });
         resizeObserver.observe(containerRef.current);
@@ -159,7 +159,7 @@ const DashboardPage = () => {
     // 1. AGREGA ESTE NUEVO ESTADO PARA LA ANIMACIÓN
     const [isClosingQB, setIsClosingQB] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
-    
+
     // Payment Modal State
     const [payModalBooking, setPayModalBooking] = useState<any | null>(null);
     const [payLoading, setPayLoading] = useState(false);
@@ -203,13 +203,13 @@ const DashboardPage = () => {
                 // Si no tiene endTime, asumimos 60 mins desde el inicio para calcular
                 const currentEnd = booking.endTime ? new Date(booking.endTime) : new Date(new Date(booking.startTime).getTime() + 60 * 60000);
                 const newEnd = new Date(currentEnd.getTime() + 30 * 60000).toISOString();
-                
+
                 let updateData: any = { endTime: newEnd };
                 if (fieldPrice) {
                     const extraPrice = fieldPrice / 2;
                     updateData.totalPrice = (Number(booking.totalPrice) || 0) + extraPrice;
                 }
-                
+
                 await bookingsApi.update(booking.id, updateData);
                 toast.success("Reserva extendida por 30 minutos", { id: loadingToast });
             } else if (action === 'finish') {
@@ -265,7 +265,7 @@ const DashboardPage = () => {
 
             const userPlan = uRes.data?.plan || userObj?.plan || 'basic';
             setPlan(String(userPlan).toLowerCase());
-            
+
             // Extract feature overrides and load custom layout if exists
             const overridesRaw = uRes.data?.featureOverrides || userObj?.featureOverrides || {};
             const overridesParsed = typeof overridesRaw === 'string' ? JSON.parse(overridesRaw) : overridesRaw;
@@ -315,9 +315,9 @@ const DashboardPage = () => {
             if (userStr) {
                 const userObj = JSON.parse(userStr);
                 const newOverrides = { ...featureOverrides, dashboardLayout: layout };
-                
+
                 await users.updateSettings({ featureOverrides: newOverrides });
-                
+
                 setFeatureOverrides(newOverrides);
                 localStorage.setItem("fieldiq_user", JSON.stringify({ ...userObj, featureOverrides: newOverrides }));
                 toast.success("Tablero guardado", { id: loadingToast });
@@ -331,10 +331,10 @@ const DashboardPage = () => {
         if (plan !== 'pro' && plan !== 'enterprise' && plan !== 'SUPER_ADMIN') {
             toast.error(
                 <div className="flex flex-col gap-2">
-                    <span className="font-bold flex items-center gap-2"><Lock className="w-4 h-4"/> Nivel Pro Requerido</span>
+                    <span className="font-bold flex items-center gap-2"><Lock className="w-4 h-4" /> Nivel Pro Requerido</span>
                     <span className="text-sm">Personalizar el tablero (arrastrar widgets) requiere un plan superior.</span>
                     <a href="/dashboard/billing?apply_plan=PRO" className="bg-foreground text-background px-3 py-1.5 rounded-lg text-center text-xs font-bold mt-1">Mejorar Plan</a>
-                </div>, 
+                </div>,
                 { duration: 5000 }
             );
             return;
@@ -640,7 +640,7 @@ const DashboardPage = () => {
                             <Plus className="w-4 h-4" />
                             Reserva Rápida
                         </button>
-                        
+
                         {isEditMode ? (
                             <button
                                 onClick={handleSaveLayout}
@@ -687,7 +687,7 @@ const DashboardPage = () => {
                             <div key="kpis" className={isEditMode ? "cursor-move glass-hover" : ""}>
                                 <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
                             </div>
-                            
+
                             <div key="live" className={isEditMode ? "cursor-move glass-hover" : ""}>
                                 <LiveFieldsWidget liveFields={liveFields} handleLiveAction={handleLiveAction} setShowQuickBooking={setShowQuickBooking} />
                             </div>
@@ -820,7 +820,7 @@ const DashboardPage = () => {
                         <div className="p-6">
                             <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Confirmar Pago</h3>
                             <p className="text-sm text-slate-500 mb-6">Selecciona el método de pago por <strong className="text-accent">S/{payModalBooking.totalPrice || payModalBooking.price || 0}</strong>.</p>
-                            
+
                             <div className="grid grid-cols-2 gap-2 mb-6">
                                 {['Efectivo', 'Yape', 'Plin', 'Tarjeta', 'Transferencia', 'Otro'].map(m => (
                                     <button
@@ -833,7 +833,7 @@ const DashboardPage = () => {
                                     </button>
                                 ))}
                             </div>
-                            
+
                             <button
                                 onClick={() => setPayModalBooking(null)}
                                 disabled={payLoading}
