@@ -44,32 +44,32 @@ const DEFAULT_LAYOUT = {
         { i: "ai", x: 8, y: 14, w: 4, h: 10, minW: 3 }
     ],
     md: [
-        { i: "kpis", x: 0, y: 0, w: 10, h: 8 },
-        { i: "live", x: 0, y: 8, w: 10, h: 10 },
-        { i: "upcoming", x: 0, y: 18, w: 10, h: 10 },
-        { i: "chart", x: 0, y: 28, w: 10, h: 12 },
-        { i: "ai", x: 0, y: 40, w: 10, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 10, h: 6 },
+        { i: "live", x: 0, y: 6, w: 10, h: 9 },
+        { i: "upcoming", x: 0, y: 15, w: 10, h: 9 },
+        { i: "chart", x: 0, y: 24, w: 10, h: 10 },
+        { i: "ai", x: 0, y: 34, w: 10, h: 8 }
     ],
     sm: [
-        { i: "kpis", x: 0, y: 0, w: 6, h: 32 },
-        { i: "live", x: 0, y: 32, w: 6, h: 12 },
-        { i: "upcoming", x: 0, y: 44, w: 6, h: 12 },
-        { i: "chart", x: 0, y: 56, w: 6, h: 14 },
-        { i: "ai", x: 0, y: 70, w: 6, h: 12 }
+        { i: "kpis", x: 0, y: 0, w: 6, h: 16 },
+        { i: "live", x: 0, y: 16, w: 6, h: 10 },
+        { i: "upcoming", x: 0, y: 26, w: 6, h: 10 },
+        { i: "chart", x: 0, y: 36, w: 6, h: 12 },
+        { i: "ai", x: 0, y: 48, w: 6, h: 8 }
     ],
     xs: [
-        { i: "kpis", x: 0, y: 0, w: 4, h: 60 },
-        { i: "live", x: 0, y: 60, w: 4, h: 15 },
-        { i: "upcoming", x: 0, y: 75, w: 4, h: 15 },
-        { i: "chart", x: 0, y: 90, w: 4, h: 18 },
-        { i: "ai", x: 0, y: 108, w: 4, h: 18 }
+        { i: "kpis", x: 0, y: 0, w: 4, h: 32 },
+        { i: "live", x: 0, y: 32, w: 4, h: 10 },
+        { i: "upcoming", x: 0, y: 42, w: 4, h: 10 },
+        { i: "chart", x: 0, y: 52, w: 4, h: 12 },
+        { i: "ai", x: 0, y: 64, w: 4, h: 10 }
     ],
     xxs: [
-        { i: "kpis", x: 0, y: 0, w: 2, h: 68 },
-        { i: "live", x: 0, y: 68, w: 2, h: 18 },
-        { i: "upcoming", x: 0, y: 86, w: 2, h: 18 },
-        { i: "chart", x: 0, y: 104, w: 2, h: 20 },
-        { i: "ai", x: 0, y: 124, w: 2, h: 24 }
+        { i: "kpis", x: 0, y: 0, w: 2, h: 40 },
+        { i: "live", x: 0, y: 40, w: 2, h: 12 },
+        { i: "upcoming", x: 0, y: 52, w: 2, h: 12 },
+        { i: "chart", x: 0, y: 64, w: 2, h: 12 },
+        { i: "ai", x: 0, y: 76, w: 2, h: 12 }
     ]
 };
 
@@ -158,7 +158,7 @@ const DashboardPage = () => {
     const [now, setNow] = useState(new Date());
     const [plan, setPlan] = useState<string>("basic");
     const [featureOverrides, setFeatureOverrides] = useState<any>({});
-    
+
     // Bento Box State
     const [isEditMode, setIsEditMode] = useState(false);
     const [layouts, setLayouts] = useState<any>(DEFAULT_LAYOUT);
@@ -315,11 +315,11 @@ const DashboardPage = () => {
             // Extract feature overrides and load custom layout if exists
             const overridesRaw = uRes.data?.featureOverrides || userObj?.featureOverrides || {};
             const overridesParsed = typeof overridesRaw === 'string' ? JSON.parse(overridesRaw) : overridesRaw;
-            
+
             // Force reset if layout is old (to fix mobile distortion for existing users)
-            const LAYOUT_VERSION = "3.5";
+            const LAYOUT_VERSION = "3.3";
             const needsMigration = !overridesParsed.dashboardVersion || overridesParsed.dashboardVersion !== LAYOUT_VERSION;
-            
+
             setFeatureOverrides(overridesParsed);
 
             if (!needsMigration && overridesParsed?.dashboardLayouts) {
@@ -369,10 +369,10 @@ const DashboardPage = () => {
             const userStr = localStorage.getItem("fieldiq_user");
             if (userStr) {
                 const userObj = JSON.parse(userStr);
-                const newOverrides = { 
-                    ...featureOverrides, 
+                const newOverrides = {
+                    ...featureOverrides,
                     dashboardLayouts: layouts,
-                    dashboardVersion: "3.2" 
+                    dashboardVersion: "3.2"
                 };
 
                 // Re-added stringify because backend expects featureOverrides as a string/text field
@@ -682,7 +682,7 @@ const DashboardPage = () => {
                         <p className="text-foreground/40 flex items-center gap-2 text-sm">
                             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                             {todayCapital} · {now.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
-                            <span className="ml-2 text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/20 font-mono">BENTO V3.5</span>
+                            <span className="ml-2 text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/20 font-mono">BENTO V3.3</span>
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
