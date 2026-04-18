@@ -98,6 +98,7 @@ export class UsersService {
         isActive?: boolean;
         subscriptionEndsAt?: string | null;
         extendDays?: number;
+        featureOverrides?: any;
     }) {
         const user = await this.prisma.user.findUnique({ where: { id } });
         if (!user) throw new Error('Tenant not found');
@@ -106,6 +107,7 @@ export class UsersService {
 
         if (data.plan !== undefined) updateData.plan = data.plan;
         if (data.isActive !== undefined) updateData.isActive = data.isActive;
+        if (data.featureOverrides !== undefined) updateData.featureOverrides = data.featureOverrides;
 
         if (data.subscriptionEndsAt !== undefined) {
             updateData.subscriptionEndsAt = data.subscriptionEndsAt

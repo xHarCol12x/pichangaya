@@ -39,6 +39,7 @@ export class UsersController {
             isActive?: boolean;
             subscriptionEndsAt?: string | null;
             extendDays?: number;
+            featureOverrides?: any;
         }
     ) {
         return this.usersService.updateTenantSubscription(id, body);

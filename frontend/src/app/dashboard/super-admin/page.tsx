@@ -1448,7 +1448,8 @@ function PlanFormModal({ plan, onClose, onUpdated }: { plan?: any, onClose: () =
         canUsePredictiveAI: false,
         canExportData: false,
         canViewCalendar: false,
-        canSetAdvancedPricing: false
+        canSetAdvancedPricing: false,
+        canDeleteBookings: false
     });
     const [loading, setLoading] = useState(false);
 
@@ -1659,6 +1660,11 @@ function PlanFormModal({ plan, onClose, onUpdated }: { plan?: any, onClose: () =
                                         <input type="checkbox" checked={permissions.canSetAdvancedPricing} onChange={e => setPermissions({ ...permissions, canSetAdvancedPricing: e.target.checked })}
                                             className="w-4 h-4 rounded text-accent" />
                                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Precios Dinámicos Avanzados</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
+                                        <input type="checkbox" checked={permissions.canDeleteBookings} onChange={e => setPermissions({ ...permissions, canDeleteBookings: e.target.checked })}
+                                            className="w-4 h-4 rounded text-accent" />
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Permitir Eliminar Reservas</span>
                                     </label>
                                 </div>
                             </div>
