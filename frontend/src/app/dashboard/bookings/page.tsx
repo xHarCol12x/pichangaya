@@ -119,35 +119,42 @@ export default function BookingsPage() {
     };
 
 
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSave = async (eOrData: any, optionalId?: string) => {
+        // Detect if it's a form event or direct data from the modal
+        const isEvent = eOrData && typeof eOrData.preventDefault === 'function';
+        if (isEvent) eOrData.preventDefault();
+
+        const formData = isEvent ? form : eOrData;
+        const targetId = isEvent ? bookingToEdit?.id : optionalId;
+
         setIsSubmitting(true);
         try {
-            const startDate = new Date(form.startTime);
-            const endDate = new Date(startDate.getTime() + form.duration * 60000);
+            const startDate = new Date(formData.startTime);
+            const endDate = new Date(startDate.getTime() + formData.duration * 60000);
 
             const payload: any = {
-                field: { connect: { id: form.fieldId } },
+                field: { connect: { id: formData.fieldId } },
                 startTime: startDate.toISOString(),
                 endTime: endDate.toISOString(),
-                status: form.status,
-                totalPrice: Number(form.totalPrice),
-                paymentMethod: form.paymentMethod || undefined,
+                status: formData.status,
+                totalPrice: Number(formData.totalPrice),
+                paymentMethod: formData.paymentMethod || undefined,
             };
-            if (form.clientId) {
-                payload.client = { connect: { id: form.clientId } };
-            } else if (bookingToEdit?.clientId) {
+
+            if (formData.clientId) {
+                payload.client = { connect: { id: formData.clientId } };
+            } else if (targetId && bookingToEdit?.clientId) {
                 payload.client = { disconnect: true };
             }
 
-            const fieldObj = fields.find((f: any) => f.id === form.fieldId) || { name: "Cancha" };
-            const clientObj = clientsList.find((c: any) => c.id === form.clientId) || null;
+            const fieldObj = fields.find((f: any) => f.id === formData.fieldId) || { name: "Cancha" };
+            const clientObj = clientsList.find((c: any) => c.id === formData.clientId) || null;
 
-            if (bookingToEdit) {
-                await bookingsApi.update(bookingToEdit.id, payload);
+            if (targetId) {
+                await bookingsApi.update(targetId, payload);
                 setBookings(prev => prev.map(b =>
-                    b.id === bookingToEdit.id
-                        ? { ...b, startTime: startDate.toISOString(), endTime: endDate.toISOString(), status: form.status, totalPrice: Number(form.totalPrice), paymentMethod: form.paymentMethod || null, field: fieldObj, client: clientObj }
+                    b.id === targetId
+                        ? { ...b, startTime: startDate.toISOString(), endTime: endDate.toISOString(), status: formData.status, totalPrice: Number(formData.totalPrice), paymentMethod: formData.paymentMethod || null, field: fieldObj, client: clientObj }
                         : b
                 ));
             } else {
@@ -161,9 +168,10 @@ export default function BookingsPage() {
             setForm(getInitialForm());
             // Background sync to ensure server-shaped data
             setTimeout(() => loadData(), 800);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving booking", error);
-            alert("Error al guardar la reserva. Verifica que no haya conflictos de horario.");
+            const msg = error.response?.data?.message || error.message || "Verifica conflictos de horario";
+            alert("Error al guardar la reserva: " + msg);
         } finally {
             setIsSubmitting(false);
         }
