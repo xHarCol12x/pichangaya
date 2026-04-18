@@ -315,11 +315,16 @@ const DashboardPage = () => {
             // Extract feature overrides and load custom layout if exists
             const overridesRaw = uRes.data?.featureOverrides || userObj?.featureOverrides || {};
             const overridesParsed = typeof overridesRaw === 'string' ? JSON.parse(overridesRaw) : overridesRaw;
+            
+            // Force reset if layout is old (to fix mobile distortion for existing users)
+            const LAYOUT_VERSION = "3.2";
+            const needsMigration = !overridesParsed.dashboardVersion || overridesParsed.dashboardVersion !== LAYOUT_VERSION;
+            
             setFeatureOverrides(overridesParsed);
-            if (overridesParsed?.dashboardLayouts) {
+
+            if (!needsMigration && overridesParsed?.dashboardLayouts) {
                 setLayouts(overridesParsed.dashboardLayouts);
-            } else if (overridesParsed?.dashboardLayout) {
-                // Backward compatibility: broadcast singular layout to all breakpoints
+            } else if (!needsMigration && overridesParsed?.dashboardLayout) {
                 const l = overridesParsed.dashboardLayout;
                 setLayouts({ lg: l, md: l, sm: l, xs: l, xxs: l });
             }
@@ -364,7 +369,11 @@ const DashboardPage = () => {
             const userStr = localStorage.getItem("fieldiq_user");
             if (userStr) {
                 const userObj = JSON.parse(userStr);
-                const newOverrides = { ...featureOverrides, dashboardLayouts: layouts };
+                const newOverrides = { 
+                    ...featureOverrides, 
+                    dashboardLayouts: layouts,
+                    dashboardVersion: "3.2" 
+                };
 
                 // Re-added stringify because backend expects featureOverrides as a string/text field
                 await users.updateSettings({ featureOverrides: JSON.stringify(newOverrides) });
