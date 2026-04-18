@@ -36,11 +36,11 @@ import {
 
 
 const DEFAULT_LAYOUT = [
-    { i: "kpis", x: 0, y: 0, w: 12, h: 4, minW: 6, minH: 6 },
+    { i: "kpis", x: 0, y: 0, w: 12, h: 6, minW: 6, minH: 6 },
     { i: "live", x: 0, y: 8, w: 10, h: 8, minW: 8, minH: 8 },
-    { i: "upcoming", x: 0, y: 22, w: 12, h: 16, minW: 6, minH: 10 },
-    { i: "chart", x: 0, y: 38, w: 8, h: 16, minW: 4, minH: 10 },
-    { i: "ai", x: 8, y: 38, w: 4, h: 16, minW: 3, minH: 10 }
+    { i: "upcoming", x: 0, y: 16, w: 12, h: 8, minW: 6, minH: 10 },
+    { i: "chart", x: 0, y: 24, w: 8, h: 8, minW: 4, minH: 10 },
+    { i: "ai", x: 8, y: 24, w: 4, h: 8, minW: 3, minH: 10 }
 ];
 
 
