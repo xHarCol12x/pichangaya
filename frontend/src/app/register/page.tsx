@@ -4,24 +4,38 @@ import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import TransitionLink from "@/components/ui/TransitionLink";
 import { useTransition } from "@/components/ui/TransitionOverlay";
-import { Activity, ArrowRight, Lock, Mail, User, AlertCircle } from "lucide-react";
+import { Activity, ArrowRight, Lock, Mail, User, AlertCircle, Eye, EyeOff, Phone } from "lucide-react";
 import AuthCarousel from "@/components/ui/AuthCarousel";
 import api from "@/lib/api";
 
 const RegisterContent = () => {
     const searchParams = useSearchParams();
     const selectedPlan = searchParams.get("plan");
-    const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "ADMIN" });
+    const [formData, setFormData] = useState({ name: "", email: "", phone: "", password: "", role: "ADMIN" });
     const [error, setError] = useState("");
+    const [phoneError, setPhoneError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const { navigateWithTransition } = useTransition();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (name === "phone") {
+            // Only allow digits, max 9
+            const digits = value.replace(/\D/g, "").slice(0, 9);
+            setFormData({ ...formData, phone: digits });
+            setPhoneError(digits.length > 0 && digits.length < 9 ? "El número debe tener exactamente 9 dígitos." : "");
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (formData.phone && formData.phone.length !== 9) {
+            setPhoneError("El número debe tener exactamente 9 dígitos.");
+            return;
+        }
         setError("");
         setLoading(true);
 
@@ -35,7 +49,7 @@ const RegisterContent = () => {
                 localStorage.setItem("fieldiq_token", response.data.access_token);
                 localStorage.setItem("fieldiq_user", JSON.stringify(response.data.user));
 
-                if (selectedPlan) {
+                if (selectedPlan === 'BASIC' || selectedPlan === 'PRO') {
                     navigateWithTransition(`/dashboard/billing?apply_plan=${selectedPlan}`);
                 } else {
                     navigateWithTransition("/dashboard");
@@ -59,7 +73,7 @@ const RegisterContent = () => {
                                 <Activity className="text-accent-foreground w-6 h-6" />
                             </div>
                             <span className="text-2xl font-bold tracking-tight text-foreground">
-                                Field<span className="text-accent">IQ</span>
+                                Pichanga<span className="text-accent">Libre</span>
                             </span>
                         </TransitionLink>
                         <h1 className="text-3xl font-black text-foreground mb-2">Crear Cuenta</h1>
@@ -106,14 +120,35 @@ const RegisterContent = () => {
                             </div>
                         </div>
 
-                        {/* Removido el Selector de Tipo de Cuenta: Por defecto Admin */}
+                        {/* Phone */}
+                        <div className="relative group pt-2">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Teléfono <span className="text-slate-400 normal-case font-normal">(opcional)</span></label>
+                            <div className={`flex items-center border-b-2 pb-2 focus-within:border-accent transition-colors ${phoneError ? "border-red-500/60" : "border-slate-200 dark:border-slate-800"}`}>
+                                <Phone className="w-5 h-5 text-slate-400 mr-3 shrink-0" />
+                                <span className="text-slate-400 text-sm mr-1 shrink-0">+51</span>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    placeholder="987 654 321"
+                                    maxLength={9}
+                                    className="w-full bg-transparent text-foreground placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:outline-none tracking-wider"
+                                />
+                                {formData.phone.length === 9 && (
+                                    <span className="text-emerald-500 text-xs font-bold ml-2 shrink-0">✓</span>
+                                )}
+                            </div>
+                            {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
+                        </div>
 
+                        {/* Password */}
                         <div className="relative group pt-2">
                             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Contraseña</label>
                             <div className="flex items-center border-b-2 border-slate-200 dark:border-slate-800 pb-2 focus-within:border-accent transition-colors">
-                                <Lock className="w-5 h-5 text-slate-400 mr-3" />
+                                <Lock className="w-5 h-5 text-slate-400 mr-3 shrink-0" />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     name="password"
                                     required
                                     value={formData.password}
@@ -121,6 +156,14 @@ const RegisterContent = () => {
                                     placeholder="••••••••"
                                     className="w-full bg-transparent text-foreground placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:outline-none"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="ml-2 text-slate-400 hover:text-accent transition-colors shrink-0"
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
                             </div>
                         </div>
 

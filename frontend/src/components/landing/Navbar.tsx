@@ -43,13 +43,13 @@ const Navbar = () => {
                         <Activity className="text-accent-foreground w-6 h-6" />
                     </div>
                     <span className="text-2xl font-bold tracking-tight text-foreground">
-                        Field<span className="text-accent">IQ</span>
+                        Pichanga<span className="text-accent">Libre</span>
                     </span>
                 </Link>
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center gap-8">
-                    {["Características", "Cómo Funciona", "IA", "Precios"].map((item) => (
+                    {["Características", "Cómo Funciona", "IA", "Precios", "FAQ"].map((item) => (
                         <Link
                             key={item}
                             href={`#${item.toLowerCase().replace(" ", "-")}`}

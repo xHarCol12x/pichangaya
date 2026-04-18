@@ -1,0 +1,136 @@
+{
+    "name": "Agente IA de Reservas El Golazo",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "whatsapp-webhook",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "id": "webhook-node",
+            "name": "Webhook (WhatsApp)"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.body.message }}",
+                "options": {
+                    "systemMessage": "Eres el asistente estrella de reservas de canchas de 'El Golazo'. Eres súper amable, usas emojis de fútbol ⚽🥅 y hablas de forma natural. Tu objetivo es ayudar al usuario a ver disponibilidades y reservar canchas.\n\nInstrucciones vitales:\n1. Si el usuario pregunta por disponibilidad, usa la herramienta HTTP Request para consultar.\n2. Si el usuario confirma que quiere reservar, usa la herramienta HTTP para enviarle el link de pago.\nNunca inventes horarios, confía solo en lo que devuelven las herramientas."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 1,
+            "position": [
+                500,
+                300
+            ],
+            "id": "ai-agent",
+            "name": "Agente de Reservas"
+        },
+        {
+            "parameters": {
+                "model": "llama-3.3-70b-versatile",
+                "options": {
+                    "temperature": 0.4
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                500,
+                500
+            ],
+            "id": "groq-llm",
+            "name": "Cerebro Llama 3 (Groq)"
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 10
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1,
+            "position": [
+                650,
+                500
+            ],
+            "id": "memory",
+            "name": "Memoria de Corto Plazo"
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "http://host.docker.internal:3001/ai-tools/availability",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "date",
+                            "value": "={{ $fromAI('date', 'La fecha consultada por el usuario en formato YYYY-MM-DD') }}"
+                        }
+                    ]
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1,
+            "position": [
+                800,
+                500
+            ],
+            "id": "tool-disponibilidad",
+            "name": "Herramienta: Ver Disponibilidad"
+        }
+    ],
+    "connections": {
+        "Webhook (WhatsApp)": {
+            "main": [
+                [
+                    {
+                        "node": "Agente de Reservas",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Cerebro Llama 3 (Groq)": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente de Reservas",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Memoria de Corto Plazo": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agente de Reservas",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Herramienta: Ver Disponibilidad": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agente de Reservas",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

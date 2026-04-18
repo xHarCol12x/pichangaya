@@ -16,7 +16,7 @@ const Footer = () => {
                             <Activity className="text-accent-foreground w-5 h-5" />
                         </div>
                         <span className="text-xl font-bold tracking-tight text-foreground">
-                            Field<span className="text-accent">IQ</span>
+                            Pichanga<span className="text-accent">Libre</span>
                         </span>
                     </Link>
                     <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
@@ -66,7 +66,7 @@ const Footer = () => {
                     <ul className="space-y-4">
                         <li className="flex items-start gap-3 text-sm text-slate-500 dark:text-slate-400">
                             <MapPin className="w-5 h-5 text-accent shrink-0" />
-                            <span>Av. Javier Prado Este 1234, Lima, Perú</span>
+                            <span> Lima, Perú</span>
                         </li>
                         <li className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                             <Phone className="w-5 h-5 text-accent shrink-0" />
@@ -74,7 +74,7 @@ const Footer = () => {
                         </li>
                         <li className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                             <Mail className="w-5 h-5 text-accent shrink-0" />
-                            <span>hola@fieldiq.com</span>
+                            <span>adminpichangalibre@pichangalibre.xyz</span>
                         </li>
                     </ul>
                 </div>
@@ -82,7 +82,7 @@ const Footer = () => {
 
             <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6">
                 <p className="text-slate-500 dark:text-slate-400 text-xs">
-                    © {new Date().getFullYear()} FieldIQ. Todos los derechos reservados.
+                    © {new Date().getFullYear()} PichangaLibre. Todos los derechos reservados.
                 </p>
                 <div className="flex gap-8">
                     <Link href="#" className="text-slate-500 text-xs hover:text-accent">Términos y Condiciones</Link>

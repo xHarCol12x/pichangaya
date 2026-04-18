@@ -11,56 +11,63 @@ import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-const plans = [
-    {
-        id: "BASIC",
-        name: "Básico",
-        price: 79,
-        description: "Ideal para canchas individuales o clubes pequeños que quieren crecer.",
-        features: ["Hasta 5 canchas", "Reservas Online", "Reportes Básicos", "Soporte por Email"],
-        icon: Star,
-        accent: "#10b981",
-        accentLight: "#34d399",
-        highlighted: false,
-    },
-    {
-        id: "PRO",
-        name: "Pro",
-        price: 109,
-        description: "Para academias y complejos en crecimiento constante que exigen más.",
-        features: ["Canchas ilimitadas", "IA Predictiva", "Pagos Automatizados", "Dashboards Avanzados", "Soporte 24/7"],
-        icon: Zap,
-        accent: "#38bdf8",
-        accentLight: "#7dd3fc",
-        highlighted: true,
-    },
-    {
-        id: "ENTERPRISE",
-        name: "Enterprise",
-        price: null,
-        description: "Soluciones a medida para grandes franquicias.",
-        features: ["Multi-sedes", "Integración API", "Gerente de Cuenta", "Capacitación"],
-        icon: Crown,
-        accent: "#f59e0b",
-        accentLight: "#fbbf24",
-        highlighted: false,
-    },
-];
+// Map icon names from DB to Lucide components
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+    Star, Zap, Crown, Rocket,
+};
+
+type Plan = {
+    id: string;
+    code: string;
+    name: string;
+    priceMensual: number | null;
+    description: string;
+    features: string[];
+    icon: string;
+    accent: string;
+    accentLight: string;
+    isPopular: boolean;
+};
 
 function BillingContent() {
     const searchParams = useSearchParams();
 
+    // Read user status from localStorage to distinguish upgrade vs reactivation
+    const [isUserActive] = useState<boolean>(() => {
+        try {
+            const usr = JSON.parse(localStorage.getItem("fieldiq_user") || "{}");
+            return !!usr?.isActive;
+        } catch { return false; }
+    });
+
     const startingStep = searchParams.get("status") === "success"
         ? "success"
-        : (searchParams.get("apply_plan") ? "plans" : "warning");
+        : (searchParams.get("apply_plan") || isUserActive ? "plans" : "warning");
+
+    // isUpgrade = user is already active, just improving their plan
+    const isUpgrade = isUserActive && startingStep !== "success";
 
     const [step, setStep] = useState<"warning" | "plans" | "success">(startingStep);
     const [selectedPlan, setSelectedPlan] = useState(searchParams.get("apply_plan")?.toUpperCase() || "PRO");
     const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
     const [errorMessage, setErrorMessage] = useState("");
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const [plansLoading, setPlansLoading] = useState(true);
 
     const warningRef = useRef<HTMLDivElement>(null);
     const plansRef = useRef<HTMLDivElement>(null);
+
+    // Fetch plans from the API
+    useEffect(() => {
+        axios.get<Plan[]>(`${API_URL}/plans`)
+            .then(res => {
+                // Filter out FREE_TRIAL from the purchase flow
+                const payable = res.data.filter((p: Plan) => p.code !== 'FREE_TRIAL');
+                setPlans(payable);
+            })
+            .catch(err => console.error("Error fetching plans", err))
+            .finally(() => setPlansLoading(false));
+    }, []);
 
     // Update local config instantly on return from gateway
     useEffect(() => {
@@ -86,15 +93,15 @@ function BillingContent() {
         }
     }, [step]);
 
-    // Animate plans step in
+    // Animate plans step in — re-run when plans are fetched
     useEffect(() => {
-        if (step === "plans" && plansRef.current) {
+        if (step === "plans" && plansRef.current && plans.length > 0) {
             gsap.fromTo(".plans-header", { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" });
             gsap.fromTo(".plan-card", { y: 50, opacity: 0, scale: 0.95 },
                 { y: 0, opacity: 1, scale: 1, duration: 0.6, stagger: 0.1, ease: "power3.out", delay: 0.2 });
             gsap.fromTo(".plans-footer", { opacity: 0 }, { opacity: 1, duration: 0.5, delay: 0.6 });
         }
-    }, [step]);
+    }, [step, plans]);
 
     const handleGoToPlans = () => {
         setStep("plans");
@@ -104,11 +111,12 @@ function BillingContent() {
         setStatus("loading");
         try {
             const token = localStorage.getItem("fieldiq_token");
-            const plan = plans.find(p => p.id === selectedPlan)!;
+            const plan = plans.find((p: Plan) => p.code === selectedPlan);
+            if (!plan) throw new Error("Plan no seleccionado");
 
             const response = await axios.post(
                 `${API_URL}/mercadopago/create-preference`,
-                { planName: plan.name, price: plan.price },
+                { planName: plan.name, price: plan.priceMensual },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -227,115 +235,135 @@ function BillingContent() {
     }
 
     // ── PLANS STEP ───────────────────────────────────────────────
-    const activePlan = plans.find(p => p.id === selectedPlan) || plans[1];
+    const activePlan = plans.find((p: Plan) => p.code === selectedPlan) || plans[0];
 
     return (
         <div ref={plansRef} className="max-w-5xl mx-auto px-6 py-12 space-y-10">
 
-            {/* Header */}
-            <div className="plans-header text-center opacity-0 space-y-2">
-                <p className="text-accent text-xs font-black uppercase tracking-[0.3em]">Elige tu plan</p>
-                <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight">
-                    Vuelve a estar en control
-                </h1>
-                <p className="text-foreground/40 text-base max-w-md mx-auto">
-                    Selecciona el plan que mejor se adapte a tu complejo y reactiva tu cuenta al instante.
-                </p>
+            {/* Header — contextual based on upgrade vs reactvation */}
+            <div className="plans-header text-center space-y-2">
+                {isUpgrade ? (
+                    <>
+                        <p className="text-accent text-xs font-black uppercase tracking-[0.3em]">Amplía tu Plan</p>
+                        <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight">
+                            Potencia tu cuenta
+                        </h1>
+                        <p className="text-foreground/40 text-base max-w-md mx-auto">
+                            Sube de plan o extiende tu suscripción. Los días restantes se conservan.
+                        </p>
+                    </>
+                ) : (
+                    <>
+                        <p className="text-accent text-xs font-black uppercase tracking-[0.3em]">Elige tu plan</p>
+                        <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight">
+                            Vuelve a estar en control
+                        </h1>
+                        <p className="text-foreground/40 text-base max-w-md mx-auto">
+                            Selecciona el plan que mejor se adapte a tu complejo y reactiva tu cuenta al instante.
+                        </p>
+                    </>
+                )}
             </div>
 
             {/* Plan cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {plans.map((plan) => {
-                    const Icon = plan.icon;
-                    const isSelected = selectedPlan === plan.id;
+            {plansLoading ? (
+                <div className="flex justify-center py-12"><Loader2 className="w-10 h-10 animate-spin text-accent" /></div>
+            ) : plans.length === 0 ? (
+                <div className="text-center py-12 text-foreground/40">No se pudieron cargar los planes. Intenta recargando la página.</div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {plans.map((plan: Plan) => {
+                        const Icon = ICON_MAP[plan.icon] || Star;
+                        const isSelected = selectedPlan === plan.code;
 
-                    return (
-                        <button
-                            key={plan.id}
-                            onClick={() => plan.price !== null && setSelectedPlan(plan.id)}
-                            className={`plan-card opacity-0 text-left relative rounded-[2rem] p-7 border transition-all duration-300 glass flex flex-col gap-5 ${isSelected
-                                ? "border-accent shadow-[0_0_40px_rgba(56,189,248,0.15)]"
-                                : "border-border hover:border-foreground/20"
-                                } ${plan.price === null ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
-                        >
-                            {/* Selected indicator */}
-                            {isSelected && (
-                                <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
-                                    <CheckCircle2 size={12} className="text-white fill-white" />
-                                </div>
-                            )}
-
-                            {plan.highlighted && (
-                                <div
-                                    className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5"
-                                    style={{ background: plan.accent, color: "#000" }}
-                                >
-                                    <Star size={10} fill="currentColor" /> Más popular
-                                </div>
-                            )}
-
-                            {/* Top color wash */}
-                            <div
-                                className="absolute top-0 left-0 right-0 h-32 rounded-t-[2rem] opacity-10 pointer-events-none"
-                                style={{ background: `linear-gradient(to bottom, ${plan.accent}, transparent)` }}
-                            />
-
-                            <div className="relative">
-                                <div
-                                    className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
-                                    style={{ background: `${plan.accent}18`, border: `1px solid ${plan.accent}30` }}
-                                >
-                                    <Icon size={20} style={{ color: plan.accentLight }} />
-                                </div>
-
-                                <p
-                                    className="text-xs font-black uppercase tracking-widest mb-1"
-                                    style={{ color: plan.accentLight }}
-                                >
-                                    {plan.name}
-                                </p>
-                                <p className="text-foreground/40 text-xs leading-relaxed">{plan.description}</p>
-                            </div>
-
-                            <div className="relative">
-                                {plan.price !== null ? (
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-foreground/30 text-sm">S/</span>
-                                        <span className="text-4xl font-black text-foreground">{plan.price}</span>
-                                        <span className="text-foreground/30 text-xs">/mes</span>
+                        return (
+                            <button
+                                key={plan.code}
+                                onClick={() => plan.priceMensual !== null && setSelectedPlan(plan.code)}
+                                className={`plan-card text-left relative rounded-[2rem] p-7 border transition-all duration-300 glass flex flex-col gap-5 ${isSelected
+                                    ? "border-accent shadow-[0_0_40px_rgba(56,189,248,0.15)]"
+                                    : "border-border hover:border-foreground/20"
+                                    } ${plan.priceMensual === null ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                            >
+                                {/* Selected indicator */}
+                                {isSelected && (
+                                    <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
+                                        <CheckCircle2 size={12} className="text-white fill-white" />
                                     </div>
-                                ) : (
-                                    <span className="text-2xl font-black" style={{ color: plan.accentLight }}>Custom</span>
                                 )}
-                            </div>
 
-                            {/* Divider */}
-                            <div
-                                className="h-px w-full"
-                                style={{ background: `linear-gradient(to right, transparent, ${plan.accent}40, transparent)` }}
-                            />
+                                {plan.isPopular && (
+                                    <div
+                                        className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5"
+                                        style={{ background: plan.accent, color: "#000" }}
+                                    >
+                                        <Star size={10} fill="currentColor" /> Más popular
+                                    </div>
+                                )}
 
-                            <ul className="relative space-y-2.5">
-                                {plan.features.map((f, i) => (
-                                    <li key={i} className="flex items-center gap-2.5 text-sm text-foreground/60">
-                                        <div className="w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0"
-                                            style={{ background: `${plan.accent}18` }}>
-                                            <CheckCircle2 size={10} style={{ color: plan.accentLight }} />
+                                {/* Top color wash */}
+                                <div
+                                    className="absolute top-0 left-0 right-0 h-32 rounded-t-[2rem] opacity-10 pointer-events-none"
+                                    style={{ background: `linear-gradient(to bottom, ${plan.accent}, transparent)` }}
+                                />
+
+                                <div className="relative">
+                                    <div
+                                        className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
+                                        style={{ background: `${plan.accent}18`, border: `1px solid ${plan.accent}30` }}
+                                    >
+                                        <Icon size={20} style={{ color: plan.accentLight }} />
+                                    </div>
+
+                                    <p
+                                        className="text-xs font-black uppercase tracking-widest mb-1"
+                                        style={{ color: plan.accentLight }}
+                                    >
+                                        {plan.name}
+                                    </p>
+                                    <p className="text-foreground/40 text-xs leading-relaxed">{plan.description}</p>
+                                </div>
+
+                                <div className="relative">
+                                    {plan.priceMensual !== null ? (
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-foreground/30 text-sm">S/</span>
+                                            <span className="text-4xl font-black text-foreground">{plan.priceMensual}</span>
+                                            <span className="text-foreground/30 text-xs">/mes</span>
                                         </div>
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                        </button>
-                    );
-                })}
-            </div>
+                                    ) : (
+                                        <span className="text-2xl font-black" style={{ color: plan.accentLight }}>Custom</span>
+                                    )}
+                                </div>
+
+                                {/* Divider */}
+                                <div
+                                    className="h-px w-full"
+                                    style={{ background: `linear-gradient(to right, transparent, ${plan.accent}40, transparent)` }}
+                                />
+
+                                <ul className="relative space-y-2.5">
+                                    {plan.features.map((f: string, i: number) => (
+                                        <li key={i} className="flex items-center gap-2.5 text-sm text-foreground/60">
+                                            <div className="w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0"
+                                                style={{ background: `${plan.accent}18` }}>
+                                                <CheckCircle2 size={10} style={{ color: plan.accentLight }} />
+                                            </div>
+                                            {f}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Pay button + trust */}
             <div className="plans-footer opacity-0 max-w-md mx-auto space-y-4">
                 <button
                     onClick={handlePay}
-                    disabled={status === "loading"}
+                    disabled={status === "loading" || !activePlan}
                     className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-50"
                     style={{
                         background: "linear-gradient(135deg, #009EE3, #00BCFF)",
@@ -350,7 +378,7 @@ function BillingContent() {
                             <svg viewBox="0 0 48 48" className="w-5 h-5 fill-white flex-shrink-0">
                                 <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm0 36c-8.82 0-16-7.18-16-16S15.18 8 24 8s16 7.18 16 16-7.18 16-16 16z" />
                             </svg>
-                            Pagar Plan {activePlan.name} — S/ {activePlan.price}/mes
+                            Pagar Plan {activePlan?.name} — {isUpgrade ? "Ampliar / Subir Plan" : "Reactivar"} — S/ {activePlan?.priceMensual}/mes
                             <ChevronRight size={16} />
                         </>
                     )}

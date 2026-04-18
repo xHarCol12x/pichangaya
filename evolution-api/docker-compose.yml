@@ -1,0 +1,42 @@
+version: '3.3'
+
+services:
+  evolution-api:
+    image: atendai/evolution-api:v1.8.2
+    container_name: evolution_api_golazo
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - evolution-postgres
+    environment:
+      - SERVER_URL=http://localhost:8080
+      - AUTHENTICATION_TYPE=apikey
+      - AUTHENTICATION_API_KEY=clave_secreta_golazo_123
+      - TZ=America/Lima
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://postgres:golazo123@evolution-postgres:5432/evolution?schema=public
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution
+      - CACHE_REDIS_ENABLED=false 
+      - WEBSOCKET_ENABLED=true
+      - QRCODE_LIMIT=30
+    volumes:
+      - evolution_instances:/evolution/instances
+
+  evolution-postgres:
+    image: postgres:15-alpine
+    container_name: evolution_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=golazo123
+      - POSTGRES_DB=evolution
+    ports:
+      - "5433:5432"
+    volumes:
+      - evolution_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  evolution_instances:
+  evolution_store:
+  evolution_postgres_data:

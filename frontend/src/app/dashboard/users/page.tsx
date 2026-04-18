@@ -8,6 +8,9 @@ import {
 } from "lucide-react";
 import { clients as clientsApi, venues, users } from "@/lib/api";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import { useVenue } from "@/context/VenueContext";
+import { Navigation } from "lucide-react";
+
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 const getInitials = (name: string) =>
@@ -97,13 +100,19 @@ const clientStats = (client: any) => {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function ClientsPage() {
     const [clientsList, setClientsList] = useState<any[]>([]);
-    const [myVenues, setMyVenues] = useState<any[]>([]);
-    const [myVenue, setMyVenue] = useState<any>(null);
+    
+    // Global Venue Context
+    const { selectedVenueId, venues: myVenues, isLoadingVenues } = useVenue();
+    const myVenue = myVenues.find(v => v.id === selectedVenueId);
+
     const [isLoading, setIsLoading] = useState(true);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [search, setSearch] = useState("");
     const [saveError, setSaveError] = useState<string | null>(null);
     const [userPlan, setUserPlan] = useState<string>('basic');
+    const [featureOverrides, setFeatureOverrides] = useState<any>({});
+    const [planPermissions, setPlanPermissions] = useState<any>({});
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,37 +123,40 @@ export default function ClientsPage() {
     const emptyForm = { name: "", phone: "", email: "", notes: "" };
     const [form, setForm] = useState(emptyForm);
 
-    useEffect(() => { loadData(); }, []);
+    useEffect(() => {
+        if (selectedVenueId) loadClients();
+    }, [selectedVenueId]);
 
-    const loadData = async () => {
+    useEffect(() => {
+        loadBasicInfo();
+    }, []);
+
+    const loadClients = async () => {
         setIsLoading(true);
         try {
-            const userStr = localStorage.getItem("fieldiq_user");
-            const userObj = userStr ? JSON.parse(userStr) : null;
-            const userId = userObj?.id || null;
-
-            const [vRes, uRes] = await Promise.all([
-                venues.getAll().catch(() => ({ data: [] })),
-                users.getMe().catch(() => ({ data: {} }))
-            ]);
-
-            setUserPlan(String(uRes.data?.plan || userObj?.plan || 'basic').toLowerCase());
-
-            const userVenues = vRes.data?.filter((v: any) => v.ownerId === userId) || [];
-            setMyVenues(userVenues);
-
-            if (userVenues.length > 0) {
-                const venue = userVenues[0];
-                setMyVenue(venue);
-                const cRes = await clientsApi.getAll(venue.id);
-                setClientsList(cRes.data || []);
-            }
+            const cRes = await clientsApi.getAll(selectedVenueId!);
+            setClientsList(cRes.data || []);
         } catch (e) {
             console.error(e);
         } finally {
             setIsLoading(false);
         }
     };
+
+    const loadBasicInfo = async () => {
+        try {
+            const userStr = localStorage.getItem("fieldiq_user");
+            const userObj = userStr ? JSON.parse(userStr) : null;
+            const uRes = await users.getMe().catch(() => ({ data: {} }));
+
+            setUserPlan(String(uRes.data?.plan || userObj?.plan || 'basic').toLowerCase());
+            setFeatureOverrides(uRes.data?.featureOverrides || userObj?.featureOverrides || {});
+            setPlanPermissions(uRes.data?.planPermissions || userObj?.planPermissions || {});
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
 
     const openCreate = () => {
         setClientToEdit(null);
@@ -173,11 +185,16 @@ export default function ClientsPage() {
             };
             if (clientToEdit) {
                 await clientsApi.update(clientToEdit.id, payload);
+                const updated = { ...clientToEdit, ...payload };
+                setClientsList(prev => prev.map(c => c.id === clientToEdit.id ? updated : c));
+                if (selectedClient?.id === clientToEdit.id) setSelectedClient(updated);
             } else {
-                await clientsApi.create({ ...payload, venueId: myVenue.id });
+                if (!selectedVenueId) throw new Error("No hay sede seleccionada");
+                const res = await clientsApi.create({ ...payload, venueId: selectedVenueId });
+                setClientsList(prev => [res.data, ...prev]);
             }
+
             setIsModalOpen(false);
-            loadData();
         } catch (err: any) {
             const msg = err?.response?.data?.message || err?.message || "Error al guardar.";
             setSaveError(typeof msg === "string" ? msg : JSON.stringify(msg));
@@ -190,9 +207,9 @@ export default function ClientsPage() {
         if (!clientToDelete) return;
         try {
             await clientsApi.delete(clientToDelete.id);
-            setClientToDelete(null);
+            setClientsList(prev => prev.filter(c => c.id !== clientToDelete.id));
             if (selectedClient?.id === clientToDelete.id) setSelectedClient(null);
-            loadData();
+            setClientToDelete(null);
         } catch (e) {
             console.error(e);
         }
@@ -213,18 +230,19 @@ export default function ClientsPage() {
         return { totalRevenue, totalBookings };
     }, [clientsList]);
 
-    if (isLoading) return (
+    if (isLoading || isLoadingVenues) return (
         <div className="flex h-64 items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-accent" />
         </div>
     );
 
+
     if (myVenues.length === 0) return (
         <div className="flex h-64 items-center justify-center">
-            <div className="glass rounded-3xl p-12 text-center border border-white/5">
-                <Users className="w-12 h-12 text-accent/30 mx-auto mb-4" />
-                <h2 className="text-xl font-bold text-white mb-2">Primero crea tu sede</h2>
-                <p className="text-slate-400 text-sm">Necesitas una sede deportiva para gestionar clientes.</p>
+            <div className="glass rounded-3xl p-12 text-center border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-transparent">
+                <Users className="w-12 h-12 text-accent/50 dark:text-accent/30 mx-auto mb-4" />
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Primero crea tu sede</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Necesitas una sede deportiva para gestionar clientes.</p>
             </div>
         </div>
     );
@@ -237,8 +255,8 @@ export default function ClientsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight">Clientes</h1>
-                    <p className="text-slate-400 mt-1 text-sm">{clientsList.length} contacto{clientsList.length !== 1 ? "s" : ""} registrado{clientsList.length !== 1 ? "s" : ""}</p>
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Clientes</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">{clientsList.length} contacto{clientsList.length !== 1 ? "s" : ""} registrado{clientsList.length !== 1 ? "s" : ""}</p>
                 </div>
                 <button
                     onClick={openCreate}
@@ -256,28 +274,28 @@ export default function ClientsPage() {
                     { label: "Ingresos Generados", value: `S/ ${totals.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "#10b981" },
                     { label: "Nuevos este mes", value: clientsList.filter(c => new Date(c.createdAt).getMonth() === new Date().getMonth()).length, icon: TrendingUp, color: "#f59e0b" },
                 ].map(kpi => (
-                    <div key={kpi.label} className="glass rounded-2xl p-5 border border-white/5 relative overflow-hidden group">
+                    <div key={kpi.label} className="glass rounded-2xl p-5 border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-transparent relative overflow-hidden group">
                         <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity" style={{ background: kpi.color }} />
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: `${kpi.color}18`, border: `1px solid ${kpi.color}30` }}>
                             <kpi.icon className="w-4 h-4" style={{ color: kpi.color }} />
                         </div>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{kpi.label}</p>
-                        <p className="text-2xl font-black text-white mt-0.5">{kpi.value}</p>
+                        <p className="text-slate-500 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">{kpi.label}</p>
+                        <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{kpi.value}</p>
                     </div>
                 ))}
             </div>
 
             {/* Search */}
             <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                 <input
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     placeholder="Buscar por nombre, teléfono o email..."
-                    className="w-full bg-slate-900/60 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-sm"
+                    className="w-full bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-sm shadow-sm dark:shadow-none"
                 />
                 {search && (
-                    <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
+                    <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                         <X className="w-4 h-4" />
                     </button>
                 )}
@@ -285,9 +303,9 @@ export default function ClientsPage() {
 
             {/* Client Grid + Detail Panel */}
             {filtered.length === 0 ? (
-                <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
-                    <Users className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                    <p className="text-slate-500 font-medium">{search ? "Sin resultados para tu búsqueda" : "Aún no tienes clientes registrados"}</p>
+                <div className="py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-transparent rounded-3xl">
+                    <Users className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">{search ? "Sin resultados para tu búsqueda" : "Aún no tienes clientes registrados"}</p>
                     {!search && (
                         <button onClick={openCreate} className="mt-4 text-accent text-sm font-bold hover:underline">
                             + Registrar primer cliente
@@ -305,21 +323,21 @@ export default function ClientsPage() {
                                 <div
                                     key={client.id}
                                     onClick={() => setSelectedClient(isSelected ? null : client)}
-                                    className={`glass p-5 rounded-2xl border cursor-pointer transition-all duration-200 group ${isSelected ? "border-accent/50 bg-accent/5 shadow-[0_0_30px_rgba(56,189,248,0.08)]" : "border-white/5 hover:border-white/20"}`}
+                                    className={`glass p-5 rounded-2xl border cursor-pointer transition-all duration-200 group ${isSelected ? "border-accent/50 bg-accent/5 shadow-[0_0_30px_rgba(56,189,248,0.08)]" : "border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-transparent"}`}
                                 >
                                     <div className="flex items-center gap-4">
                                         <ClientAvatar name={client.name} size="sm" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-white truncate">{client.name}</p>
-                                            <p className="text-slate-400 text-xs flex items-center gap-1 truncate mt-0.5">
+                                            <p className="font-bold text-slate-900 dark:text-white truncate">{client.name}</p>
+                                            <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1 truncate mt-0.5">
                                                 <Phone className="w-3 h-3" /> {client.phone}
                                             </p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-xs text-slate-500">{stats.count} reserva{stats.count !== 1 ? "s" : ""}</p>
-                                            <p className="text-sm font-bold text-white">S/ {stats.total.toFixed(0)}</p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">S/ {stats.total.toFixed(0)}</p>
                                         </div>
-                                        <ChevronRight className={`w-4 h-4 text-slate-600 transition-transform ${isSelected ? "rotate-90 text-accent" : "group-hover:translate-x-0.5"}`} />
+                                        <ChevronRight className={`w-4 h-4 text-slate-400 dark:text-slate-600 transition-transform ${isSelected ? "rotate-90 text-accent" : "group-hover:translate-x-0.5"}`} />
                                     </div>
                                 </div>
                             );
@@ -328,16 +346,16 @@ export default function ClientsPage() {
 
                     {/* Detail Panel */}
                     {selectedClient && (
-                        <div className="flex-1 glass rounded-3xl border border-white/10 p-8 relative animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="flex-1 bg-white dark:bg-slate-950/50 rounded-3xl border border-slate-200 dark:border-white/10 p-8 relative animate-in fade-in slide-in-from-right-4 duration-300 shadow-sm dark:shadow-none">
                             <button
                                 onClick={() => setSelectedClient(null)}
-                                className="absolute top-5 right-5 p-1.5 bg-white/5 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors md:hidden"
+                                className="absolute top-5 right-5 p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors md:hidden"
                             >
                                 <X className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setSelectedClient(null)}
-                                className="absolute top-5 right-5 p-1.5 bg-white/5 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors hidden md:flex"
+                                className="absolute top-5 right-5 p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hidden md:flex"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -347,33 +365,43 @@ export default function ClientsPage() {
                                 <ClientAvatar name={selectedClient.name} />
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3">
-                                        <h2 className="text-2xl font-black text-white tracking-tight">{selectedClient.name}</h2>
+                                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{selectedClient.name}</h2>
                                         {isPremium ? (
                                             <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${clientStats(selectedClient).tier.color}`}>
                                                 {clientStats(selectedClient).tier.label}
                                             </span>
                                         ) : (
-                                            <div title="Disponible en Plan PRO" className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border text-slate-500 bg-slate-500/10 border-slate-500/20 cursor-not-allowed">
+                                            <div title="Disponible en Plan PRO" className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border text-slate-500 dark:text-slate-500 bg-slate-100 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/20 cursor-not-allowed">
                                                 <Lock className="w-3 h-3" /> VIP/Frecuente
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-wrap gap-3 mt-2">
-                                        <div className="flex items-center gap-1.5 text-sm text-slate-400">
-                                            <Phone className="w-3.5 h-3.5 text-accent" /> {selectedClient.phone}
-                                            <button
-                                                onClick={() => {
-                                                    const cleanPhone = selectedClient.phone.replace(/\D/g, '');
-                                                    window.open(`https://wa.me/${cleanPhone}`, '_blank');
-                                                }}
-                                                className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-md text-[10px] font-black uppercase tracking-widest transition-colors"
-                                                title="Contactar por WhatsApp"
-                                            >
-                                                <MessageSquare className="w-3 h-3" /> WhatsApp
-                                            </button>
-                                        </div>
+                                     <div className="flex flex-wrap gap-3 mt-2">
+                                         <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                                             <Phone className="w-3.5 h-3.5 text-accent" /> {selectedClient.phone}
+                                             { (featureOverrides?.canSendWhatsapp === true || planPermissions?.canSendWhatsapp === true || isPremium) ? (
+                                                 <button
+                                                     onClick={() => {
+                                                         const cleanPhone = selectedClient.phone.replace(/\D/g, '');
+                                                         window.open(`https://wa.me/${cleanPhone}`, '_blank');
+                                                     }}
+                                                     className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 rounded-md text-[10px] font-black uppercase tracking-widest transition-colors"
+                                                     title="Contactar por WhatsApp"
+                                                 >
+                                                     <MessageSquare className="w-3 h-3" /> WhatsApp
+                                                 </button>
+                                             ) : (
+                                                 <button
+                                                     disabled
+                                                     className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-slate-500/10 text-slate-400 dark:text-slate-500 rounded-md text-[10px] font-black uppercase tracking-widest cursor-not-allowed"
+                                                     title="WhatsApp Directo Requiere Permiso/Ad-on"
+                                                 >
+                                                     <Lock className="w-3 h-3" /> WhatsApp
+                                                 </button>
+                                             )}
+                                         </div>
                                         {selectedClient.email && (
-                                            <span className="flex items-center gap-1.5 text-sm text-slate-400">
+                                            <span className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
                                                 <Mail className="w-3.5 h-3.5 text-accent" /> {selectedClient.email}
                                             </span>
                                         )}
@@ -415,35 +443,35 @@ export default function ClientsPage() {
                                 const stats = clientStats(selectedClient);
                                 return (
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                                        <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5">
                                             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Reservas</p>
-                                            <p className="text-xl font-black mt-1 text-indigo-400">{stats.count}</p>
+                                            <p className="text-xl font-black mt-1 text-indigo-600 dark:text-indigo-400">{stats.count}</p>
                                         </div>
-                                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                                        <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5">
                                             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Gastado</p>
-                                            <p className="text-xl font-black mt-1 text-sky-400">S/ {stats.total.toFixed(0)}</p>
+                                            <p className="text-xl font-black mt-1 text-sky-600 dark:text-sky-400">S/ {stats.total.toFixed(0)}</p>
                                         </div>
-                                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                                        <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5">
                                             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Última Visita</p>
-                                            <p className="text-sm font-bold mt-1.5 text-emerald-400">
+                                            <p className="text-sm font-bold mt-1.5 text-emerald-600 dark:text-emerald-400">
                                                 {stats.daysSinceLastVisit === 0 ? "Hoy" :
                                                     stats.daysSinceLastVisit === 1 ? "Ayer" :
                                                         stats.daysSinceLastVisit > 1 ? `Hace ${stats.daysSinceLastVisit} días` :
                                                             "No registra"}
                                             </p>
                                         </div>
-                                        <div className={`bg-white/5 rounded-2xl p-4 border border-white/5 ${isPremium && stats.cancelRatio >= 30 ? 'bg-orange-500/5 border-orange-500/20' : ''}`}>
+                                        <div className={`bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5 ${isPremium && stats.cancelRatio >= 30 ? 'bg-orange-50 dark:bg-orange-500/5 border-orange-200 dark:border-orange-500/20' : ''}`}>
                                             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black flex items-center justify-between">
                                                 Ausencia
-                                                {isPremium && stats.cancelRatio >= 30 && <AlertCircle className="w-3 h-3 text-orange-400" />}
-                                                {!isPremium && <span title="Disponible en Plan PRO"><Lock className="w-3 h-3 text-slate-600" /></span>}
+                                                {isPremium && stats.cancelRatio >= 30 && <AlertCircle className="w-3 h-3 text-orange-500 dark:text-orange-400" />}
+                                                {!isPremium && <span title="Disponible en Plan PRO"><Lock className="w-3 h-3 text-slate-400 dark:text-slate-600" /></span>}
                                             </p>
                                             {isPremium ? (
-                                                <p className={`text-xl font-black mt-1 ${stats.cancelRatio >= 30 ? 'text-orange-400' : 'text-slate-300'}`}>
+                                                <p className={`text-xl font-black mt-1 ${stats.cancelRatio >= 30 ? 'text-orange-500 dark:text-orange-400' : 'text-slate-700 dark:text-slate-300'}`}>
                                                     {stats.cancelRatio}%
                                                 </p>
                                             ) : (
-                                                <p className="text-sm font-black mt-2 text-slate-600">Plan PRO</p>
+                                                <p className="text-sm font-black mt-2 text-slate-400 dark:text-slate-600">Plan PRO</p>
                                             )}
                                         </div>
                                     </div>
@@ -452,11 +480,11 @@ export default function ClientsPage() {
 
                             {/* Notes */}
                             {selectedClient.notes && (
-                                <div className="bg-white/5 rounded-2xl p-4 border border-white/5 mb-6">
+                                <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5 mb-6">
                                     <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black flex items-center gap-1 mb-2">
                                         <MessageSquare className="w-3 h-3" /> Notas
                                     </p>
-                                    <p className="text-slate-300 text-sm leading-relaxed">{selectedClient.notes}</p>
+                                    <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">{selectedClient.notes}</p>
                                 </div>
                             )}
 
@@ -466,12 +494,12 @@ export default function ClientsPage() {
                                     <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mb-3">Historial de Reservas</p>
                                     <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
                                         {selectedClient.bookings.slice(0, 8).map((b: any, i: number) => (
-                                            <div key={i} className="flex justify-between items-center bg-white/5 rounded-xl px-4 py-2.5 border border-white/5">
+                                            <div key={i} className="flex justify-between items-center bg-slate-50 dark:bg-white/5 rounded-xl px-4 py-2.5 border border-slate-200 dark:border-white/5">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${b.status === "CONFIRMED" ? "bg-emerald-400" : b.status === "CANCELLED" ? "bg-red-400" : "bg-amber-400"}`} />
-                                                    <span className="text-slate-300 text-xs">{new Date(b.startTime || Date.now()).toLocaleDateString("es-PE", { day: "numeric", month: "short" })}</span>
+                                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${b.status === "CONFIRMED" ? "bg-emerald-500 dark:bg-emerald-400" : b.status === "CANCELLED" ? "bg-red-500 dark:bg-red-400" : "bg-amber-500 dark:bg-amber-400"}`} />
+                                                    <span className="text-slate-600 dark:text-slate-300 text-xs">{new Date(b.startTime || Date.now()).toLocaleDateString("es-PE", { day: "numeric", month: "short" })}</span>
                                                 </div>
-                                                <span className="text-white text-xs font-bold">S/ {b.totalPrice || 0}</span>
+                                                <span className="text-slate-900 dark:text-white text-xs font-bold">S/ {b.totalPrice || 0}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -479,16 +507,16 @@ export default function ClientsPage() {
                             )}
 
                             {/* Actions */}
-                            <div className="flex gap-3 mt-6 pt-6 border-t border-white/5">
+                            <div className="flex gap-3 mt-6 pt-6 border-t border-slate-200 dark:border-white/5">
                                 <button
                                     onClick={() => openEdit(selectedClient)}
-                                    className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl font-bold text-sm transition-all border border-white/5"
+                                    className="flex-1 flex items-center justify-center gap-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white py-3 rounded-xl font-bold text-sm transition-all border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-none"
                                 >
                                     <Edit2 className="w-4 h-4" /> Editar
                                 </button>
                                 <button
                                     onClick={() => { setClientToDelete(selectedClient); setSelectedClient(null); }}
-                                    className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-3 rounded-xl font-bold text-sm transition-all border border-red-500/10"
+                                    className="flex-1 flex items-center justify-center gap-2 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 py-3 rounded-xl font-bold text-sm transition-all border border-red-200 dark:border-red-500/10 shadow-sm dark:shadow-none"
                                 >
                                     <Trash2 className="w-4 h-4" /> Eliminar
                                 </button>
@@ -502,15 +530,15 @@ export default function ClientsPage() {
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div
-                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                        className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md"
                         onClick={() => setIsModalOpen(false)}
                     />
-                    <div className="glass border border-white/10 rounded-[2rem] w-full max-w-lg relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-[2rem] w-full max-w-lg relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
                         {/* Modal Header with Avatar Preview */}
-                        <div className="bg-slate-900/60 px-8 py-6 border-b border-white/5 flex items-center gap-4">
+                        <div className="bg-slate-50 dark:bg-slate-900/60 px-8 py-6 border-b border-slate-200 dark:border-white/5 flex items-center gap-4">
                             <ClientAvatar name={form.name || "?"} size="sm" />
                             <div className="flex-1 min-w-0">
-                                <h2 className="text-xl font-black text-white tracking-tight">
+                                <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
                                     {clientToEdit ? "Editar Cliente" : "Nuevo Cliente"}
                                 </h2>
                                 <p className="text-slate-500 text-xs mt-0.5 truncate">
@@ -519,7 +547,7 @@ export default function ClientsPage() {
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors"
+                                className="p-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -528,16 +556,16 @@ export default function ClientsPage() {
                         <form onSubmit={handleSave} className="p-8 space-y-5">
                             {/* Name */}
                             <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                                     Nombre Completo <span className="text-accent">*</span>
                                 </label>
                                 <div className="relative">
-                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                                     <input
                                         required
                                         value={form.name}
                                         onChange={e => setForm({ ...form, name: e.target.value })}
-                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                                         placeholder="Ej. Juan Pérez López"
                                     />
                                 </div>
@@ -545,16 +573,16 @@ export default function ClientsPage() {
 
                             {/* Phone */}
                             <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                                     Teléfono / Celular <span className="text-accent">*</span>
                                 </label>
                                 <div className="relative">
-                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                                     <input
                                         required
                                         value={form.phone}
                                         onChange={e => setForm({ ...form, phone: e.target.value })}
-                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all font-mono"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all font-mono"
                                         placeholder="999 123 456"
                                     />
                                 </div>
@@ -562,16 +590,16 @@ export default function ClientsPage() {
 
                             {/* Email (optional) */}
                             <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                                    Email <span className="text-slate-600 font-medium normal-case tracking-normal text-[10px]">(opcional)</span>
+                                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+                                    Email <span className="text-slate-400 dark:text-slate-600 font-medium normal-case tracking-normal text-[10px]">(opcional)</span>
                                 </label>
                                 <div className="relative">
-                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                                     <input
                                         type="email"
                                         value={form.email}
                                         onChange={e => setForm({ ...form, email: e.target.value })}
-                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                                         placeholder="ejemplo@correo.com"
                                     />
                                 </div>
@@ -579,16 +607,16 @@ export default function ClientsPage() {
 
                             {/* Notes (optional) */}
                             <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                                    Notas <span className="text-slate-600 font-medium normal-case tracking-normal text-[10px]">(opcional)</span>
+                                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+                                    Notas <span className="text-slate-400 dark:text-slate-600 font-medium normal-case tracking-normal text-[10px]">(opcional)</span>
                                 </label>
                                 <div className="relative">
-                                    <MessageSquare className="absolute left-4 top-4 w-4 h-4 text-slate-500" />
+                                    <MessageSquare className="absolute left-4 top-4 w-4 h-4 text-slate-400 dark:text-slate-500" />
                                     <textarea
                                         value={form.notes}
                                         onChange={e => setForm({ ...form, notes: e.target.value })}
                                         rows={3}
-                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all resize-none text-sm"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all resize-none text-sm"
                                         placeholder="Preferencias, alergias, observaciones..."
                                     />
                                 </div>
@@ -596,7 +624,7 @@ export default function ClientsPage() {
 
                             {/* Error */}
                             {saveError && (
-                                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-2 text-red-400 text-sm">
+                                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
                                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                     <span>{saveError}</span>
                                 </div>

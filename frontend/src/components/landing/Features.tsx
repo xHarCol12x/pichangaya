@@ -56,7 +56,7 @@ const features = [
         description: "Automatiza tareas repetitivas y dedica tus horas a lo que realmente importa: crecer.",
         icon: Clock,
         stat: "8h/semana libres",
-        tooltip: "Con FieldIQ dejas de responder mensajes de '¿está disponible tal hora?', de cobrar a mano y de armar planillas. El sistema hace todo eso solo. Administradores reportan recuperar entre 6 y 10 horas semanales desde el primer mes.",
+        tooltip: "Con PichangaLibre dejas de responder mensajes de '¿está disponible tal hora?', de cobrar a mano y de armar planillas. El sistema hace todo eso solo. Administradores reportan recuperar entre 6 y 10 horas semanales desde el primer mes.",
     }
 ];
 
@@ -198,7 +198,7 @@ const Features = () => {
                         <span className="text-gradient"> elite</span>
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto">
-                        FieldIQ centraliza toda tu operación deportiva, elimina errores humanos y te devuelve el tiempo que pierdes en tareas repetitivas.
+                        PichangaLibre centraliza toda tu operación deportiva, elimina errores humanos y te devuelve el tiempo que pierdes en tareas repetitivas.
                     </p>
                 </div>
 

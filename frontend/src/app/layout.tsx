@@ -13,12 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FieldIQ | Gestión Deportiva Inteligente con IA",
+  title: "PichangaLibre | Gestión Deportiva Inteligente con IA",
   description: "La plataforma definitiva para la gestión de centros deportivos. Optimización de reservas, analítica avanzada y automatización con IA.",
 };
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { TransitionProvider } from "@/components/ui/TransitionOverlay";
 import { StripeProvider } from "@/components/providers/StripeProvider";
+import { SidebarProvider } from "@/context/SidebarContext";
+import { VenueProvider } from "@/context/VenueContext";
 
 export default function RootLayout({
   children,
@@ -37,7 +39,11 @@ export default function RootLayout({
         >
           <StripeProvider>
             <TransitionProvider>
-              {children}
+              <VenueProvider>
+                <SidebarProvider>
+                  {children}
+                </SidebarProvider>
+              </VenueProvider>
             </TransitionProvider>
           </StripeProvider>
         </ThemeProvider>
@@ -45,3 +51,4 @@ export default function RootLayout({
     </html>
   );
 }
+

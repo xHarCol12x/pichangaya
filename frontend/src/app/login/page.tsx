@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import TransitionLink from "@/components/ui/TransitionLink";
 import { useTransition } from "@/components/ui/TransitionOverlay";
-import { Activity, Lock, Mail, AlertCircle } from "lucide-react";
+import { Activity, Lock, Mail, AlertCircle, Eye, EyeOff } from "lucide-react";
 import AuthCarousel from "@/components/ui/AuthCarousel";
 import api from "@/lib/api";
 
@@ -12,6 +12,7 @@ const LoginPage = () => {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const { navigateWithTransition } = useTransition();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -70,7 +71,7 @@ const LoginPage = () => {
                                 <Activity className="text-accent-foreground w-6 h-6" />
                             </div>
                             <span className="text-2xl font-bold tracking-tight text-foreground">
-                                Field<span className="text-accent">IQ</span>
+                                Pichanga<span className="text-accent">Libre</span>
                             </span>
                         </TransitionLink>
                         <h1 className="text-3xl font-black text-foreground mb-2">Inicio de Sesión</h1>
@@ -105,15 +106,23 @@ const LoginPage = () => {
                         <div className="relative group pt-4">
                             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Contraseña</label>
                             <div className="flex items-center border-b-2 border-slate-200 dark:border-slate-800 pb-2 focus-within:border-accent transition-colors">
-                                <Lock className="w-5 h-5 text-slate-400 mr-3" />
+                                <Lock className="w-5 h-5 text-slate-400 mr-3 shrink-0" />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
                                     className="w-full bg-transparent text-foreground placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:outline-none"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="ml-2 text-slate-400 hover:text-accent transition-colors shrink-0"
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
                             </div>
                             <div className="flex justify-end mt-2">
                                 <TransitionLink href="/forgot-password" className="text-xs font-semibold text-slate-500 hover:text-accent transition-colors">

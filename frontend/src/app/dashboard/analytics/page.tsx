@@ -75,7 +75,10 @@ const AnalyticsPage = () => {
                 setHasVenue(userVenues.length > 0);
 
                 const plan = String(uRes.data?.plan || userObj.plan || 'basic').toLowerCase();
-                if (plan === 'pro' || plan === 'enterprise') {
+                const featureOverrides = uRes.data?.featureOverrides || userObj?.featureOverrides || {};
+                const planPermissions = uRes.data?.planPermissions || userObj?.planPermissions || {};
+
+                if (plan === 'pro' || plan === 'enterprise' || featureOverrides.canUsePredictiveAI || planPermissions.canUsePredictiveAI) {
                     setHasAccess(true);
                 }
             } catch (err) {

@@ -55,6 +55,7 @@ const SubscriptionWidget = () => {
     const router = useRouter();
     const [plan, setPlan] = useState<string | null>(null);
     const [endsAt, setEndsAt] = useState<string | null>(null);
+    const [isActive, setIsActive] = useState<boolean>(true);
     const [collapsed, setCollapsed] = useState(false);
     const [ready, setReady] = useState(false); // FIX 2: no bloquea render esperando API
     const cardRef = useRef<HTMLDivElement>(null);
@@ -68,6 +69,7 @@ const SubscriptionWidget = () => {
                 const u = JSON.parse(stored);
                 setPlan(u.plan?.toLowerCase() || null);
                 setEndsAt(u.subscriptionEndsAt || null);
+                setIsActive(u.isActive ?? true);
             }
         } catch (_) { }
         setReady(true);
@@ -79,6 +81,7 @@ const SubscriptionWidget = () => {
                 const userPlan = res.data.plan?.toLowerCase() || null;
                 setPlan(userPlan);
                 setEndsAt(res.data.subscriptionEndsAt || null);
+                setIsActive(res.data.isActive ?? true);
 
                 // Sync localStorage
                 const stored = localStorage.getItem("fieldiq_user");
@@ -88,6 +91,7 @@ const SubscriptionWidget = () => {
                         ...parsed,
                         plan: userPlan,
                         subscriptionEndsAt: res.data.subscriptionEndsAt,
+                        isActive: res.data.isActive,
                     }));
                 }
             } catch (_) { }
@@ -131,6 +135,7 @@ const SubscriptionWidget = () => {
     const Icon = cfg.icon;
     const daysLeft = endsAt ? getDaysLeft(endsAt) : null;
     const isExpiringSoon = daysLeft !== null && daysLeft <= 7;
+    const isExpiredOrSuspended = !isActive || (daysLeft !== null && daysLeft === 0);
     const endsAtFormatted = endsAt
         ? new Date(endsAt).toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" })
         : null;
@@ -139,9 +144,9 @@ const SubscriptionWidget = () => {
         <div
             ref={cardRef}
             className="fixed bottom-6 right-6 z-40 w-64 opacity-0"
-            style={{ filter: `drop-shadow(0 8px 32px ${cfg.glow})` }}
+            style={{ filter: `drop-shadow(0 8px 32px ${isExpiredOrSuspended ? 'rgba(239, 68, 68, 0.4)' : cfg.glow})` }}
         >
-            <div className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${cfg.gradient} border border-white/10`}>
+            <div className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${isExpiredOrSuspended ? 'from-red-900 to-red-800' : cfg.gradient} border border-white/10`}>
 
                 {/* Header siempre visible */}
                 <div className="flex items-center justify-between px-4 py-3">
@@ -149,7 +154,7 @@ const SubscriptionWidget = () => {
                         <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center">
                             <Icon size={14} className="text-white" />
                         </div>
-                        <span className="text-white font-black text-sm">{cfg.label}</span>
+                        <span className="text-white font-black text-sm text-shadow-sm">{cfg.label}</span>
                     </div>
 
                     {/* Solo plan pro y enterprise pueden colapsar el widget */}
@@ -170,34 +175,48 @@ const SubscriptionWidget = () => {
                 <div ref={contentRef} className="overflow-hidden">
                     <div className="px-4 pb-4 space-y-3">
 
-                        {daysLeft !== null && (
-                            <div className="bg-black/20 rounded-xl p-3 space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5">
-                                        <Clock size={11} className="text-white/50" />
-                                        <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Vence en</span>
+                        {isExpiredOrSuspended ? (
+                            <div className="bg-red-500/20 rounded-xl p-3 border border-red-500/30">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <span className="text-red-200 text-[10px] uppercase tracking-widest font-bold">Estado Actual</span>
+                                </div>
+                                <p className="text-white font-black text-lg leading-tight drop-shadow-md">
+                                    Suspendido
+                                </p>
+                                <p className="text-red-200/80 text-xs mt-1">
+                                    Tu suscripción ha expirado o está desactivada.
+                                </p>
+                            </div>
+                        ) : (
+                            daysLeft !== null && (
+                                <div className="bg-black/20 rounded-xl p-3 space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                            <Clock size={11} className="text-white/50" />
+                                            <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Vence en</span>
+                                        </div>
+                                        {isExpiringSoon && (
+                                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-red-500/30 text-red-300 animate-pulse">
+                                                ¡Pronto!
+                                            </span>
+                                        )}
                                     </div>
-                                    {isExpiringSoon && (
-                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-red-500/30 text-red-300 animate-pulse">
-                                            ¡Pronto!
-                                        </span>
+                                    <p className="text-white font-black text-xl leading-none">
+                                        {daysLeft} <span className="text-sm font-medium text-white/60">días</span>
+                                    </p>
+                                    {endsAtFormatted && (
+                                        <p className="text-white/40 text-[10px]">{endsAtFormatted}</p>
+                                    )}
+                                    {endsAt && (
+                                        <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-1">
+                                            <div
+                                                className="h-full rounded-full bg-white/60 transition-all"
+                                                style={{ width: `${Math.min(100, (daysLeft / 30) * 100)}%` }}
+                                            />
+                                        </div>
                                     )}
                                 </div>
-                                <p className="text-white font-black text-xl leading-none">
-                                    {daysLeft} <span className="text-sm font-medium text-white/60">días</span>
-                                </p>
-                                {endsAtFormatted && (
-                                    <p className="text-white/40 text-[10px]">{endsAtFormatted}</p>
-                                )}
-                                {endsAt && (
-                                    <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-1">
-                                        <div
-                                            className="h-full rounded-full bg-white/60 transition-all"
-                                            style={{ width: `${Math.min(100, (daysLeft / 30) * 100)}%` }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
+                            )
                         )}
 
                         <button

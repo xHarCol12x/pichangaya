@@ -11,7 +11,7 @@ const testimonials = [
     {
         name: "Carlos Rodríguez",
         role: "Dueño de Arena Sport",
-        content: "FieldIQ transformó nuestra gestión. Pasamos de perder reservas por WhatsApp a tener el 90% automatizado.",
+        content: "PichangaLibre transformó nuestra gestión. Pasamos de perder reservas por WhatsApp a tener el 90% automatizado.",
         image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop"
     },
     {

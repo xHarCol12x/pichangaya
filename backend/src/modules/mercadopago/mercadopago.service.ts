@@ -25,7 +25,7 @@ export class MercadoPagoService {
                     items: [
                         {
                             id: planName,
-                            title: `Plan ${planName} - FieldIQ`,
+                            title: `Plan ${planName} - PichangaLibre`,
                             quantity: 1,
                             unit_price: price,
                             currency_id: 'PEN'
@@ -40,7 +40,7 @@ export class MercadoPagoService {
                         failure: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/billing?status=failure`,
                         pending: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?status=pending`
                     },
-                    auto_return: (process.env.FRONTEND_URL && process.env.FRONTEND_URL.startsWith('https')) ? 'approved' : undefined,
+                    auto_return: 'approved',
                     notification_url: `${process.env.BACKEND_URL || 'https://tu-ngrok-url.ngrok.io'}/mercadopago/webhook`,
                     external_reference: userId
                 }
@@ -66,7 +66,7 @@ export class MercadoPagoService {
             const result = await preApproval.create({
                 body: {
                     back_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard`,
-                    reason: `Suscripción Plan ${planName} - FieldIQ`,
+                    reason: `Suscripción Plan ${planName} - PichangaLibre`,
                     auto_recurring: {
                         frequency: 1,
                         frequency_type: 'months',
@@ -101,21 +101,31 @@ export class MercadoPagoService {
                     const userId = paymentInfo.external_reference;
                     // By default, assuming PRO plan if they paid this specific amount.
                     // If you want dynamic plans, you would extract it from paymentInfo.description or metadata.
-                    const planType = paymentInfo.description?.includes('Enterprise') ? 'ENTERPRISE' : 'PRO';
-
                     if (userId) {
-                        const now = new Date();
-                        const nextMonth = new Date(now.setMonth(now.getMonth() + 1));
+                        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+                        if (user) {
+                            const now = new Date();
+                            const nextMonth = new Date(now.setMonth(now.getMonth() + 1));
 
-                        await this.prisma.user.update({
-                            where: { id: userId },
-                            data: {
-                                plan: planType,
-                                isActive: true,
-                                subscriptionEndsAt: nextMonth
-                            }
-                        });
-                        this.logger.log(`Usuario ${userId} actualizado a plan ${planType} exitosamente por pago MP.`);
+                            // Determine the plan to assign
+                            let assignedPlan = user.plan;
+
+                            // Optional: Override if the payment description explicitly mentions another plan
+                            const description = (paymentInfo.description || '').toUpperCase();
+                            if (description.includes('BASIC') || description.includes('BÁSICO')) assignedPlan = 'BASIC' as any;
+                            else if (description.includes('PRO')) assignedPlan = 'PRO' as any;
+                            else if (description.includes('ENTERPRISE')) assignedPlan = 'ENTERPRISE' as any;
+
+                            await this.prisma.user.update({
+                                where: { id: userId },
+                                data: {
+                                    plan: assignedPlan,
+                                    isActive: true,
+                                    subscriptionEndsAt: nextMonth
+                                }
+                            });
+                            this.logger.log(`Usuario ${userId} activado exitosamente en el plan ${assignedPlan} por pago MP.`);
+                        }
                     }
                 }
             } catch (error: any) {

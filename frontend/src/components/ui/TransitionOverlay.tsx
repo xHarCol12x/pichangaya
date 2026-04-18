@@ -75,7 +75,7 @@ export const TransitionProvider = ({ children }: { children: ReactNode }) => {
                                 }}
                             />
 
-                            {/* Logo FieldIQ Latiente (Solo Ícono) */}
+                            {/* Logo PichangaLibre Latiente (Solo Ícono) */}
                             <motion.div
                                 className="relative z-20 w-24 h-24 bg-accent rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(56,189,248,0.5)]"
                                 initial={{ scale: 0, rotate: 0 }}

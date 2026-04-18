@@ -1,98 +1,50 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Check, Zap, ArrowRight, Sparkles, Star, Crown, Rocket } from "lucide-react";
+import { Check, Zap, ArrowRight, Sparkles, Star, Crown, Rocket, Loader2 } from "lucide-react";
 import { gsap } from "gsap";
 import { useTransition } from "../ui/TransitionOverlay";
+import api from "@/lib/api";
 
-const plans = [
-    {
-        name: "Prueba",
-        monthlyPrice: 0,
-        annualPrice: 0,
-        description: "Experimenta el poder de la automatización por 7 días sin costo.",
-        features: ["Todas las funciones básicas", "Hasta 2 canchas", "Reportes básicos"],
-        cta: "Probar Gratis",
-        highlighted: false,
-        icon: Rocket,
-        accent: "#6366f1",
-        accentLight: "#818cf8",
-        accentDark: "#4f46e5",
-        twBg: "bg-indigo-500/10",
-        twBorder: "border-indigo-500/20",
+// Map icon name strings from the DB to Lucide components
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+    Star, Zap, Crown, Rocket,
+};
+
+// Tailwind classes by plan for color variants that need compile-time tokens
+const PLAN_TAILWIND: Record<string, any> = {
+    FREE_TRIAL: {
+        twBg: "bg-indigo-500/10", twBorder: "border-indigo-500/20",
         twText: "text-indigo-600 dark:text-indigo-400",
         twCta: "bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-400/20",
         gradientTop: "from-indigo-500/10 dark:from-indigo-500/15",
-        glowClass: "bg-indigo-500",
-        badge: null,
     },
-    {
-        name: "Básico",
-        monthlyPrice: 79,
-        annualPrice: 69,
-        description: "Ideal para canchas individuales o clubes pequeños que quieren crecer.",
-        features: ["Hasta 5 canchas", "Reservas Online", "Reportes Básicos", "Soporte por Email"],
-        cta: "Comenzar ahora",
-        highlighted: false,
-        icon: Star,
-        accent: "#10b981",
-        accentLight: "#34d399",
-        accentDark: "#059669",
-        twBg: "bg-emerald-500/10",
-        twBorder: "border-emerald-500/20",
+    BASIC: {
+        twBg: "bg-emerald-500/10", twBorder: "border-emerald-500/20",
         twText: "text-emerald-600 dark:text-emerald-400",
         twCta: "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-400/20",
         gradientTop: "from-emerald-500/10 dark:from-emerald-500/15",
-        glowClass: "bg-emerald-500",
-        badge: null,
     },
-    {
-        name: "Pro",
-        monthlyPrice: 109,
-        annualPrice: 99,
-        description: "Para academias y complejos en crecimiento constante que exigen más.",
-        features: ["Canchas ilimitadas", "IA Predictiva", "Pagos Automatizados", "Dashboards Avanzados", "Soporte 24/7"],
-        cta: "Elegir Plan Pro",
-        highlighted: true,
-        icon: Zap,
-        accent: "#f59e0b",
-        accentLight: "#fbbf24",
-        accentDark: "#d97706",
-        twBg: "bg-amber-500/10",
-        twBorder: "border-amber-400/40",
+    PRO: {
+        twBg: "bg-amber-500/10", twBorder: "border-amber-400/40",
         twText: "text-amber-600 dark:text-amber-400",
         twCta: "",
         gradientTop: "from-amber-500/15 dark:from-amber-500/20",
-        glowClass: "bg-amber-500",
-        badge: "MÁS POPULAR",
     },
-    {
-        name: "Enterprise",
-        monthlyPrice: "Custom",
-        annualPrice: "Custom",
-        description: "Soluciones a medida para grandes franquicias y redes de complejos.",
-        features: ["Multi-sedes", "Integración API", "Gerente de Cuenta", "Capacitación Presencial"],
-        cta: "Contactar Ventas",
-        highlighted: false,
-        icon: Crown,
-        accent: "#ec4899",
-        accentLight: "#f472b6",
-        accentDark: "#db2777",
-        twBg: "bg-pink-500/10",
-        twBorder: "border-pink-500/20",
+    ENTERPRISE: {
+        twBg: "bg-pink-500/10", twBorder: "border-pink-500/20",
         twText: "text-pink-600 dark:text-pink-400",
         twCta: "bg-pink-500/10 hover:bg-pink-500/20 text-pink-700 dark:text-pink-300 border border-pink-400/20",
         gradientTop: "from-pink-500/10 dark:from-pink-500/15",
-        glowClass: "bg-pink-500",
-        badge: null,
     },
-];
+};
 
-const PlanCard = ({ plan, isAnnual, index }: { plan: typeof plans[0]; isAnnual: boolean; index: number }) => {
+const PlanCard = ({ plan, isAnnual, index }: { plan: any; isAnnual: boolean; index: number }) => {
     const [hovered, setHovered] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
     const { navigateWithTransition } = useTransition();
-    const Icon = plan.icon;
+    // Resolve icon from name string (from DB) to Lucide component
+    const Icon = (typeof plan.icon === "string" ? ICON_MAP[plan.icon] : plan.icon) || Star;
     const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
 
     useEffect(() => {
@@ -123,8 +75,8 @@ const PlanCard = ({ plan, isAnnual, index }: { plan: typeof plans[0]; isAnnual: 
         >
             {/* Glow blob decorativo */}
             <div
-                className={`absolute inset-0 rounded-[2.5rem] blur-2xl -z-10 scale-90 transition-opacity duration-300 ${plan.glowClass}`}
-                style={{ opacity: hovered ? 0.12 : 0 }}
+                className={`absolute inset-0 rounded-[2.5rem] blur-2xl -z-10 scale-90 transition-opacity duration-300`}
+                style={{ background: plan.accent, opacity: hovered ? 0.12 : 0 }}
             />
 
             {/* Badge */}
@@ -200,7 +152,7 @@ const PlanCard = ({ plan, isAnnual, index }: { plan: typeof plans[0]; isAnnual: 
 
                     {/* Features */}
                     <div className="space-y-3.5 flex-1 mb-8">
-                        {plan.features.map((feature, j) => (
+                        {plan.features.map((feature: string, j: number) => (
                             <div key={j} className="flex items-center gap-3 text-sm text-foreground/70">
                                 <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 ${plan.twBg}`}>
                                     <Check size={12} className={plan.twText} />
@@ -214,13 +166,10 @@ const PlanCard = ({ plan, isAnnual, index }: { plan: typeof plans[0]; isAnnual: 
                     {plan.highlighted ? (
                         <button
                             onClick={() => {
-                                if (plan.name === "Enterprise") {
+                                if (plan.code === "ENTERPRISE") {
                                     // Contact sales logic
                                 } else {
-                                    const planParam = plan.name === "Prueba" ? "TRIAL" :
-                                        plan.name === "Básico" ? "BASIC" :
-                                            plan.name.toUpperCase();
-                                    navigateWithTransition(`/register?plan=${planParam}`);
+                                    navigateWithTransition(`/register?plan=${plan.code}`);
                                 }
                             }}
                             className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 group/btn hover:scale-[1.02] active:scale-[0.98]"
@@ -236,13 +185,10 @@ const PlanCard = ({ plan, isAnnual, index }: { plan: typeof plans[0]; isAnnual: 
                     ) : (
                         <button
                             onClick={() => {
-                                if (plan.name === "Enterprise") {
+                                if (plan.code === "ENTERPRISE") {
                                     // Contact sales logic
                                 } else {
-                                    const planParam = plan.name === "Prueba" ? "TRIAL" :
-                                        plan.name === "Básico" ? "BASIC" :
-                                            plan.name.toUpperCase();
-                                    navigateWithTransition(`/register?plan=${planParam}`);
+                                    navigateWithTransition(`/register?plan=${plan.code}`);
                                 }
                             }}
                             className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 group/btn ${plan.twCta}`}>
@@ -258,17 +204,58 @@ const PlanCard = ({ plan, isAnnual, index }: { plan: typeof plans[0]; isAnnual: 
 
 const Pricing = () => {
     const [isAnnual, setIsAnnual] = useState(false);
+    const [plans, setPlans] = useState<any[]>([]);
     const headerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (headerRef.current) {
+        const fetchPlans = async () => {
+            try {
+                // The public endpoint returns active plans
+                const { data } = await api.get('/plans');
+
+                // Map API data to visual properties
+                const mappedPlans = data.map((apiPlan: any) => {
+                    const twClasses = PLAN_TAILWIND[apiPlan.code] || PLAN_TAILWIND['BASIC'];
+                    return {
+                        ...apiPlan,
+                        ...twClasses,
+                        // Use colors directly from DB
+                        accentDark: apiPlan.accent,
+                        monthlyPrice: apiPlan.code === 'ENTERPRISE' ? 'Custom' : apiPlan.priceMensual,
+                        annualPrice: apiPlan.code === 'ENTERPRISE' ? 'Custom' : apiPlan.priceAnual,
+                        highlighted: apiPlan.isPopular,
+                        badge: apiPlan.isPopular ? "MÁS POPULAR" : null,
+                        // features come directly from DB, with a fallback
+                        features: apiPlan.features?.length > 0 ? apiPlan.features : [
+                            `Hasta ${apiPlan.limitVenues} complejo${apiPlan.limitVenues > 1 ? 's' : ''}`,
+                            `Hasta ${apiPlan.limitFields} canchas`,
+                        ],
+                        cta: apiPlan.code === 'ENTERPRISE' ? 'Contactar Ventas' : (apiPlan.code === 'FREE_TRIAL' ? 'Probar Gratis' : 'Comenzar Ahora')
+                    };
+                });
+
+                // Sort to match traditional order: Trial, Basic, Pro, Enterprise
+                const order = ['FREE_TRIAL', 'BASIC', 'PRO', 'ENTERPRISE'];
+                mappedPlans.sort((a: any, b: any) => order.indexOf(a.code) - order.indexOf(b.code));
+
+                setPlans(mappedPlans);
+            } catch (error) {
+                console.error("Error fetching plans for landing page:", error);
+            }
+        };
+
+        fetchPlans();
+    }, []);
+
+    useEffect(() => {
+        if (headerRef.current && plans.length > 0) {
             gsap.fromTo(
                 headerRef.current.children,
                 { y: 30, opacity: 0 },
                 { y: 0, opacity: 1, stagger: 0.1, duration: 0.7, ease: "power3.out" }
             );
         }
-    }, []);
+    }, [plans]);
 
     return (
         <section id="precios" className="py-28 bg-background relative overflow-hidden transition-colors duration-500">

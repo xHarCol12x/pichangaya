@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
     LayoutDashboard,
     Calendar,
@@ -13,7 +13,17 @@ import {
     Activity,
     Users as UsersIcon,
     Loader2,
+    Menu,
+    X,
+    CreditCard,
+    ClipboardList,
+    Navigation
 } from "lucide-react";
+import { useSidebar } from "@/context/SidebarContext";
+
+
+
+
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { useTransition } from "@/components/ui/TransitionOverlay";
 import { clsx, type ClassValue } from "clsx";
@@ -28,32 +38,51 @@ const menuItems = [
     { icon: LayoutDashboard, label: "Vista General", href: "/dashboard" },
     { icon: Calendar, label: "Reservas", href: "/dashboard/bookings" },
     { icon: MapPin, label: "Canchas", href: "/dashboard/fields" },
+    { icon: Navigation, label: "Sedes", href: "/dashboard/venues" },
     { icon: UsersIcon, label: "Clientes", href: "/dashboard/users" },
+
     { icon: BrainCircuit, label: "IA Predictiva", href: "/dashboard/analytics" },
     { icon: Settings, label: "Configuración", href: "/dashboard/settings" },
 ];
 
-const Sidebar = () => {
+
+
+const SidebarInner = () => {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const currentTab = searchParams.get("tab") || "DIRECTORY";
+
     const { navigateWithTransition } = useTransition();
+    const { isOpen: isMobileOpen, setIsOpen: setIsMobileOpen, toggleSidebar } = useSidebar();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showHomeModal, setShowHomeModal] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+
+
+    // Close drawer when route changes (user tapped a link on mobile)
+    useEffect(() => {
+        setIsMobileOpen(false);
+    }, [pathname]);
+
+    // Prevent scroll when drawer is open on mobile
+    useEffect(() => {
+        if (isMobileOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => { document.body.style.overflow = ""; };
+    }, [isMobileOpen]);
+
     const handleLogout = async () => {
         setIsLoggingOut(true);
         try {
-            // Llama al endpoint de logout en el backend si existe
-            await api.post("/auth/logout").catch(() => {
-                // Si no hay endpoint de logout, no importa — igual limpiamos
-            });
+            await api.post("/auth/logout").catch(() => { });
         } finally {
-            // Limpia todo el storage local
             localStorage.removeItem("fieldiq_token");
             localStorage.removeItem("fieldiq_user");
             sessionStorage.clear();
-
-            // Pequeña pausa para que se vea el spinner antes de redirigir
             setTimeout(() => {
                 navigateWithTransition("/login");
             }, 300);
@@ -64,91 +93,172 @@ const Sidebar = () => {
         navigateWithTransition("/");
     };
 
-    // Determina el menú según rol e isActive desde localStorage
     const getMenuItems = () => {
-        if (typeof window === "undefined") return menuItems;
-
+        if (typeof window === "undefined") {
+            return [
+                { icon: LayoutDashboard, label: "Vista General", href: "/dashboard" },
+                { icon: Calendar, label: "Reservas", href: "/dashboard/bookings" },
+                { icon: MapPin, label: "Canchas", href: "/dashboard/fields" },
+                { icon: UsersIcon, label: "Clientes", href: "/dashboard/users" },
+                { icon: Settings, label: "Configuración", href: "/dashboard/settings" },
+            ];
+        }
         try {
             const userStr = localStorage.getItem("fieldiq_user");
-            if (!userStr) return menuItems;
-            const user = JSON.parse(userStr);
-
-            if (user.role === "SUPER_ADMIN") {
+            if (!userStr) {
                 return [
-                    { icon: BrainCircuit, label: "Panel Global", href: "/dashboard/super-admin" },
-                    { icon: UsersIcon, label: "Clientes (Tenants)", href: "/dashboard/super-admin/tenants" },
+                    { icon: LayoutDashboard, label: "Vista General", href: "/dashboard" },
+                    { icon: Calendar, label: "Reservas", href: "/dashboard/bookings" },
+                    { icon: MapPin, label: "Canchas", href: "/dashboard/fields" },
+                    { icon: UsersIcon, label: "Clientes", href: "/dashboard/users" },
                     { icon: Settings, label: "Configuración", href: "/dashboard/settings" },
                 ];
             }
-
-            if (user.role === "ADMIN" && !user.isActive) {
+            
+            const user = JSON.parse(userStr);
+            if (user.role === "SUPER_ADMIN") {
                 return [
-                    { icon: Settings, label: "Facturación", href: "/dashboard/billing" },
+                    { icon: LayoutDashboard, label: "Directorio", href: "/dashboard/super-admin?tab=DIRECTORY" },
+                    { icon: CreditCard, label: "Planes", href: "/dashboard/super-admin?tab=PLANS" },
+                    { icon: ClipboardList, label: "Auditoría", href: "/dashboard/super-admin?tab=AUDIT" },
+                    { icon: Settings, label: "Configuración", href: "/dashboard/settings" },
                 ];
             }
-        } catch (_) { }
+            
+            if (user.role === "ADMIN" && !user.isActive) {
+                return [{ icon: Settings, label: "Facturación", href: "/dashboard/billing" }];
+            }
 
-        return menuItems;
+            const isProOrEnterprise = String(user.plan).toUpperCase() === "PRO" || String(user.plan).toUpperCase() === "ENTERPRISE";
+            const overrides = user.featureOverrides || {};
+            const planPermissions = user.planPermissions || {};
+
+            const baseMenu = [
+                { icon: LayoutDashboard, label: "Vista General", href: "/dashboard" },
+                { icon: Calendar, label: "Reservas", href: "/dashboard/bookings" },
+                { icon: MapPin, label: "Canchas", href: "/dashboard/fields" },
+                { icon: Navigation, label: "Sedes", href: "/dashboard/venues" },
+                { icon: UsersIcon, label: "Clientes", href: "/dashboard/users" },
+            ];
+
+
+            // 📆 Visual Calendar Feature Toggle
+            if (isProOrEnterprise || overrides.canViewCalendar || planPermissions.canViewCalendar) {
+                baseMenu.push({ icon: Calendar, label: "Calendario", href: "/dashboard/calendar" });
+            }
+
+            // 🤖 Predictive AI Feature Toggle
+            if (isProOrEnterprise || overrides.canUsePredictiveAI || planPermissions.canUsePredictiveAI) {
+                baseMenu.push({ icon: BrainCircuit, label: "IA Predictiva", href: "/dashboard/analytics" });
+            }
+
+            baseMenu.push({ icon: Settings, label: "Configuración", href: "/dashboard/settings" });
+            
+            return baseMenu;
+
+        } catch (_) { }
+        return [];
     };
 
     const activeItems = getMenuItems();
 
+    const SidebarContent = () => (
+        <div className="flex flex-col h-full">
+            {/* Logo */}
+            <div className="px-4 py-8 mb-4 flex items-center justify-between">
+                <button
+                    onClick={() => setShowHomeModal(true)}
+                    className="flex items-center gap-2 group focus:outline-none text-left"
+                >
+                    <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                        <Activity className="text-accent-foreground w-4 h-4" />
+                    </div>
+                    <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                        Pichanga<span className="text-accent">Libre</span>
+                    </span>
+                </button>
+
+                {/* Close btn on mobile */}
+                <button
+                    onClick={toggleSidebar}
+                    className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
+
+
+            {/* Navigation */}
+            <nav className="flex-1 space-y-2 px-4">
+                {activeItems.map((item) => {
+                    const isTabLink = item.href.includes("?tab=");
+                    let isActive = false;
+
+                    if (isTabLink) {
+                        const [basePath, query] = item.href.split("?tab=");
+                        isActive = pathname === basePath && currentTab === query;
+                    } else {
+                        isActive = pathname === item.href;
+                    }
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                                "flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all group",
+                                isActive
+                                    ? "bg-accent text-accent-foreground shadow-md dark:shadow-[0_0_20px_rgba(56,189,248,0.2)]"
+                                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
+                            )}
+                        >
+                            <item.icon className={cn("w-5 h-5", isActive ? "text-accent-foreground" : "group-hover:text-accent")} />
+                            {item.label}
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            {/* Logout */}
+            <div className="pt-4 border-t border-slate-200 dark:border-white/5 mt-auto px-4 pb-4">
+                <button
+                    onClick={() => setShowLogoutModal(true)}
+                    disabled={isLoggingOut}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all focus:outline-none disabled:opacity-50"
+                >
+                    {isLoggingOut ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
+                    {isLoggingOut ? "Cerrando sesión..." : "Cerrar Sesión"}
+                </button>
+            </div>
+        </div>
+    );
+
     return (
         <>
-            <div className="w-64 h-screen border-r border-white/5 flex flex-col glass p-4 fixed left-0 top-0 z-30">
+            {/* ── Desktop Sidebar ── */}
+            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 border-r border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl z-30">
+                <SidebarContent />
+            </aside>
 
-                {/* Logo */}
-                <div className="px-4 py-8 mb-8">
-                    <button
-                        onClick={() => setShowHomeModal(true)}
-                        className="flex items-center gap-2 group focus:outline-none w-full text-left"
-                    >
-                        <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform shadow-[0_0_15px_rgba(56,189,248,0.2)]">
-                            <Activity className="text-accent-foreground w-4 h-4" />
-                        </div>
-                        <span className="text-xl font-bold tracking-tight text-white">
-                            Field<span className="text-accent">IQ</span>
-                        </span>
-                    </button>
-                </div>
+            {/* ── Mobile Overlay ── */}
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
 
-                {/* Navigation */}
-                <nav className="flex-1 space-y-2">
-                    {activeItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all group",
-                                    isActive
-                                        ? "bg-accent text-accent-foreground shadow-[0_0_20px_rgba(56,189,248,0.2)]"
-                                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                                )}
-                            >
-                                <item.icon className={cn("w-5 h-5", isActive ? "text-accent-foreground" : "group-hover:text-accent")} />
-                                {item.label}
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                {/* Logout */}
-                <div className="pt-4 border-t border-white/5 mt-auto">
-                    <button
-                        onClick={() => setShowLogoutModal(true)}
-                        disabled={isLoggingOut}
-                        className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all focus:outline-none disabled:opacity-50"
-                    >
-                        {isLoggingOut
-                            ? <Loader2 className="w-5 h-5 animate-spin" />
-                            : <LogOut className="w-5 h-5" />
-                        }
-                        {isLoggingOut ? "Cerrando sesión..." : "Cerrar Sesión"}
-                    </button>
-                </div>
+            {/* ── Mobile Drawer ── */}
+            <div
+                className={cn(
+                    "fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-white/5 z-50 lg:hidden transition-transform duration-300 ease-in-out",
+                    isMobileOpen ? "translate-x-0" : "-translate-x-full"
+                )}
+            >
+                <SidebarContent />
             </div>
+
+
+
 
             {/* Modal logout */}
             <ConfirmModal
@@ -178,5 +288,11 @@ const Sidebar = () => {
         </>
     );
 };
+
+const Sidebar = () => (
+    <Suspense fallback={<div className="hidden lg:flex w-64 h-screen border-r border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl" />}>
+        <SidebarInner />
+    </Suspense>
+);
 
 export default Sidebar;

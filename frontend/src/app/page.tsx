@@ -7,6 +7,7 @@ import HowItWorks from "@/components/landing/HowItWorks";
 import AISection from "@/components/landing/AISection";
 import Testimonials from "@/components/landing/Testimonials";
 import Pricing from "@/components/landing/Pricing";
+import FAQSection from "@/components/landing/FAQSection";
 import Footer from "@/components/landing/Footer";
 
 export default function Home() {
@@ -21,6 +22,7 @@ export default function Home() {
       <AISection />
       <Testimonials />
       <Pricing />
+      <FAQSection />
       <Footer />
     </main>
   );

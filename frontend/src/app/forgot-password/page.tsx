@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import TransitionLink from "@/components/ui/TransitionLink";
 import { Activity, ArrowLeft, ArrowRight, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
 import AuthCarousel from "@/components/ui/AuthCarousel";
+import api from "@/lib/api";
 
 const ForgotPasswordPage = () => {
     const [email, setEmail] = useState("");
@@ -16,7 +17,7 @@ const ForgotPasswordPage = () => {
         setStatus("loading");
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await api.post("/auth/forgot-password", { email });
             setStatus("success");
         } catch (err: any) {
             setError(err.response?.data?.message || "Ocurrió un error al procesar tu solicitud.");
@@ -58,7 +59,7 @@ const ForgotPasswordPage = () => {
                                 <Activity className="text-accent-foreground w-6 h-6" />
                             </div>
                             <span className="text-2xl font-bold tracking-tight text-foreground">
-                                Field<span className="text-accent">IQ</span>
+                                Pichanga<span className="text-accent">Libre</span>
                             </span>
                         </TransitionLink>
                         <h1 className="text-3xl font-black text-foreground mb-2">Recuperar contraseña</h1>
