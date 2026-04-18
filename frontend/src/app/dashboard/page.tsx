@@ -133,6 +133,21 @@ const DashboardPage = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [layout, setLayout] = useState<any[]>(DEFAULT_LAYOUT);
 
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [containerWidth, setContainerWidth] = useState<number>(1200);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const resizeObserver = new ResizeObserver((entries) => {
+            const newWidth = entries[0]?.contentRect?.width;
+            if (newWidth && newWidth > 0) {
+                 setContainerWidth(newWidth);
+            }
+        });
+        resizeObserver.observe(containerRef.current);
+        return () => resizeObserver.disconnect();
+    }, []);
+
     // Pagination & Filters State
     const [bookingFilter, setBookingFilter] = useState("ALL");
     const [currentPage, setCurrentPage] = useState(1);
@@ -653,19 +668,21 @@ const DashboardPage = () => {
                             Modo Edición: Arrastra los bordes o títulos para organizar tu tablero.
                         </div>
                     )}
-                    {/* @ts-ignore */}
-                    <ResponsiveGridLayout
-                        className={`layout ${isEditMode ? 'is-editing' : ''}`}
-                        layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
-                        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-                        rowHeight={30}
-                        onLayoutChange={(currLayout: any) => setLayout(currLayout)}
-                        isDraggable={isEditMode}
-                        isResizable={isEditMode}
-                        margin={[20, 20]}
-                        useCSSTransforms={true}
-                    >
+                    <div ref={containerRef}>
+                        {/* @ts-ignore */}
+                        <ResponsiveGridLayout
+                            width={containerWidth || 1200}
+                            className={`layout ${isEditMode ? 'is-editing' : ''}`}
+                            layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
+                            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                            cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                            rowHeight={30}
+                            onLayoutChange={(currLayout: any) => setLayout(currLayout)}
+                            isDraggable={isEditMode}
+                            isResizable={isEditMode}
+                            margin={[20, 20]}
+                            useCSSTransforms={true}
+                        >
                         <div key="kpis" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'kpis')} className={isEditMode ? "cursor-move glass-hover" : ""}>
                             <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
                         </div>
@@ -685,7 +702,8 @@ const DashboardPage = () => {
                         <div key="ia" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'ia')} className={isEditMode ? "cursor-move glass-hover" : ""}>
                             <AiInsightWidget plan={plan} prediction={prediction} />
                         </div>
-                    </ResponsiveGridLayout>
+                        </ResponsiveGridLayout>
+                    </div>
                 </div>
             </div>
             {/* Modal: Detalles de Reserva */}
