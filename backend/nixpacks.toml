@@ -7,8 +7,5 @@ cmds = ["npm install"]
 [phases.build]
 cmds = ["npx prisma generate", "npm run build"]
 
-[variables]
-PORT = "3001"
-
 [start]
 cmd = "npm run start:prod"
