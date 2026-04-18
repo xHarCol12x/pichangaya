@@ -7,7 +7,7 @@ import {
     TrendingUp, TrendingDown, Users, CalendarCheck, CreditCard,
     BrainCircuit, ArrowUpRight, ChevronRight, MoreVertical,
     Activity, Zap, Clock, MapPin, Loader2, RefreshCw,
-    CalendarX, CheckCircle2, AlertCircle
+    CalendarX, CheckCircle2, AlertCircle, GripVertical
 } from "lucide-react";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -37,42 +37,41 @@ import {
 
 const DEFAULT_LAYOUT = {
     lg: [
-        { i: "kpis", x: 0, y: 0, w: 12, h: 5, minW: 12 },
-        { i: "live", x: 0, y: 5, w: 8, h: 9, minW: 4 },
-        { i: "upcoming", x: 8, y: 5, w: 4, h: 9, minW: 3 },
-        { i: "chart", x: 0, y: 14, w: 8, h: 10, minW: 4 },
-        { i: "ai", x: 8, y: 14, w: 4, h: 10, minW: 3 }
+        { i: "kpis", x: 0, y: 0, w: 12, h: 8, minW: 12 },
+        { i: "chart", x: 0, y: 8, w: 8, h: 18, minW: 6 },
+        { i: "ai", x: 8, y: 8, w: 4, h: 18, minW: 3 },
+        { i: "live", x: 0, y: 26, w: 12, h: 14, minW: 6 },
+        { i: "upcoming", x: 0, y: 40, w: 12, h: 16, minW: 6 }
     ],
     md: [
-        { i: "kpis", x: 0, y: 0, w: 10, h: 6 },
-        { i: "live", x: 0, y: 6, w: 10, h: 9 },
-        { i: "upcoming", x: 0, y: 15, w: 10, h: 9 },
-        { i: "chart", x: 0, y: 24, w: 10, h: 10 },
-        { i: "ai", x: 0, y: 34, w: 10, h: 8 }
+        { i: "kpis", x: 0, y: 0, w: 10, h: 8 },
+        { i: "chart", x: 0, y: 8, w: 6, h: 16 },
+        { i: "ai", x: 6, y: 8, w: 4, h: 16 },
+        { i: "live", x: 0, y: 24, w: 10, h: 14 },
+        { i: "upcoming", x: 0, y: 38, w: 10, h: 16 }
     ],
     sm: [
-        { i: "kpis", x: 0, y: 0, w: 6, h: 16 },
-        { i: "live", x: 0, y: 16, w: 6, h: 10 },
-        { i: "upcoming", x: 0, y: 26, w: 6, h: 10 },
-        { i: "chart", x: 0, y: 36, w: 6, h: 12 },
-        { i: "ai", x: 0, y: 48, w: 6, h: 8 }
+        { i: "kpis", x: 0, y: 0, w: 6, h: 14 },
+        { i: "chart", x: 0, y: 14, w: 6, h: 14 },
+        { i: "ai", x: 0, y: 28, w: 6, h: 10 },
+        { i: "live", x: 0, y: 38, w: 6, h: 12 },
+        { i: "upcoming", x: 0, y: 50, w: 6, h: 14 }
     ],
     xs: [
-        { i: "kpis", x: 0, y: 0, w: 4, h: 32 },
-        { i: "live", x: 0, y: 32, w: 4, h: 10 },
-        { i: "upcoming", x: 0, y: 42, w: 4, h: 10 },
-        { i: "chart", x: 0, y: 52, w: 4, h: 12 },
-        { i: "ai", x: 0, y: 64, w: 4, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 4, h: 18 },
+        { i: "chart", x: 0, y: 18, w: 4, h: 14 },
+        { i: "ai", x: 0, y: 32, w: 4, h: 12 },
+        { i: "live", x: 0, y: 44, w: 4, h: 12 },
+        { i: "upcoming", x: 0, y: 56, w: 4, h: 14 }
     ],
     xxs: [
-        { i: "kpis", x: 0, y: 0, w: 2, h: 40 },
-        { i: "live", x: 0, y: 40, w: 2, h: 12 },
-        { i: "upcoming", x: 0, y: 52, w: 2, h: 12 },
-        { i: "chart", x: 0, y: 64, w: 2, h: 12 },
-        { i: "ai", x: 0, y: 76, w: 2, h: 12 }
+        { i: "kpis", x: 0, y: 0, w: 2, h: 22 },
+        { i: "chart", x: 0, y: 22, w: 2, h: 14 },
+        { i: "ai", x: 0, y: 36, w: 2, h: 12 },
+        { i: "live", x: 0, y: 48, w: 2, h: 12 },
+        { i: "upcoming", x: 0, y: 60, w: 2, h: 14 }
     ]
 };
-
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -309,8 +308,9 @@ const DashboardPage = () => {
             setAllBookings(bRes.data || []);
             setAllFields(fRes.data || []);
 
-            const userPlan = uRes.data?.plan || userObj?.plan || 'basic';
-            setPlan(String(userPlan).toLowerCase());
+            const rawPlan = uRes.data?.plan || userObj?.plan || 'basic';
+            const normalizedPlan = String(rawPlan).toLowerCase().trim();
+            setPlan(normalizedPlan);
 
             // Extract feature overrides and load custom layout if exists
             const overridesRaw = uRes.data?.featureOverrides || userObj?.featureOverrides || {};
@@ -729,7 +729,7 @@ const DashboardPage = () => {
                         ) : (
                             <button
                                 onClick={toggleEditMode}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all text-sm ${(plan !== 'pro' && plan !== 'enterprise' && plan !== 'SUPER_ADMIN') ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all text-sm ${(plan !== 'pro' && plan !== 'enterprise' && plan !== 'super_admin' && plan !== 'admin') ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                             >
                                 <Edit3 className="w-4 h-4" />
                                 Personalizar
@@ -760,23 +760,28 @@ const DashboardPage = () => {
                             margin={[20, 20]}
                             useCSSTransforms={true}
                         >
-                            <div key="kpis" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <div key="kpis" className={isEditMode ? "cursor-move glass-hover group" : ""}>
+                                {isEditMode && <div className="drag-handle"><GripVertical className="w-4 h-4" /></div>}
                                 <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
                             </div>
 
-                            <div key="live" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <div key="live" className={isEditMode ? "cursor-move glass-hover group" : ""}>
+                                {isEditMode && <div className="drag-handle"><GripVertical className="w-4 h-4" /></div>}
                                 <LiveFieldsWidget liveFields={liveFields} handleLiveAction={handleLiveAction} setShowQuickBooking={setShowQuickBooking} />
                             </div>
 
-                            <div key="upcoming" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <div key="upcoming" className={isEditMode ? "cursor-move glass-hover group" : ""}>
+                                {isEditMode && <div className="drag-handle"><GripVertical className="w-4 h-4" /></div>}
                                 <UpcomingBookingsWidget filteredUpcoming={filteredUpcoming} bookingFilter={bookingFilter} setBookingFilter={setBookingFilter} setSelectedBooking={setSelectedBooking} />
                             </div>
 
-                            <div key="chart" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <div key="chart" className={isEditMode ? "cursor-move glass-hover group" : ""}>
+                                {isEditMode && <div className="drag-handle"><GripVertical className="w-4 h-4" /></div>}
                                 <RevenueChartWidget globalDateRange={globalDateRange} stats={stats} chartData={chartData} />
                             </div>
 
-                            <div key="ai" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <div key="ai" className={isEditMode ? "cursor-move glass-hover group" : ""}>
+                                {isEditMode && <div className="drag-handle"><GripVertical className="w-4 h-4" /></div>}
                                 <AiInsightWidget plan={plan} prediction={prediction} />
                             </div>
                         </ResponsiveGridLayout>

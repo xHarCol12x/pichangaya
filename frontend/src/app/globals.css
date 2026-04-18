@@ -282,3 +282,34 @@ body {
   bottom: 0;
   transform: rotate(45deg);
 }
+
+/* BENTO DASHBOARD IMPROVEMENTS */
+.is-editing .react-grid-item {
+  border: 2px dashed rgba(56, 189, 248, 0.4);
+  border-radius: 2rem;
+  background: rgba(56, 189, 248, 0.05);
+  transition: none !important;
+}
+
+.is-editing .react-grid-item:hover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.drag-handle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  cursor: move;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: #38bdf8;
+  color: #0f172a;
+  padding: 4px;
+  border-radius: 8px;
+  z-index: 50;
+}
+
+.is-editing .react-grid-item:hover .drag-handle {
+  opacity: 1;
+}

@@ -4,7 +4,8 @@ import React from "react";
 import { BrainCircuit, ChevronRight, Zap } from "lucide-react";
 
 export function AiInsightWidget({ plan, prediction }: { plan: string, prediction: any }) {
-    if (plan === "pro" || plan === "enterprise") {
+    const isPro = plan?.toLowerCase() === "pro" || plan?.toLowerCase() === "enterprise" || plan?.toLowerCase() === "super_admin";
+    if (isPro) {
         return (
             <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-6 lg:p-8 rounded-[2.5rem] relative overflow-hidden flex flex-col justify-between group h-full">
                 <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
