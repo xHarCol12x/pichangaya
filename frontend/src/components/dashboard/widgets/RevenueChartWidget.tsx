@@ -7,7 +7,7 @@ const formatCurrency = (n: number) => `S/ ${n.toLocaleString("es-PE", { minimumF
 
 export function RevenueChartWidget({ globalDateRange, stats, chartData }: { globalDateRange: string, stats: any, chartData: any[] }) {
     return (
-        <div className="glass h-full p-6 lg:p-8 rounded-[2.5rem] border border-border flex flex-col">
+        <div className="glass h-full p-6 lg:p-8 rounded-[2.5rem] border border-border flex flex-col min-h-[300px]">
             <div className="flex items-center justify-between mb-6 shrink-0">
                 <div>
                     <h2 className="text-sm font-black text-foreground mb-1 leading-tight">

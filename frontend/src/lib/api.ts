@@ -49,7 +49,7 @@ export const bookings = {
 export const users = {
     getAll: () => api.get('/users'),
     getMe: () => api.get('/users/me'),
-    updateSettings: (data: any) => api.patch('/users/me/settings', data),
+    updateSettings: (data: any) => api.patch('/users/settings', data),
     changePassword: (data: any) => api.post('/users/me/change-password', data),
 };
 

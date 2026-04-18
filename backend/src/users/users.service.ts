@@ -159,4 +159,16 @@ export class UsersService {
     async create(data: Prisma.UserCreateInput): Promise<User> {
         return this.prisma.user.create({ data });
     }
+
+    async updateMySettings(id: string, data: { featureOverrides?: any }) {
+        return this.prisma.user.update({
+            where: { id },
+            data: { featureOverrides: data.featureOverrides },
+            select: {
+                id: true,
+                featureOverrides: true,
+                updatedAt: true,
+            }
+        });
+    }
 }

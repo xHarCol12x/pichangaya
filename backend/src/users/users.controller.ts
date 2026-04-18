@@ -18,6 +18,12 @@ export class UsersController {
         return this.usersService.findMe(req.user.userId);
     }
 
+    // PATCH /users/settings — actualizar ajustes del usuario (ej: dashboardLayout)
+    @Patch('settings')
+    updateSettings(@Request() req: any, @Body() body: { featureOverrides?: any }) {
+        return this.usersService.updateMySettings(req.user.userId, body);
+    }
+
     // GET /users/tenants — lista todos los tenants (ADMIN)
     @Get('tenants')
     findTenants() {
