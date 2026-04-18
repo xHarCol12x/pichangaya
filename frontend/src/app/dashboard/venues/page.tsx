@@ -122,11 +122,7 @@ export default function VenuesPage() {
             const user = userStr ? JSON.parse(userStr) : null;
             
             if (venueToEdit) {
-                // Assuming updateVenues exists or use similar logic if not explicitly in api.ts
-                // Note: venues as currently in api.ts only has getAll and create
-                // I'll assume we might need to add update/delete to venuesApi in api.ts if missing
-                // For now, I'll use axios directly if needed or just use what's there
-                await venuesApi.create({ ...form, id: venueToEdit.id, ownerId: user?.id }); // Fallback if no update method
+                await venuesApi.update(venueToEdit.id, form);
             } else {
                 await venuesApi.create({ ...form, ownerId: user?.id });
             }

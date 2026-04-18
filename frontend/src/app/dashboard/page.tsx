@@ -366,8 +366,8 @@ const DashboardPage = () => {
                 const userObj = JSON.parse(userStr);
                 const newOverrides = { ...featureOverrides, dashboardLayouts: layouts };
 
-                // Note: The backend usually expects an object for PATCH, which axios stringifies
-                await users.updateSettings({ featureOverrides: newOverrides });
+                // Re-added stringify because backend expects featureOverrides as a string/text field
+                await users.updateSettings({ featureOverrides: JSON.stringify(newOverrides) });
 
                 setFeatureOverrides(newOverrides);
                 localStorage.setItem("fieldiq_user", JSON.stringify({ ...userObj, featureOverrides: newOverrides }));
