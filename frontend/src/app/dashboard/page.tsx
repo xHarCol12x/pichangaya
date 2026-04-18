@@ -158,11 +158,26 @@ const DashboardPage = () => {
     const [now, setNow] = useState(new Date());
     const [plan, setPlan] = useState<string>("basic");
     const [featureOverrides, setFeatureOverrides] = useState<any>({});
-
+    
     // Bento Box State
     const [isEditMode, setIsEditMode] = useState(false);
     const [layouts, setLayouts] = useState<any>(DEFAULT_LAYOUT);
     const [previousLayouts, setPreviousLayouts] = useState<any>(null);
+
+    // ── 0. Procesamiento de Layout (Hook de nivel superior para evitar Error #310) ──
+    const finalLayouts = useMemo(() => {
+        if (!layouts || typeof layouts !== 'object') return DEFAULT_LAYOUT;
+        const processed: any = {};
+        const bps = ["lg", "md", "sm", "xs", "xxs"];
+        bps.forEach(bp => {
+            const current = Array.isArray(layouts[bp]) ? layouts[bp] : (DEFAULT_LAYOUT as any)[bp];
+            processed[bp] = current.map((item: any) => ({
+                ...item,
+                static: !isEditMode
+            }));
+        });
+        return processed;
+    }, [layouts, isEditMode]);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState<number>(1200);
@@ -728,25 +743,7 @@ const DashboardPage = () => {
                             key={containerWidth + (isEditMode ? '_editing' : '_view')}
                             width={containerWidth || 1200}
                             className={`layout ${isEditMode ? 'is-editing' : ''}`}
-                            layouts={useMemo(() => {
-                                // Protección defensiva: si layouts no es válido, usamos el por defecto
-                                if (!layouts || typeof layouts !== 'object') return DEFAULT_LAYOUT;
-
-                                const processed: any = {};
-                                const breakpoints = ["lg", "md", "sm", "xs", "xxs"];
-                                
-                                breakpoints.forEach(bp => {
-                                    // Si el breakpoint no existe o no es un array, usamos el del DEFAULT_LAYOUT
-                                    const currentLayout = Array.isArray(layouts[bp]) ? layouts[bp] : (DEFAULT_LAYOUT as any)[bp];
-                                    
-                                    processed[bp] = currentLayout.map((item: any) => ({
-                                        ...item,
-                                        static: !isEditMode // Esto bloquea/desbloquea el movimiento físicamente
-                                    }));
-                                });
-                                
-                                return processed;
-                            }, [layouts, isEditMode])}
+                            layouts={finalLayouts}
                             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                             cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
                             rowHeight={30}
