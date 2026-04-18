@@ -236,22 +236,27 @@ const TopBar = () => {
                         <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                     )}
 
-                    <input
-                        type="text"
+                    <button
                         disabled={!active || loading}
-                        placeholder={
-                            loading
-                                ? "Cargando..."
-                                : active
-                                    ? "Buscar reservas, canchas o clientes..."
-                                    : "Activa tu plan para usar el buscador"
-                        }
-                        className={`w-full border rounded-xl py-2.5 pl-11 pr-4 text-sm transition-all
+                        onClick={() => document.dispatchEvent(new CustomEvent('open-cmdk'))}
+                        className={`w-full border rounded-xl py-2.5 pl-11 pr-14 text-sm text-left transition-all relative overflow-hidden
                             ${active && !loading
-                                ? "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none focus:border-accent/40 focus:ring-4 focus:ring-accent/5"
-                                : "bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 text-slate-400 dark:text-slate-600 placeholder-slate-400 dark:placeholder-slate-600 cursor-not-allowed select-none"
+                                ? "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:border-accent/40 hover:ring-1 hover:ring-accent/50"
+                                : "bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 text-slate-400 dark:text-slate-600 cursor-not-allowed select-none"
                             }`}
-                    />
+                    >
+                        {loading
+                            ? "Cargando..."
+                            : active
+                                ? "Presiona Ctrl+K para buscar..."
+                                : "Activa tu plan para buscar"}
+                        
+                        {active && !loading && (
+                            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex items-center gap-1 bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
+                                <span className="text-[10px]">⌘</span>K
+                            </kbd>
+                        )}
+                    </button>
 
                     {/* Borde rojo cuando inactivo */}
                     {!active && !loading && (

@@ -7,7 +7,7 @@ import TopBar from "@/components/dashboard/TopBar";
 import SubscriptionWidget from "@/components/dashboard/SubscriptionWidget";
 
 
-
+import CommandPalette from "@/components/ui/CommandPalette";
 
 export default function DashboardLayout({
     children,
@@ -87,6 +87,7 @@ export default function DashboardLayout({
                 </main>
 
             </div>
+            <CommandPalette />
             {/* Show floating subscription widget for active ADMIN users only */}
             {userRole === 'ADMIN' && <SubscriptionWidget />}
         </div>
