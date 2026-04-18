@@ -35,13 +35,29 @@ import {
 
 
 
-const DEFAULT_LAYOUT = [
-    { i: "kpis", x: 0, y: 0, w: 12, h: 6, minW: 6, minH: 6 },
-    { i: "live", x: 0, y: 8, w: 10, h: 8, minW: 8, minH: 8 },
-    { i: "upcoming", x: 0, y: 16, w: 12, h: 8, minW: 6, minH: 10 },
-    { i: "chart", x: 0, y: 24, w: 8, h: 8, minW: 4, minH: 10 },
-    { i: "ai", x: 8, y: 24, w: 4, h: 8, minW: 3, minH: 10 }
-];
+const DEFAULT_LAYOUT = {
+    lg: [
+        { i: "kpis", x: 0, y: 0, w: 12, h: 8, minW: 12 },
+        { i: "live", x: 0, y: 8, w: 8, h: 14, minW: 4 },
+        { i: "upcoming", x: 8, y: 8, w: 4, h: 14, minW: 3 },
+        { i: "chart", x: 0, y: 22, w: 8, h: 16, minW: 4 },
+        { i: "ai", x: 8, y: 22, w: 4, h: 16, minW: 3 }
+    ],
+    md: [
+        { i: "kpis", x: 0, y: 0, w: 10, h: 8 },
+        { i: "live", x: 0, y: 8, w: 10, h: 12 },
+        { i: "upcoming", x: 0, y: 20, w: 10, h: 12 },
+        { i: "chart", x: 0, y: 32, w: 6, h: 14 },
+        { i: "ai", x: 6, y: 32, w: 4, h: 14 }
+    ],
+    sm: [
+        { i: "kpis", x: 0, y: 0, w: 6, h: 18 },
+        { i: "live", x: 0, y: 18, w: 6, h: 12 },
+        { i: "upcoming", x: 0, y: 30, w: 6, h: 12 },
+        { i: "chart", x: 0, y: 42, w: 6, h: 16 },
+        { i: "ai", x: 0, y: 58, w: 6, h: 10 }
+    ]
+};
 
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -131,7 +147,8 @@ const DashboardPage = () => {
 
     // Bento Box State
     const [isEditMode, setIsEditMode] = useState(false);
-    const [layout, setLayout] = useState<any[]>(DEFAULT_LAYOUT);
+    const [layouts, setLayouts] = useState<any>(DEFAULT_LAYOUT);
+    const [previousLayouts, setPreviousLayouts] = useState<any>(null);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState<number>(1200);
@@ -270,8 +287,11 @@ const DashboardPage = () => {
             const overridesRaw = uRes.data?.featureOverrides || userObj?.featureOverrides || {};
             const overridesParsed = typeof overridesRaw === 'string' ? JSON.parse(overridesRaw) : overridesRaw;
             setFeatureOverrides(overridesParsed);
-            if (overridesParsed?.dashboardLayout) {
-                setLayout(overridesParsed.dashboardLayout);
+            if (overridesParsed?.dashboardLayouts) {
+                setLayouts(overridesParsed.dashboardLayouts);
+            } else if (overridesParsed?.dashboardLayout) {
+                // Backward compatibility
+                setLayouts({ lg: overridesParsed.dashboardLayout });
             }
 
             // Load clients for quick booking
@@ -314,9 +334,9 @@ const DashboardPage = () => {
             const userStr = localStorage.getItem("fieldiq_user");
             if (userStr) {
                 const userObj = JSON.parse(userStr);
-                const newOverrides = { ...featureOverrides, dashboardLayout: layout };
+                const newOverrides = { ...featureOverrides, dashboardLayouts: layouts };
 
-                await users.updateSettings({ featureOverrides: newOverrides });
+                await users.updateSettings({ featureOverrides: JSON.stringify(newOverrides) });
 
                 setFeatureOverrides(newOverrides);
                 localStorage.setItem("fieldiq_user", JSON.stringify({ ...userObj, featureOverrides: newOverrides }));
@@ -325,6 +345,13 @@ const DashboardPage = () => {
         } catch (e) {
             toast.error("Error al guardar tablero", { id: loadingToast });
         }
+    };
+
+    const handleCancelLayout = () => {
+        if (previousLayouts) {
+            setLayouts(previousLayouts);
+        }
+        setIsEditMode(false);
     };
 
     const toggleEditMode = () => {
@@ -339,6 +366,7 @@ const DashboardPage = () => {
             );
             return;
         }
+        setPreviousLayouts(layouts);
         setIsEditMode(true);
     };
 
@@ -642,17 +670,25 @@ const DashboardPage = () => {
                         </button>
 
                         {isEditMode ? (
-                            <button
-                                onClick={handleSaveLayout}
-                                className="bg-emerald-500 text-slate-950 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-transform text-sm"
-                            >
-                                <Check className="w-4 h-4" />
-                                Guardar Tablero
-                            </button>
+                            <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                                <button
+                                    onClick={handleCancelLayout}
+                                    className="px-5 py-2.5 rounded-xl font-bold border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-all text-sm"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleSaveLayout}
+                                    className="bg-emerald-500 text-slate-950 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all text-sm"
+                                >
+                                    <Check className="w-4 h-4" />
+                                    Guardar Tablero
+                                </button>
+                            </div>
                         ) : (
                             <button
                                 onClick={toggleEditMode}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all text-sm"
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all text-sm ${(plan !== 'pro' && plan !== 'enterprise' && plan !== 'SUPER_ADMIN') ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                             >
                                 <Edit3 className="w-4 h-4" />
                                 Personalizar
@@ -671,16 +707,17 @@ const DashboardPage = () => {
                     <div ref={containerRef} className="w-full min-h-[800px]">
                         {/* @ts-ignore */}
                         <ResponsiveGridLayout
-                            key={containerWidth}
+                            key={containerWidth + (isEditMode ? '_editing' : '_view')}
                             width={containerWidth || 1200}
                             className={`layout ${isEditMode ? 'is-editing' : ''}`}
-                            layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
+                            layouts={layouts}
                             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                             cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
                             rowHeight={30}
-                            onLayoutChange={(currLayout: any) => setLayout(currLayout)}
+                            onLayoutChange={(curr: any, all: any) => isEditMode && setLayouts(all)}
                             isDraggable={isEditMode}
                             isResizable={isEditMode}
+                            draggableHandle=".cursor-move"
                             margin={[20, 20]}
                             useCSSTransforms={true}
                         >
