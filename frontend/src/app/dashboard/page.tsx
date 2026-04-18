@@ -37,39 +37,39 @@ import {
 
 const DEFAULT_LAYOUT = {
     lg: [
-        { i: "kpis", x: 0, y: 0, w: 12, h: 8, minW: 12 },
-        { i: "live", x: 0, y: 8, w: 8, h: 14, minW: 4 },
-        { i: "upcoming", x: 8, y: 8, w: 4, h: 14, minW: 3 },
-        { i: "chart", x: 0, y: 22, w: 8, h: 16, minW: 4 },
-        { i: "ai", x: 8, y: 22, w: 4, h: 16, minW: 3 }
+        { i: "kpis", x: 0, y: 0, w: 12, h: 5, minW: 12 },
+        { i: "live", x: 0, y: 5, w: 8, h: 9, minW: 4 },
+        { i: "upcoming", x: 8, y: 5, w: 4, h: 9, minW: 3 },
+        { i: "chart", x: 0, y: 14, w: 8, h: 10, minW: 4 },
+        { i: "ai", x: 8, y: 14, w: 4, h: 10, minW: 3 }
     ],
     md: [
-        { i: "kpis", x: 0, y: 0, w: 10, h: 8 },
-        { i: "live", x: 0, y: 8, w: 10, h: 12 },
-        { i: "upcoming", x: 0, y: 20, w: 10, h: 12 },
-        { i: "chart", x: 0, y: 32, w: 6, h: 14 },
-        { i: "ai", x: 6, y: 32, w: 4, h: 14 }
+        { i: "kpis", x: 0, y: 0, w: 10, h: 5 },
+        { i: "live", x: 0, y: 5, w: 10, h: 9 },
+        { i: "upcoming", x: 0, y: 14, w: 10, h: 9 },
+        { i: "chart", x: 0, y: 23, w: 6, h: 10 },
+        { i: "ai", x: 6, y: 23, w: 4, h: 10 }
     ],
     sm: [
-        { i: "kpis", x: 0, y: 0, w: 6, h: 18 },
-        { i: "live", x: 0, y: 18, w: 6, h: 12 },
-        { i: "upcoming", x: 0, y: 30, w: 6, h: 12 },
-        { i: "chart", x: 0, y: 42, w: 6, h: 16 },
-        { i: "ai", x: 0, y: 58, w: 6, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 6, h: 12 },
+        { i: "live", x: 0, y: 12, w: 6, h: 10 },
+        { i: "upcoming", x: 0, y: 22, w: 6, h: 10 },
+        { i: "chart", x: 0, y: 32, w: 6, h: 12 },
+        { i: "ai", x: 0, y: 44, w: 6, h: 8 }
     ],
     xs: [
-        { i: "kpis", x: 0, y: 0, w: 4, h: 24 },
-        { i: "live", x: 0, y: 24, w: 4, h: 12 },
-        { i: "upcoming", x: 0, y: 36, w: 4, h: 12 },
-        { i: "chart", x: 0, y: 48, w: 4, h: 14 },
-        { i: "ai", x: 0, y: 62, w: 4, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 4, h: 18 },
+        { i: "live", x: 0, y: 18, w: 4, h: 10 },
+        { i: "upcoming", x: 0, y: 28, w: 4, h: 10 },
+        { i: "chart", x: 0, y: 38, w: 4, h: 12 },
+        { i: "ai", x: 0, y: 50, w: 4, h: 8 }
     ],
     xxs: [
-        { i: "kpis", x: 0, y: 0, w: 2, h: 32 },
-        { i: "live", x: 0, y: 32, w: 2, h: 12 },
-        { i: "upcoming", x: 0, y: 44, w: 2, h: 12 },
-        { i: "chart", x: 0, y: 56, w: 2, h: 14 },
-        { i: "ai", x: 0, y: 70, w: 2, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 2, h: 24 },
+        { i: "live", x: 0, y: 24, w: 2, h: 10 },
+        { i: "upcoming", x: 0, y: 34, w: 2, h: 10 },
+        { i: "chart", x: 0, y: 44, w: 2, h: 12 },
+        { i: "ai", x: 0, y: 56, w: 2, h: 8 }
     ]
 };
 
@@ -717,8 +717,9 @@ const DashboardPage = () => {
                 {/* Bento Box Grid Layout */}
                 <div className={`mt-6 ${isEditMode ? 'bg-foreground/[0.02] border border-dashed border-border rounded-3xl p-4' : ''}`}>
                     {isEditMode && (
-                        <div className="mb-4 text-center text-sm font-medium text-foreground/50 animate-pulse">
-                            Modo Edición: Arrastra los bordes o títulos para organizar tu tablero.
+                        <div className="mb-4 text-center text-sm font-medium text-foreground/50 animate-pulse flex items-center justify-center gap-2">
+                            <Zap className="w-4 h-4 text-accent" />
+                            Modo Edición: Organiza tus widgets libremente.
                         </div>
                     )}
                     <div ref={containerRef} className="w-full min-h-[800px]">
@@ -727,14 +728,22 @@ const DashboardPage = () => {
                             key={containerWidth + (isEditMode ? '_editing' : '_view')}
                             width={containerWidth || 1200}
                             className={`layout ${isEditMode ? 'is-editing' : ''}`}
-                            layouts={layouts}
+                            layouts={useMemo(() => {
+                                // Forzar el estado 'static' en todos los items si no estamos en modo edición
+                                // Esto es vital para que react-grid-layout desactive TODO el JS de interacción.
+                                const processed: any = {};
+                                Object.keys(layouts).forEach(bp => {
+                                    processed[bp] = layouts[bp].map((item: any) => ({
+                                        ...item,
+                                        static: !isEditMode
+                                    }));
+                                });
+                                return processed;
+                            }, [layouts, isEditMode])}
                             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                             cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
                             rowHeight={30}
                             onLayoutChange={(curr: any, all: any) => isEditMode && setLayouts(all)}
-                            isDraggable={isEditMode}
-                            isResizable={isEditMode}
-                            draggableHandle=".cursor-move"
                             margin={[20, 20]}
                             useCSSTransforms={true}
                         >
