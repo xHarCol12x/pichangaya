@@ -74,24 +74,6 @@ async function bootstrap() {
         console.log(`✅ Expired Tenant created: ${expiredTenantEmail}`);
     }
 
-    // 3. Regular User (Player)
-    const userEmail = 'user@fieldiq.com';
-    const existingUser = await prisma.user.findUnique({ where: { email: userEmail } });
-    if (!existingUser) {
-        const hash = await bcrypt.hash('password123', 10);
-        await prisma.user.create({
-            data: {
-                email: userEmail,
-                name: 'Jugador Estándar',
-                password: hash,
-                role: 'USER',
-                plan: 'FREE_TRIAL',
-                isActive: true,
-            }
-        });
-        console.log(`✅ Regular User created: ${userEmail}`);
-    }
-
     await app.close();
 }
 bootstrap();
