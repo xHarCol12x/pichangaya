@@ -4,7 +4,9 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npm run start:prod",
-    "restartPolicyType": "ON_FAILURE"
+    "startCommand": "npx prisma generate && npm run build && npm run start:prod",
+    "restartPolicyType": "ON_FAILURE",
+    "healthCheckPath": "/",
+    "healthCheckTimeout": 300
   }
 }
