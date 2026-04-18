@@ -44,32 +44,32 @@ const DEFAULT_LAYOUT = {
         { i: "ai", x: 8, y: 14, w: 4, h: 10, minW: 3 }
     ],
     md: [
-        { i: "kpis", x: 0, y: 0, w: 10, h: 5 },
-        { i: "live", x: 0, y: 5, w: 10, h: 9 },
-        { i: "upcoming", x: 0, y: 14, w: 10, h: 9 },
-        { i: "chart", x: 0, y: 23, w: 6, h: 10 },
-        { i: "ai", x: 6, y: 23, w: 4, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 10, h: 6 },
+        { i: "live", x: 0, y: 6, w: 10, h: 9 },
+        { i: "upcoming", x: 0, y: 15, w: 10, h: 9 },
+        { i: "chart", x: 0, y: 24, w: 10, h: 10 },
+        { i: "ai", x: 0, y: 34, w: 10, h: 8 }
     ],
     sm: [
-        { i: "kpis", x: 0, y: 0, w: 6, h: 12 },
-        { i: "live", x: 0, y: 12, w: 6, h: 10 },
-        { i: "upcoming", x: 0, y: 22, w: 6, h: 10 },
-        { i: "chart", x: 0, y: 32, w: 6, h: 12 },
-        { i: "ai", x: 0, y: 44, w: 6, h: 8 }
+        { i: "kpis", x: 0, y: 0, w: 6, h: 16 },
+        { i: "live", x: 0, y: 16, w: 6, h: 10 },
+        { i: "upcoming", x: 0, y: 26, w: 6, h: 10 },
+        { i: "chart", x: 0, y: 36, w: 6, h: 12 },
+        { i: "ai", x: 0, y: 48, w: 6, h: 8 }
     ],
     xs: [
-        { i: "kpis", x: 0, y: 0, w: 4, h: 18 },
-        { i: "live", x: 0, y: 18, w: 4, h: 10 },
-        { i: "upcoming", x: 0, y: 28, w: 4, h: 10 },
-        { i: "chart", x: 0, y: 38, w: 4, h: 12 },
-        { i: "ai", x: 0, y: 50, w: 4, h: 8 }
+        { i: "kpis", x: 0, y: 0, w: 4, h: 32 },
+        { i: "live", x: 0, y: 32, w: 4, h: 10 },
+        { i: "upcoming", x: 0, y: 42, w: 4, h: 10 },
+        { i: "chart", x: 0, y: 52, w: 4, h: 12 },
+        { i: "ai", x: 0, y: 64, w: 4, h: 10 }
     ],
     xxs: [
-        { i: "kpis", x: 0, y: 0, w: 2, h: 24 },
-        { i: "live", x: 0, y: 24, w: 2, h: 10 },
-        { i: "upcoming", x: 0, y: 34, w: 2, h: 10 },
-        { i: "chart", x: 0, y: 44, w: 2, h: 12 },
-        { i: "ai", x: 0, y: 56, w: 2, h: 8 }
+        { i: "kpis", x: 0, y: 0, w: 2, h: 40 },
+        { i: "live", x: 0, y: 40, w: 2, h: 12 },
+        { i: "upcoming", x: 0, y: 52, w: 2, h: 12 },
+        { i: "chart", x: 0, y: 64, w: 2, h: 12 },
+        { i: "ai", x: 0, y: 76, w: 2, h: 12 }
     ]
 };
 

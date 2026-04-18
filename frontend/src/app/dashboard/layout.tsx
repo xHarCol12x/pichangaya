@@ -81,7 +81,10 @@ export default function DashboardLayout({
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-accent/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
 
-                <TopBar />
+                {/* Sticky Header Wrapper */}
+                <div className="sticky top-0 z-40 w-full bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300">
+                    <TopBar />
+                </div>
                 <main className="p-4 sm:p-6 lg:p-8 flex-1 pb-24 lg:pb-8 max-w-[100vw] overflow-x-hidden">
                     {children}
                 </main>
