@@ -20,7 +20,7 @@ import { Toaster, toast } from "sonner";
 import { Edit3, Check, Lock } from "lucide-react";
 import dynamic from "next/dynamic";
 const ResponsiveGridLayout = dynamic(
-    () => import("react-grid-layout").then((mod: any) => mod.WidthProvider(mod.Responsive)), 
+    () => import("react-grid-layout").then((mod: any) => mod.ResponsiveGridLayout), 
     { ssr: false }
 );
 import { 
