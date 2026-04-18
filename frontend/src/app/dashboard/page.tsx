@@ -673,7 +673,7 @@ const DashboardPage = () => {
                         <p className="text-foreground/40 flex items-center gap-2 text-sm">
                             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                             {todayCapital} · {now.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
-                            <span className="ml-2 text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/20 font-mono">BENTO V2.2</span>
+                            <span className="ml-2 text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/20 font-mono">BENTO V3.1</span>
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
