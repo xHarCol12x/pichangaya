@@ -17,6 +17,30 @@ import gsap from "gsap";
 
 import FieldMiniMap from "@/components/fields/FieldMiniMap";
 import { Toaster, toast } from "sonner";
+import { Edit3, Check, Lock } from "lucide-react";
+import dynamic from "next/dynamic";
+const ResponsiveGridLayout = dynamic(
+    () => import("react-grid-layout").then((mod: any) => mod.WidthProvider(mod.Responsive)), 
+    { ssr: false }
+);
+import { 
+    KpiStatsWidget, 
+    LiveFieldsWidget, 
+    UpcomingBookingsWidget, 
+    RevenueChartWidget, 
+    AiInsightWidget 
+} from "@/components/dashboard/widgets";
+
+
+
+const DEFAULT_LAYOUT = [
+    { i: "kpis", x: 0, y: 0, w: 12, h: 5, minW: 6, minH: 4 },
+    { i: "live", x: 0, y: 5, w: 12, h: 12, minW: 6, minH: 8 },
+    { i: "upcoming", x: 0, y: 17, w: 12, h: 14, minW: 6, minH: 10 },
+    { i: "chart", x: 0, y: 31, w: 8, h: 12, minW: 4, minH: 10 },
+    { i: "ai", x: 8, y: 31, w: 4, h: 12, minW: 3, minH: 10 }
+];
+
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -102,6 +126,10 @@ const DashboardPage = () => {
     const [now, setNow] = useState(new Date());
     const [plan, setPlan] = useState<string>("basic");
     const [featureOverrides, setFeatureOverrides] = useState<any>({});
+    
+    // Bento Box State
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [layout, setLayout] = useState<any[]>(DEFAULT_LAYOUT);
 
     // Pagination & Filters State
     const [bookingFilter, setBookingFilter] = useState("ALL");
@@ -221,10 +249,13 @@ const DashboardPage = () => {
             const userPlan = uRes.data?.plan || userObj?.plan || 'basic';
             setPlan(String(userPlan).toLowerCase());
             
-            // Extract feature overrides
+            // Extract feature overrides and load custom layout if exists
             const overridesRaw = uRes.data?.featureOverrides || userObj?.featureOverrides || {};
             const overridesParsed = typeof overridesRaw === 'string' ? JSON.parse(overridesRaw) : overridesRaw;
             setFeatureOverrides(overridesParsed);
+            if (overridesParsed?.dashboardLayout) {
+                setLayout(overridesParsed.dashboardLayout);
+            }
 
             // Load clients for quick booking
             if (userVenues.length > 0) {
@@ -257,6 +288,41 @@ const DashboardPage = () => {
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const handleSaveLayout = async () => {
+        setIsEditMode(false);
+        const loadingToast = toast.loading("Guardando tablero...");
+        try {
+            const userStr = localStorage.getItem("fieldiq_user");
+            if (userStr) {
+                const userObj = JSON.parse(userStr);
+                const newOverrides = { ...featureOverrides, dashboardLayout: layout };
+                
+                await users.updateSettings({ featureOverrides: newOverrides });
+                
+                setFeatureOverrides(newOverrides);
+                localStorage.setItem("fieldiq_user", JSON.stringify({ ...userObj, featureOverrides: newOverrides }));
+                toast.success("Tablero guardado", { id: loadingToast });
+            }
+        } catch (e) {
+            toast.error("Error al guardar tablero", { id: loadingToast });
+        }
+    };
+
+    const toggleEditMode = () => {
+        if (plan !== 'pro' && plan !== 'enterprise' && plan !== 'SUPER_ADMIN') {
+            toast.error(
+                <div className="flex flex-col gap-2">
+                    <span className="font-bold flex items-center gap-2"><Lock className="w-4 h-4"/> Nivel Pro Requerido</span>
+                    <span className="text-sm">Personalizar el tablero (arrastrar widgets) requiere un plan superior.</span>
+                    <a href="/dashboard/billing?apply_plan=PRO" className="bg-foreground text-background px-3 py-1.5 rounded-lg text-center text-xs font-bold mt-1">Mejorar Plan</a>
+                </div>, 
+                { duration: 5000 }
+            );
+            return;
+        }
+        setIsEditMode(true);
     };
 
     useEffect(() => {
@@ -557,423 +623,67 @@ const DashboardPage = () => {
                             <Plus className="w-4 h-4" />
                             Reserva Rápida
                         </button>
-                        <button
-                            onClick={() => loadData(true)}
-                            disabled={refreshing}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all text-sm"
-                        >
-                            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-                            Actualizar
-                        </button>
-                        {(plan === "pro" || plan === "enterprise") ? (
-                            <button className="bg-accent text-accent-foreground px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:shadow-[0_0_25px_rgba(56,189,248,0.3)] transition-all active:scale-95 text-sm">
-                                <Zap className="w-4 h-4" />
-                                Reporte IA
+                        
+                        {isEditMode ? (
+                            <button
+                                onClick={handleSaveLayout}
+                                className="bg-emerald-500 text-slate-950 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-transform text-sm"
+                            >
+                                <Check className="w-4 h-4" />
+                                Guardar Tablero
                             </button>
                         ) : (
-                            <button className="bg-foreground/5 text-foreground/40 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 cursor-not-allowed text-sm">
-                                <Zap className="w-4 h-4" />
-                                Reporte IA
+                            <button
+                                onClick={toggleEditMode}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all text-sm"
+                            >
+                                <Edit3 className="w-4 h-4" />
+                                Personalizar
                             </button>
                         )}
                     </div>
                 </header>
 
-                {/* KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <KpiCard
-                        title="Ingresos Totales"
-                        value={formatCurrency(stats.revenue)}
-                        sub={`${formatCurrency(stats.todayRevenue)} hoy`}
-                        change="+14.2%"
-                        positive={true}
-                        icon={CreditCard}
-                        accent="#38bdf8"
-                    />
-                    <KpiCard
-                        title="Reservas Confirmadas"
-                        value={stats.confirmed.length}
-                        sub={`${stats.todayBookings.length} para hoy`}
-                        change="+8.1%"
-                        positive={true}
-                        icon={CalendarCheck}
-                        accent="#818cf8"
-                    />
-                    <KpiCard
-                        title="Pendientes de Pago"
-                        value={stats.pending.length}
-                        sub="Requieren atención"
-                        change={stats.pending.length > 0 ? `${stats.pending.length} activas` : "Al día"}
-                        positive={stats.pending.length === 0}
-                        icon={AlertCircle}
-                        accent="#f59e0b"
-                    />
-                    <KpiCard
-                        title="Ocupación Hoy"
-                        value={`${stats.occupancy}%`}
-                        sub={`${allFields.length} canchas registradas`}
-                        change="+5.4%"
-                        positive={true}
-                        icon={Activity}
-                        accent="#10b981"
-                    />
-                </div>
-
-
-                {/* Widget: En Juego Ahora (Real-Time) */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-5 px-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
-                        <h2 className="text-xl font-black text-foreground tracking-tight">En Juego Ahora</h2>
-                        <span className="text-foreground/40 text-xs ml-2 font-medium bg-foreground/5 px-2 py-1 rounded-md">
-                            Actualización en vivo
-                        </span>
-                    </div>
-
-                    {liveFields.length === 0 ? (
-                        <div className="glass p-6 rounded-2xl border border-border text-center text-sm text-foreground/40">
-                            Cargando estado de las canchas...
-                        </div>
-                    ) : (
-                        <div className="flex xl:grid xl:grid-cols-3 2xl:grid-cols-4 gap-5 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar">
-                            {liveFields.map(field => {
-                                const b = field.booking;
-                                return (
-                                    <div key={field.id} className={`snap-center w-[85vw] sm:w-[320px] xl:w-auto shrink-0 p-6 rounded-[2rem] border backdrop-blur-md transition-all flex flex-col h-full ${field.isOccupied ? 'bg-white/80 dark:bg-slate-900/80 border-red-500/20 shadow-[0_8px_30px_rgba(239,68,68,0.08)]' : 'bg-slate-100/50 dark:bg-slate-900/40 border-emerald-500/10'}`}>
-
-                                        {/* CABECERA DE LA TARJETA */}
-                                        <div className="flex justify-between items-start mb-5">
-                                            <div>
-                                                <h3 className="font-black text-slate-900 dark:text-white text-lg truncate pr-2">{field.name.toUpperCase()}</h3>
-                                                <span className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">
-                                                    {field.type || 'Deportiva'} • {field.surface || 'Sintético'}
-                                                </span>
-                                            </div>
-                                            {field.isOccupied ? (
-                                                <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 px-2.5 py-1.5 rounded-lg flex-shrink-0">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                                                    En Juego
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-lg flex-shrink-0">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                                    Libre
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* CUERPO DE LA TARJETA */}
-                                        {field.isOccupied && b ? (
-                                            <div className="flex-1 flex flex-col">
-
-                                                {/* Info del Cliente y Pago */}
-                                                <div className="bg-slate-100 dark:bg-white/5 rounded-2xl p-4 mb-5 border border-slate-200 dark:border-white/5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
-                                                            <Users className="w-5 h-5" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                                                                {b.client?.name || 'Walk-in (Sin registro)'}
-                                                            </p>
-                                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                                                                {formatTime(b.startTime)} - {b.endTime ? formatTime(b.endTime) : '---'}
-                                                            </p>
-                                                        </div>
-
-                                                        {b.status?.toUpperCase() === 'CONFIRMED' ? (
-                                                            <div className="bg-emerald-500/10 text-emerald-400 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border border-emerald-500/20">
-                                                                Pagado
-                                                            </div>
-                                                        ) : (
-                                                            <div className="bg-amber-500/10 text-amber-400 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-right border border-amber-500/20">
-                                                                Debe<br />{formatCurrency(b.totalPrice || 0)}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Barra de Progreso */}
-                                                <div className="mb-6 mt-auto">
-                                                    <div className="flex items-center justify-between text-xs mb-2">
-                                                        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                                                            <Clock className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
-                                                            <span>Quedan <strong className="text-slate-900 dark:text-white">{field.remainingMins} min</strong></span>
-                                                        </div>
-                                                        <span className="text-[10px] font-mono text-slate-500">{Math.round(field.progress)}%</span>
-                                                    </div>
-                                                    <div className="w-full bg-slate-200 dark:bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-300 dark:border-white/5">
-                                                        <div
-                                                            className="bg-gradient-to-r from-red-600 to-red-400 h-2 rounded-full transition-all duration-1000 ease-linear relative"
-                                                            style={{ width: `${field.progress}%` }}
-                                                        >
-                                                            <div className="absolute top-0 right-0 bottom-0 w-4 bg-white/30 blur-[2px]" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Botones de Acción Rápida */}
-                                                <div className="grid grid-cols-3 gap-2 border-t border-slate-200 dark:border-white/5 pt-5 mt-auto">
-                                                    <button
-                                                        onClick={() => handleLiveAction('extend', b, field.pricePerHour)}
-                                                        title="Extender 30 min"
-                                                        className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                        <span className="text-[9px] font-bold uppercase tracking-widest">+30 min</span>
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => handleLiveAction('pay', b)}
-                                                        disabled={b.status?.toUpperCase() === 'CONFIRMED'}
-                                                        title="Cobrar"
-                                                        className={`flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl transition-colors ${b.status?.toUpperCase() === 'CONFIRMED' ? 'bg-emerald-500/5 text-emerald-500/30 cursor-not-allowed border border-emerald-500/5' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 border border-emerald-500/20'}`}
-                                                    >
-                                                        <CreditCard className="w-4 h-4" />
-                                                        <span className="text-[9px] font-bold uppercase tracking-widest">Cobrar</span>
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => handleLiveAction('finish', b)}
-                                                        title="Finalizar ahora"
-                                                        className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition-colors"
-                                                    >
-                                                        <CheckCircle2 className="w-4 h-4" />
-                                                        <span className="text-[9px] font-bold uppercase tracking-widest">Finalizar</span>
-                                                    </button>
-                                                </div>
-
-                                            </div>
-                                        ) : (
-                                            <div className="flex-1 flex flex-col mt-4 border-t border-slate-200 dark:border-white/5 pt-6">
-                                                <div className="flex-1 flex flex-col items-center justify-center py-4 text-emerald-500/50">
-                                                    <div className="w-16 h-16 rounded-full bg-emerald-500/5 flex items-center justify-center mb-3">
-                                                        <CheckCircle2 className="w-8 h-8 opacity-50" />
-                                                    </div>
-                                                    <span className="text-sm font-medium">Lista para usar</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => setShowQuickBooking(true)}
-                                                    className="w-full py-3 mt-auto rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 border border-emerald-500/20"
-                                                >
-                                                    <Plus className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-                                                    Ocupar ahora
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                {/* Bento Box Grid Layout */}
+                <div className={`mt-6 ${isEditMode ? 'bg-foreground/[0.02] border border-dashed border-border rounded-3xl p-4' : ''}`}>
+                    {isEditMode && (
+                        <div className="mb-4 text-center text-sm font-medium text-foreground/50 animate-pulse">
+                            Modo Edición: Arrastra los bordes o títulos para organizar tu tablero.
                         </div>
                     )}
-                </div>
-
-                {/* Próximas Reservas */}
-                <div className="glass rounded-[2.5rem] border border-border overflow-hidden w-full">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between px-8 py-6 border-b border-border gap-4">
-                        <div>
-                            <h2 className="text-lg font-black text-foreground">Próximas Reservas</h2>
-                            <p className="text-foreground/40 text-xs mt-0.5">{filteredUpcoming.length} reservas encontradas</p>
+                    {/* @ts-ignore */}
+                    <ResponsiveGridLayout
+                        className={`layout ${isEditMode ? 'is-editing' : ''}`}
+                        layouts={{ lg: layout }}
+                        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                        rowHeight={30}
+                        onLayoutChange={(currLayout: any) => setLayout(currLayout)}
+                        isDraggable={isEditMode}
+                        isResizable={isEditMode}
+                        margin={[20, 20]}
+                        useCSSTransforms={true}
+                    >
+                        <div key="kpis" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
+                        </div>
+                        
+                        <div key="live" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <LiveFieldsWidget liveFields={liveFields} handleLiveAction={handleLiveAction} setShowQuickBooking={setShowQuickBooking} />
                         </div>
 
-                        <div className="flex items-center gap-2 bg-foreground/5 p-1 rounded-xl">
-                            {["ALL", "CONFIRMED", "PENDING"].map(f => (
-                                <button
-                                    key={f}
-                                    onClick={() => setBookingFilter(f)}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${bookingFilter === f ? "bg-background text-foreground shadow-sm" : "text-foreground/40 hover:text-foreground/70"}`}
-                                >
-                                    {f === "ALL" ? "Todas" : f === "CONFIRMED" ? "Confirmadas" : "Pendientes"}
-                                </button>
-                            ))}
+                        <div key="upcoming" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <UpcomingBookingsWidget filteredUpcoming={filteredUpcoming} bookingFilter={bookingFilter} setBookingFilter={setBookingFilter} setSelectedBooking={setSelectedBooking} />
                         </div>
-                    </div>
 
-                    {filteredUpcoming.length === 0 ? (
-                        <div className="py-16 text-center">
-                            <CalendarX className="w-10 h-10 text-foreground/20 mx-auto mb-3" />
-                            <p className="text-foreground/30 text-sm">No hay reservas próximas</p>
+                        <div key="chart" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <RevenueChartWidget globalDateRange={globalDateRange} stats={stats} chartData={chartData} />
                         </div>
-                    ) : (
-                        <div className="w-full overflow-x-auto">
-                            <table className="w-full text-left min-w-[800px]">
-                                <thead>
-                                    <tr className="text-foreground/30 text-[11px] font-black uppercase tracking-widest border-b border-border">
-                                        <th className="pb-3 pt-4 pl-8">Cancha</th>
-                                        <th className="pb-3 pt-4">Fecha</th>
-                                        <th className="pb-3 pt-4">Horario</th>
-                                        <th className="pb-3 pt-4">Total</th>
-                                        <th className="pb-3 pt-4">Estado</th>
-                                        <th className="pb-3 pt-4 pr-6 text-right sticky right-0 bg-background md:bg-transparent z-10">Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-sm divide-y divide-border">
-                                    {paginatedBookings.map((b, i) => (
-                                        <tr key={b.id || i} className="group hover:bg-foreground/[0.02] transition-colors relative">
-                                            <td className="py-4 pl-8">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                                                        <MapPin className="w-3.5 h-3.5 text-accent" />
-                                                    </div>
-                                                    <span className="font-bold text-foreground">{b.field.name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="py-4">
-                                                <div className="flex items-center gap-1.5 text-foreground/50">
-                                                    <span>{formatDate(b.startTime)}</span>
-                                                    {isToday(b.startTime) && (
-                                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">Hoy</span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="py-4">
-                                                <div className="flex items-center gap-1.5 text-foreground/50">
-                                                    <Clock className="w-3.5 h-3.5" />
-                                                    <span className="font-mono text-xs">{formatTime(b.startTime)} – {formatTime(b.endTime)}</span>
-                                                </div>
-                                            </td>
-                                            <td className="py-4">
-                                                <span className="font-black text-foreground">{formatCurrency(b.totalPrice || 0)}</span>
-                                            </td>
-                                            <td className="py-4">
-                                                <StatusBadge status={b.status} />
-                                            </td>
-                                            <td className="py-4 pr-6 text-right sticky right-0 bg-background md:bg-transparent z-10 before:absolute before:inset-y-0 before:-left-4 before:w-4 before:bg-gradient-to-r before:from-transparent before:to-background md:before:hidden">
-                                                <button
-                                                    onClick={() => setSelectedBooking(b)}
-                                                    className="w-8 h-8 rounded-xl flex items-center justify-center text-foreground/30 hover:text-foreground hover:bg-foreground/5 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 ml-auto bg-background md:bg-transparent border border-border md:border-transparent"
-                                                >
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
 
-                            {/* Pagination Footer */}
-                            {totalPages > 1 && (
-                                <div className="flex items-center justify-between px-8 py-4 border-t border-border bg-foreground/[0.01]">
-                                    <span className="text-xs text-foreground/40 font-medium">
-                                        Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, filteredUpcoming.length)} de {filteredUpcoming.length}
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                            disabled={currentPage === 1}
-                                            className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/5 disabled:opacity-30 disabled:pointer-events-none transition-all"
-                                        >
-                                            <ChevronLeft className="w-4 h-4" />
-                                        </button>
-                                        <span className="text-xs font-bold text-foreground mx-2">
-                                            {currentPage} / {totalPages}
-                                        </span>
-                                        <button
-                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                            disabled={currentPage === totalPages}
-                                            className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/5 disabled:opacity-30 disabled:pointer-events-none transition-all"
-                                        >
-                                            <ChevronRight className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
+                        <div key="ai" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                            <AiInsightWidget plan={plan} prediction={prediction} />
                         </div>
-                    )}
-                </div>
-                {/* Chart + AI */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                    {/* Gráfico */}
-                    <div className="lg:col-span-2 glass p-8 rounded-[2.5rem] border border-border">
-                        <div className="flex items-center justify-between mb-8">
-                            <div>
-                                <h2 className="text-lg font-black text-foreground mb-1">
-                                    Ingresos — {
-                                        globalDateRange === "TODAY" ? "Hoy" :
-                                            globalDateRange === "WEEK" ? "Esta Semana" :
-                                                globalDateRange === "MONTH" ? "Este Mes" : "Histórico General"
-                                    }
-                                </h2>
-                                <p className="text-sm text-foreground/40">Solo reservas confirmadas</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-xs text-foreground/30 uppercase tracking-widest">Total período</p>
-                                <p className="text-lg font-black text-foreground">{formatCurrency(stats.revenue)}</p>
-                            </div>
-                        </div>
-                        <div className="h-[260px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                                    <defs>
-                                        <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.25} />
-                                            <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                    <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => `S/${v}`} width={60} />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: "var(--background)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", fontSize: "12px" }}
-                                        itemStyle={{ color: "#38bdf8" }}
-                                        formatter={(v: any) => [formatCurrency(v), "Ingresos"]}
-                                    />
-                                    <Area type="monotone" dataKey="revenue" stroke="#38bdf8" strokeWidth={2.5} fill="url(#gr)" dot={false} activeDot={{ r: 4, fill: "#38bdf8" }} />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    {/* AI Insight */}
-                    {(plan === "pro" || plan === "enterprise") ? (
-                        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-8 rounded-[2.5rem] relative overflow-hidden flex flex-col justify-between group">
-                            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <BrainCircuit className="w-32 h-32" />
-                            </div>
-                            <div className="relative z-10 space-y-5">
-                                <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                                    <BrainCircuit className="text-white w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h2 className="text-xl font-black text-white mb-1">Insight Predictivo</h2>
-                                    <p className="text-indigo-200/60 text-xs leading-relaxed">Basado en historial de reservas.</p>
-                                </div>
-                                <div className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-2xl space-y-2">
-                                    <p className="text-[10px] uppercase font-black text-indigo-300 tracking-widest">Demanda estimada</p>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-4xl font-black text-white">{prediction.pct}</span>
-                                        <span className="bg-emerald-400/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-black">ALTA</span>
-                                    </div>
-                                    <p className="text-indigo-100/70 text-xs">{prediction.text}</p>
-                                </div>
-                                <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-xl flex items-center justify-between">
-                                    <span className="text-indigo-200/60 text-xs">Ticket promedio fines de semana</span>
-                                    <span className="text-white font-black text-sm">{prediction.avg}</span>
-                                </div>
-                            </div>
-                            <button className="relative z-10 w-full bg-white text-indigo-600 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors mt-6 shadow-xl">
-                                Ver Proyecciones <ChevronRight className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="glass bg-foreground/[0.02] p-8 rounded-[2.5rem] relative overflow-hidden flex flex-col justify-center items-center group border border-border text-center">
-                            <div className="absolute inset-0 backdrop-blur-[2px] z-0" />
-                            <div className="relative z-10 flex flex-col items-center">
-                                <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4">
-                                    <BrainCircuit className="text-accent w-8 h-8 opacity-50" />
-                                </div>
-                                <h2 className="text-lg font-black text-foreground mb-2">IA Exclusiva</h2>
-                                <p className="text-foreground/40 text-sm max-w-[200px] mb-6">
-                                    Actualiza a Pro o Enterprise para ver insights predictivos de demanda.
-                                </p>
-                                <a href="/dashboard/billing?apply_plan=PRO" className="bg-foreground text-background px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm hover:scale-105 transition-transform">
-                                    <Zap className="w-4 h-4" />
-                                    Mejorar Plan
-                                </a>
-                            </div>
-                        </div>
-                    )}
+                    </ResponsiveGridLayout>
                 </div>
             </div>
             {/* Modal: Detalles de Reserva */}
