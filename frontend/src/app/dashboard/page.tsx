@@ -729,15 +729,22 @@ const DashboardPage = () => {
                             width={containerWidth || 1200}
                             className={`layout ${isEditMode ? 'is-editing' : ''}`}
                             layouts={useMemo(() => {
-                                // Forzar el estado 'static' en todos los items si no estamos en modo edición
-                                // Esto es vital para que react-grid-layout desactive TODO el JS de interacción.
+                                // Protección defensiva: si layouts no es válido, usamos el por defecto
+                                if (!layouts || typeof layouts !== 'object') return DEFAULT_LAYOUT;
+
                                 const processed: any = {};
-                                Object.keys(layouts).forEach(bp => {
-                                    processed[bp] = layouts[bp].map((item: any) => ({
+                                const breakpoints = ["lg", "md", "sm", "xs", "xxs"];
+                                
+                                breakpoints.forEach(bp => {
+                                    // Si el breakpoint no existe o no es un array, usamos el del DEFAULT_LAYOUT
+                                    const currentLayout = Array.isArray(layouts[bp]) ? layouts[bp] : (DEFAULT_LAYOUT as any)[bp];
+                                    
+                                    processed[bp] = currentLayout.map((item: any) => ({
                                         ...item,
-                                        static: !isEditMode
+                                        static: !isEditMode // Esto bloquea/desbloquea el movimiento físicamente
                                     }));
                                 });
+                                
                                 return processed;
                             }, [layouts, isEditMode])}
                             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
