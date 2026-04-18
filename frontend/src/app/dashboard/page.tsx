@@ -656,7 +656,7 @@ const DashboardPage = () => {
                     {/* @ts-ignore */}
                     <ResponsiveGridLayout
                         className={`layout ${isEditMode ? 'is-editing' : ''}`}
-                        layouts={{ lg: layout }}
+                        layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
                         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                         cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
                         rowHeight={30}
@@ -666,23 +666,23 @@ const DashboardPage = () => {
                         margin={[20, 20]}
                         useCSSTransforms={true}
                     >
-                        <div key="kpis" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                        <div key="kpis" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'kpis')} className={isEditMode ? "cursor-move glass-hover" : ""}>
                             <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
                         </div>
                         
-                        <div key="live" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                        <div key="live" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'live')} className={isEditMode ? "cursor-move glass-hover" : ""}>
                             <LiveFieldsWidget liveFields={liveFields} handleLiveAction={handleLiveAction} setShowQuickBooking={setShowQuickBooking} />
                         </div>
 
-                        <div key="upcoming" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                        <div key="upcoming" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'upcoming')} className={isEditMode ? "cursor-move glass-hover" : ""}>
                             <UpcomingBookingsWidget filteredUpcoming={filteredUpcoming} bookingFilter={bookingFilter} setBookingFilter={setBookingFilter} setSelectedBooking={setSelectedBooking} />
                         </div>
 
-                        <div key="chart" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                        <div key="revenue" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'revenue')} className={isEditMode ? "cursor-move glass-hover" : ""}>
                             <RevenueChartWidget globalDateRange={globalDateRange} stats={stats} chartData={chartData} />
                         </div>
 
-                        <div key="ai" className={isEditMode ? "cursor-move glass-hover" : ""}>
+                        <div key="ia" data-grid={DEFAULT_LAYOUT.find(l => l.i === 'ia')} className={isEditMode ? "cursor-move glass-hover" : ""}>
                             <AiInsightWidget plan={plan} prediction={prediction} />
                         </div>
                     </ResponsiveGridLayout>
