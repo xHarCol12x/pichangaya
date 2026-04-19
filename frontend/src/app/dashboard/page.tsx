@@ -767,7 +767,7 @@ const DashboardPage = () => {
                     )}
                     <div 
                         ref={containerRef} 
-                        className="w-full min-h-[800px] transition-all duration-500 ease-in-out"
+                        className="w-full max-w-[1400px] mx-auto min-h-[800px] transition-all duration-500 ease-in-out flex flex-col"
                         style={isEditMode && editBreakpoint === 'sm' ? { maxWidth: '420px' } : {}}
                     >
                         {/* @ts-ignore */}
