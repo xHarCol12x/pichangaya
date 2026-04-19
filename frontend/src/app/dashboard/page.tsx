@@ -7,7 +7,7 @@ import {
     TrendingUp, TrendingDown, Users, CalendarCheck, CreditCard,
     BrainCircuit, ArrowUpRight, ChevronRight, MoreVertical,
     Activity, Zap, Clock, MapPin, Loader2, RefreshCw,
-    CalendarX, CheckCircle2, AlertCircle, GripVertical
+    CalendarX, CheckCircle2, AlertCircle, GripVertical, Monitor, Smartphone
 } from "lucide-react";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -162,6 +162,7 @@ const DashboardPage = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [layouts, setLayouts] = useState<any>(DEFAULT_LAYOUT);
     const [previousLayouts, setPreviousLayouts] = useState<any>(null);
+    const [editBreakpoint, setEditBreakpoint] = useState<string>("lg"); // lg or sm/xs simulation
 
     // ── 0. Procesamiento de Layout (Hook de nivel superior para evitar Error #310) ──
     const finalLayouts = useMemo(() => {
@@ -364,6 +365,7 @@ const DashboardPage = () => {
 
     const handleSaveLayout = async () => {
         setIsEditMode(false);
+        setEditBreakpoint("lg");
         const loadingToast = toast.loading("Guardando tablero...");
         try {
             const userStr = localStorage.getItem("fieldiq_user");
@@ -392,10 +394,12 @@ const DashboardPage = () => {
             setLayouts(previousLayouts);
         }
         setIsEditMode(false);
+        setEditBreakpoint("lg");
     };
 
     const toggleEditMode = () => {
-        if (plan !== 'pro' && plan !== 'enterprise' && plan !== 'SUPER_ADMIN') {
+        const p = plan?.toLowerCase();
+        if (p !== 'pro' && p !== 'enterprise' && p !== 'super_admin' && p !== 'admin') {
             toast.error(
                 <div className="flex flex-col gap-2">
                     <span className="font-bold flex items-center gap-2"><Lock className="w-4 h-4" /> Nivel Pro Requerido</span>
@@ -711,7 +715,25 @@ const DashboardPage = () => {
                         </button>
 
                         {isEditMode ? (
-                            <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                            <div className="flex flex-wrap items-center gap-3 animate-in fade-in zoom-in duration-300">
+                                {/* Device Selector */}
+                                <div className="flex items-center gap-1 bg-foreground/5 p-1 rounded-xl border border-divider mr-2">
+                                    <button
+                                        onClick={() => setEditBreakpoint("lg")}
+                                        className={`p-2 rounded-lg transition-all ${editBreakpoint === "lg" ? "bg-accent text-accent-foreground shadow-md" : "text-foreground/40 hover:text-foreground hover:bg-foreground/5"}`}
+                                        title="Vista PC"
+                                    >
+                                        <Monitor className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setEditBreakpoint("sm")}
+                                        className={`p-2 rounded-lg transition-all ${editBreakpoint === "sm" ? "bg-accent text-accent-foreground shadow-md" : "text-foreground/40 hover:text-foreground hover:bg-foreground/5"}`}
+                                        title="Vista Móvil"
+                                    >
+                                        <Smartphone className="w-4 h-4" />
+                                    </button>
+                                </div>
+
                                 <button
                                     onClick={handleCancelLayout}
                                     className="px-5 py-2.5 rounded-xl font-bold border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-all text-sm"
@@ -746,11 +768,15 @@ const DashboardPage = () => {
                             Modo Edición: Organiza tus widgets libremente.
                         </div>
                     )}
-                    <div ref={containerRef} className="w-full min-h-[800px]">
+                    <div 
+                        ref={containerRef} 
+                        className="w-full min-h-[800px] transition-all duration-500 ease-in-out flex justify-center"
+                        style={isEditMode && editBreakpoint === 'sm' ? { maxWidth: '420px', margin: '0 auto' } : {}}
+                    >
                         {/* @ts-ignore */}
                         <ResponsiveGridLayout
-                            key={containerWidth + (isEditMode ? '_editing' : '_view')}
-                            width={containerWidth || 1200}
+                            key={containerWidth + (isEditMode ? '_editing' : '_view') + (editBreakpoint)}
+                            width={isEditMode && editBreakpoint === 'sm' ? 400 : (containerWidth || 1200)}
                             className={`layout ${isEditMode ? 'is-editing' : ''}`}
                             layouts={finalLayouts}
                             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
