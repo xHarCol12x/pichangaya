@@ -37,39 +37,39 @@ import {
 
 const DEFAULT_LAYOUT = {
     lg: [
-        { i: "kpis", x: 0, y: 0, w: 12, h: 8, minW: 12 },
-        { i: "chart", x: 0, y: 8, w: 8, h: 18, minW: 6 },
-        { i: "ai", x: 8, y: 8, w: 4, h: 18, minW: 3 },
-        { i: "live", x: 0, y: 26, w: 12, h: 14, minW: 6 },
-        { i: "upcoming", x: 0, y: 40, w: 12, h: 16, minW: 6 }
+        { i: "kpis", x: 0, y: 0, w: 12, h: 6, minW: 12 },
+        { i: "chart", x: 0, y: 6, w: 8, h: 12, minW: 6 },
+        { i: "ai", x: 8, y: 6, w: 4, h: 12, minW: 3 },
+        { i: "live", x: 0, y: 18, w: 12, h: 10, minW: 6 },
+        { i: "upcoming", x: 0, y: 28, w: 12, h: 12, minW: 6 }
     ],
     md: [
-        { i: "kpis", x: 0, y: 0, w: 10, h: 8 },
-        { i: "chart", x: 0, y: 8, w: 6, h: 16 },
-        { i: "ai", x: 6, y: 8, w: 4, h: 16 },
-        { i: "live", x: 0, y: 24, w: 10, h: 14 },
-        { i: "upcoming", x: 0, y: 38, w: 10, h: 16 }
+        { i: "kpis", x: 0, y: 0, w: 10, h: 6 },
+        { i: "chart", x: 0, y: 6, w: 6, h: 12 },
+        { i: "ai", x: 6, y: 6, w: 4, h: 12 },
+        { i: "live", x: 0, y: 18, w: 10, h: 10 },
+        { i: "upcoming", x: 0, y: 28, w: 10, h: 12 }
     ],
     sm: [
-        { i: "kpis", x: 0, y: 0, w: 6, h: 14 },
-        { i: "chart", x: 0, y: 14, w: 6, h: 14 },
-        { i: "ai", x: 0, y: 28, w: 6, h: 10 },
-        { i: "live", x: 0, y: 38, w: 6, h: 12 },
-        { i: "upcoming", x: 0, y: 50, w: 6, h: 14 }
+        { i: "kpis", x: 0, y: 0, w: 6, h: 10 },
+        { i: "chart", x: 0, y: 10, w: 6, h: 10 },
+        { i: "ai", x: 0, y: 20, w: 6, h: 8 },
+        { i: "live", x: 0, y: 28, w: 6, h: 10 },
+        { i: "upcoming", x: 0, y: 38, w: 6, h: 10 }
     ],
     xs: [
-        { i: "kpis", x: 0, y: 0, w: 4, h: 18 },
-        { i: "chart", x: 0, y: 18, w: 4, h: 14 },
-        { i: "ai", x: 0, y: 32, w: 4, h: 12 },
-        { i: "live", x: 0, y: 44, w: 4, h: 12 },
-        { i: "upcoming", x: 0, y: 56, w: 4, h: 14 }
+        { i: "kpis", x: 0, y: 0, w: 4, h: 12 },
+        { i: "chart", x: 0, y: 12, w: 4, h: 10 },
+        { i: "ai", x: 0, y: 22, w: 4, h: 8 },
+        { i: "live", x: 0, y: 30, w: 4, h: 10 },
+        { i: "upcoming", x: 0, y: 40, w: 4, h: 10 }
     ],
     xxs: [
-        { i: "kpis", x: 0, y: 0, w: 2, h: 22 },
-        { i: "chart", x: 0, y: 22, w: 2, h: 14 },
-        { i: "ai", x: 0, y: 36, w: 2, h: 12 },
-        { i: "live", x: 0, y: 48, w: 2, h: 12 },
-        { i: "upcoming", x: 0, y: 60, w: 2, h: 14 }
+        { i: "kpis", x: 0, y: 0, w: 2, h: 16 },
+        { i: "chart", x: 0, y: 16, w: 2, h: 10 },
+        { i: "ai", x: 0, y: 26, w: 2, h: 8 },
+        { i: "live", x: 0, y: 34, w: 2, h: 10 },
+        { i: "upcoming", x: 0, y: 44, w: 2, h: 10 }
     ]
 };
 
