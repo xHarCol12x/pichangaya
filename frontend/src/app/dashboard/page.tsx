@@ -171,13 +171,10 @@ const DashboardPage = () => {
         const bps = ["lg", "md", "sm", "xs", "xxs"];
         bps.forEach(bp => {
             const current = Array.isArray(layouts[bp]) ? layouts[bp] : (DEFAULT_LAYOUT as any)[bp];
-            processed[bp] = current.map((item: any) => ({
-                ...item,
-                static: !isEditMode
-            }));
+            processed[bp] = current.map((item: any) => ({ ...item }));
         });
         return processed;
-    }, [layouts, isEditMode]);
+    }, [layouts]);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState<number>(1200);
@@ -770,20 +767,23 @@ const DashboardPage = () => {
                     )}
                     <div 
                         ref={containerRef} 
-                        className="w-full min-h-[800px] transition-all duration-500 ease-in-out flex justify-center"
-                        style={isEditMode && editBreakpoint === 'sm' ? { maxWidth: '420px', margin: '0 auto' } : {}}
+                        className="w-full min-h-[800px] transition-all duration-500 ease-in-out"
+                        style={isEditMode && editBreakpoint === 'sm' ? { maxWidth: '420px' } : {}}
                     >
                         {/* @ts-ignore */}
                         <ResponsiveGridLayout
-                            key={containerWidth + (isEditMode ? '_editing' : '_view') + (editBreakpoint)}
+                            key={(isEditMode ? '_editing' : '_view') + editBreakpoint}
                             width={isEditMode && editBreakpoint === 'sm' ? 400 : (containerWidth || 1200)}
                             className={`layout ${isEditMode ? 'is-editing' : ''}`}
                             layouts={finalLayouts}
                             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                             cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
                             rowHeight={30}
+                            isDraggable={isEditMode}
+                            isResizable={isEditMode}
                             onLayoutChange={(curr: any, all: any) => isEditMode && setLayouts(all)}
-                            margin={[20, 20]}
+                            margin={[16, 16]}
+                            containerPadding={[0, 0]}
                             useCSSTransforms={true}
                         >
                             <div key="kpis" className={isEditMode ? "cursor-move glass-hover group" : ""}>
