@@ -44,7 +44,7 @@ const KpiCard = ({ title, value, sub, change, positive, icon: Icon, accent }: an
 
 export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFieldsLength: number }) {
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 h-full w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 h-full w-full">
             <KpiCard
                 title="Ingresos Totales"
                 value={formatCurrency(stats.revenue)}
