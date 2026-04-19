@@ -58,18 +58,18 @@ const DEFAULT_LAYOUT = {
         { i: "upcoming", x: 0, y: 38, w: 6, h: 10 }
     ],
     xs: [
-        { i: "kpis", x: 0, y: 0, w: 4, h: 8 },
-        { i: "chart", x: 0, y: 8, w: 4, h: 10 },
-        { i: "ai", x: 0, y: 18, w: 4, h: 8 },
-        { i: "live", x: 0, y: 26, w: 4, h: 10 },
-        { i: "upcoming", x: 0, y: 36, w: 4, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 4, h: 12 },
+        { i: "chart", x: 0, y: 12, w: 4, h: 14 },
+        { i: "ai", x: 0, y: 26, w: 4, h: 10 },
+        { i: "live", x: 0, y: 36, w: 4, h: 12 },
+        { i: "upcoming", x: 0, y: 48, w: 4, h: 14 }
     ],
     xxs: [
-        { i: "kpis", x: 0, y: 0, w: 2, h: 10 },
-        { i: "chart", x: 0, y: 10, w: 2, h: 10 },
-        { i: "ai", x: 0, y: 20, w: 2, h: 8 },
-        { i: "live", x: 0, y: 28, w: 2, h: 10 },
-        { i: "upcoming", x: 0, y: 38, w: 2, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 2, h: 18 },
+        { i: "chart", x: 0, y: 18, w: 2, h: 14 },
+        { i: "ai", x: 0, y: 32, w: 2, h: 12 },
+        { i: "live", x: 0, y: 44, w: 2, h: 12 },
+        { i: "upcoming", x: 0, y: 56, w: 2, h: 14 }
     ]
 };
 
@@ -171,10 +171,13 @@ const DashboardPage = () => {
         const bps = ["lg", "md", "sm", "xs", "xxs"];
         bps.forEach(bp => {
             const current = Array.isArray(layouts[bp]) ? layouts[bp] : (DEFAULT_LAYOUT as any)[bp];
-            processed[bp] = current.map((item: any) => ({ ...item }));
+            processed[bp] = current.map((item: any) => ({
+                ...item,
+                static: !isEditMode
+            }));
         });
         return processed;
-    }, [layouts]);
+    }, [layouts, isEditMode]);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState<number>(1200);
