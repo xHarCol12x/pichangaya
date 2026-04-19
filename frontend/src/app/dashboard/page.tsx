@@ -58,18 +58,18 @@ const DEFAULT_LAYOUT = {
         { i: "upcoming", x: 0, y: 38, w: 6, h: 10 }
     ],
     xs: [
-        { i: "kpis", x: 0, y: 0, w: 4, h: 12 },
-        { i: "chart", x: 0, y: 12, w: 4, h: 10 },
-        { i: "ai", x: 0, y: 22, w: 4, h: 8 },
-        { i: "live", x: 0, y: 30, w: 4, h: 10 },
-        { i: "upcoming", x: 0, y: 40, w: 4, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 4, h: 8 },
+        { i: "chart", x: 0, y: 8, w: 4, h: 10 },
+        { i: "ai", x: 0, y: 18, w: 4, h: 8 },
+        { i: "live", x: 0, y: 26, w: 4, h: 10 },
+        { i: "upcoming", x: 0, y: 36, w: 4, h: 10 }
     ],
     xxs: [
-        { i: "kpis", x: 0, y: 0, w: 2, h: 16 },
-        { i: "chart", x: 0, y: 16, w: 2, h: 10 },
-        { i: "ai", x: 0, y: 26, w: 2, h: 8 },
-        { i: "live", x: 0, y: 34, w: 2, h: 10 },
-        { i: "upcoming", x: 0, y: 44, w: 2, h: 10 }
+        { i: "kpis", x: 0, y: 0, w: 2, h: 10 },
+        { i: "chart", x: 0, y: 10, w: 2, h: 10 },
+        { i: "ai", x: 0, y: 20, w: 2, h: 8 },
+        { i: "live", x: 0, y: 28, w: 2, h: 10 },
+        { i: "upcoming", x: 0, y: 38, w: 2, h: 10 }
     ]
 };
 
@@ -315,7 +315,7 @@ const DashboardPage = () => {
             const overridesParsed = typeof overridesRaw === 'string' ? JSON.parse(overridesRaw) : overridesRaw;
 
             // Force reset if layout is old (to fix mobile distortion for existing users)
-            const LAYOUT_VERSION = "3.3";
+            const LAYOUT_VERSION = "4.0";
             const needsMigration = !overridesParsed.dashboardVersion || overridesParsed.dashboardVersion !== LAYOUT_VERSION;
 
             setFeatureOverrides(overridesParsed);
@@ -371,7 +371,7 @@ const DashboardPage = () => {
                 const newOverrides = {
                     ...featureOverrides,
                     dashboardLayouts: layouts,
-                    dashboardVersion: "3.2"
+                    dashboardVersion: "4.0"
                 };
 
                 // Re-added stringify because backend expects featureOverrides as a string/text field
