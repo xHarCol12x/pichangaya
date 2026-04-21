@@ -32,6 +32,7 @@ import {
     RevenueChartWidget,
     AiInsightWidget
 } from "@/components/dashboard/widgets";
+import { getDashboardCache, setDashboardCache } from "@/lib/dashboardCache";
 
 
 
@@ -289,8 +290,21 @@ const DashboardPage = () => {
     }, []);
 
     const loadData = async (silent = false) => {
-        if (!silent) setLoading(true);
-        else setRefreshing(true);
+        if (!silent) {
+            // Try loading from cache first for instant display
+            const cached = getDashboardCache();
+            if (cached) {
+                setAllBookings(cached.bookings);
+                setAllFields(cached.fields);
+                setMyVenues(cached.venues);
+                if (cached.clients) setAllClientsList(cached.clients);
+                // Don't set loading=true if we have cache, show data immediately
+            } else {
+                setLoading(true);
+            }
+        } else {
+            setRefreshing(true);
+        }
         try {
             const userStr = localStorage.getItem("fieldiq_user");
             const userObj = userStr ? JSON.parse(userStr) : null;
@@ -331,10 +345,21 @@ const DashboardPage = () => {
             }
 
             // Load clients for quick booking
+            let clientsData: any[] = [];
             if (userVenues.length > 0) {
                 const cRes = await clientsApi.getAll(userVenues[0].id).catch(() => ({ data: [] }));
-                setAllClientsList(cRes.data || []);
+                clientsData = cRes.data || [];
+                setAllClientsList(clientsData);
             }
+
+            // Save fresh data to cache for next visit
+            setDashboardCache({
+                bookings: bRes.data || [],
+                fields: fRes.data || [],
+                venues: userVenues,
+                user: uRes.data || {},
+                clients: clientsData,
+            });
         } catch (e) {
             console.error(e);
         } finally {
