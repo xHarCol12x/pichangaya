@@ -674,7 +674,7 @@ const DashboardPage = () => {
 
     return (
         <>
-            <div className="space-y-8 animate-in fade-in duration-700">
+            <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 w-full">
                 <Toaster theme="dark" position="bottom-right" richColors closeButton />
 
                 {/* Header */}
@@ -760,8 +760,28 @@ const DashboardPage = () => {
                     </div>
                 </header>
 
-                {/* Bento Box Grid Layout */}
-                <div className={`mt-6 ${isEditMode ? 'bg-foreground/[0.02] border border-dashed border-border rounded-3xl p-4' : ''}`}>
+                {/* ── Mobile: Pure CSS Stack (same pattern as Users/Bookings/Fields pages) ── */}
+                <div className="block lg:hidden space-y-4">
+                    {!isEditMode && (
+                        <>
+                            <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
+                            <RevenueChartWidget globalDateRange={globalDateRange} stats={stats} chartData={chartData} />
+                            <AiInsightWidget plan={plan} prediction={prediction} />
+                            <LiveFieldsWidget liveFields={liveFields} handleLiveAction={handleLiveAction} setShowQuickBooking={setShowQuickBooking} />
+                            <UpcomingBookingsWidget filteredUpcoming={filteredUpcoming} bookingFilter={bookingFilter} setBookingFilter={setBookingFilter} setSelectedBooking={setSelectedBooking} />
+                        </>
+                    )}
+                    {isEditMode && (
+                        <div className="py-8 text-center text-foreground/50 text-sm border-2 border-dashed border-border rounded-3xl">
+                            <Smartphone className="w-8 h-8 mx-auto mb-2 text-accent/50" />
+                            <p>La personalización del tablero solo está disponible en pantalla grande (PC/tablet).</p>
+                            <p className="text-xs mt-1 text-foreground/30">El diseño móvil se aplica automáticamente.</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Desktop: React Grid Layout ── */}
+                <div className="hidden lg:block">
                     {isEditMode && (
                         <div className="mb-4 text-center text-sm font-medium text-foreground/50 animate-pulse flex items-center justify-center gap-2">
                             <Zap className="w-4 h-4 text-accent" />
