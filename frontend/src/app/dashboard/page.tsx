@@ -58,18 +58,18 @@ const DEFAULT_LAYOUT = {
         { i: "upcoming", x: 0, y: 38, w: 6, h: 10 }
     ],
     xs: [
-        { i: "kpis", x: 0, y: 0, w: 4, h: 11 },
-        { i: "chart", x: 0, y: 11, w: 4, h: 8 },
-        { i: "ai", x: 0, y: 19, w: 4, h: 7 },
-        { i: "live", x: 0, y: 26, w: 4, h: 10 },
-        { i: "upcoming", x: 0, y: 36, w: 4, h: 12 }
+        { i: "kpis", x: 0, y: 0, w: 4, h: 18 },
+        { i: "chart", x: 0, y: 18, w: 4, h: 11 },
+        { i: "ai", x: 0, y: 29, w: 4, h: 8 },
+        { i: "live", x: 0, y: 37, w: 4, h: 10 },
+        { i: "upcoming", x: 0, y: 47, w: 4, h: 12 }
     ],
     xxs: [
-        { i: "kpis", x: 0, y: 0, w: 2, h: 11 },
-        { i: "chart", x: 0, y: 11, w: 2, h: 8 },
-        { i: "ai", x: 0, y: 19, w: 2, h: 7 },
-        { i: "live", x: 0, y: 26, w: 2, h: 10 },
-        { i: "upcoming", x: 0, y: 36, w: 2, h: 12 }
+        { i: "kpis", x: 0, y: 0, w: 2, h: 18 },
+        { i: "chart", x: 0, y: 18, w: 2, h: 11 },
+        { i: "ai", x: 0, y: 29, w: 2, h: 8 },
+        { i: "live", x: 0, y: 37, w: 2, h: 10 },
+        { i: "upcoming", x: 0, y: 47, w: 2, h: 12 }
     ]
 };
 
@@ -318,7 +318,7 @@ const DashboardPage = () => {
             const overridesParsed = typeof overridesRaw === 'string' ? JSON.parse(overridesRaw) : overridesRaw;
 
             // Force reset if layout is old (to fix mobile distortion for existing users)
-            const LAYOUT_VERSION = "8.0";
+            const LAYOUT_VERSION = "9.0";
             const needsMigration = !overridesParsed.dashboardVersion || overridesParsed.dashboardVersion !== LAYOUT_VERSION;
 
             setFeatureOverrides(overridesParsed);
@@ -374,7 +374,7 @@ const DashboardPage = () => {
                 const newOverrides = {
                     ...featureOverrides,
                     dashboardLayouts: layouts,
-                    dashboardVersion: "8.0"
+                    dashboardVersion: "9.0"
                 };
 
                 // Re-added stringify because backend expects featureOverrides as a string/text field
@@ -770,9 +770,20 @@ const DashboardPage = () => {
                     )}
                     <div 
                         ref={containerRef} 
-                        className="w-full max-w-[1400px] mx-auto min-h-[800px] transition-all duration-500 ease-in-out flex flex-col"
-                        style={isEditMode && editBreakpoint === 'sm' ? { maxWidth: '420px' } : {}}
+                        className={`w-full max-w-[1400px] mx-auto min-h-[800px] transition-all duration-500 ease-in-out flex flex-col ${isEditMode && editBreakpoint === 'sm' ? 'relative overflow-y-auto max-h-[85vh] scrollbar-hide' : ''}`}
+                        style={isEditMode && editBreakpoint === 'sm' ? { 
+                            maxWidth: '430px', 
+                            border: '14px solid #1e293b', 
+                            borderRadius: '3.5rem', 
+                            background: 'rgba(2, 8, 23, 0.8)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)'
+                        } : {}}
                     >
+                        {isEditMode && editBreakpoint === 'sm' && (
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1e293b] rounded-b-2xl z-50 flex items-center justify-center">
+                                <div className="w-10 h-1 bg-white/10 rounded-full" />
+                            </div>
+                        )}
                         {/* @ts-ignore */}
                         <ResponsiveGridLayout
                             key={(isEditMode ? '_editing' : '_view') + editBreakpoint}
