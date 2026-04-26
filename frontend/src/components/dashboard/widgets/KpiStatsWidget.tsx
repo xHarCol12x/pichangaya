@@ -32,39 +32,47 @@ const KpiCard = ({ title, value, sub, change, positive, icon: Icon, accent }: an
 };
 
 export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFieldsLength: number }) {
+    // Defensive normalization
+    const revenue = stats?.revenue || 0;
+    const todayRevenue = stats?.todayRevenue || 0;
+    const confirmedCount = Array.isArray(stats?.confirmed) ? stats.confirmed.length : 0;
+    const todayCount = Array.isArray(stats?.todayBookings) ? stats.todayBookings.length : 0;
+    const pendingCount = Array.isArray(stats?.pending) ? stats.pending.length : 0;
+    const occupancy = stats?.occupancy || 0;
+
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard
-                title="Ingresos Totales"
-                value={formatCurrency(stats.revenue)}
-                sub={`${formatCurrency(stats.todayRevenue)} hoy`}
+                title="Total Revenue"
+                value={formatCurrency(revenue)}
+                sub={`${formatCurrency(todayRevenue)} today`}
                 change="+14.2%"
                 positive={true}
                 icon={CreditCard}
                 accent="#cafd00"
             />
             <KpiCard
-                title="Reservas Confirmadas"
-                value={stats.confirmed.length}
-                sub={`${stats.todayBookings.length} para hoy`}
+                title="Confirmed Bookings"
+                value={confirmedCount}
+                sub={`${todayCount} for today`}
                 change="+8.1%"
                 positive={true}
                 icon={CalendarCheck}
                 accent="#818cf8"
             />
             <KpiCard
-                title="Pendientes de Pago"
-                value={stats.pending.length}
-                sub="Requieren atención"
-                change={stats.pending.length > 0 ? `${stats.pending.length} activas` : "Al día"}
-                positive={stats.pending.length === 0}
+                title="Pending Payments"
+                value={pendingCount}
+                sub="Requires Attention"
+                change={pendingCount > 0 ? `${pendingCount} active` : "Cleared"}
+                positive={pendingCount === 0}
                 icon={AlertCircle}
                 accent="#f59e0b"
             />
             <KpiCard
-                title="Ocupación Hoy"
-                value={`${stats.occupancy}%`}
-                sub={`${allFieldsLength} canchas registradas`}
+                title="Daily Occupancy"
+                value={`${occupancy}%`}
+                sub={`${allFieldsLength} sectors total`}
                 change="+5.4%"
                 positive={true}
                 icon={Activity}
