@@ -43,21 +43,21 @@ export function UpcomingBookingsWidget({
     const paginatedBookings = filteredUpcoming.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     return (
-        <div className="glass rounded-[2rem] border border-border overflow-hidden w-full h-full flex flex-col justify-between">
-            <div className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4 border-b border-border gap-4 shrink-0">
+        <div className="bg-[#1a1919] rounded-[1.5rem] border border-[#484847]/15 overflow-hidden w-full h-full flex flex-col justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4 border-b border-[#484847]/15 gap-4 shrink-0">
                 <div>
-                    <h2 className="text-base font-black text-foreground">Próximas Reservas</h2>
-                    <p className="text-foreground/40 text-xs mt-0.5">{filteredUpcoming.length} res. encontradas</p>
+                    <h2 className="text-xl font-black text-white font-space-grotesk tracking-tighter uppercase">Upcoming Bookings</h2>
+                    <p className="text-[#adaaaa] font-mono text-[10px] mt-0.5 uppercase tracking-widest">{filteredUpcoming.length} ENTRIES FOUND</p>
                 </div>
 
-                <div className="flex items-center gap-1 bg-foreground/5 p-1 rounded-xl">
+                <div className="flex items-center gap-1 bg-[#0e0e0e] border border-[#484847]/20 p-1 rounded-xl">
                     {["ALL", "CONFIRMED", "PENDING"].map(f => (
                         <button
                             key={f}
                             onClick={() => { setBookingFilter(f); setCurrentPage(1); }}
-                            className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${bookingFilter === f ? "bg-background text-foreground shadow-sm" : "text-foreground/40 hover:text-foreground/70"}`}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold font-space-grotesk uppercase tracking-wider transition-all ${bookingFilter === f ? "bg-[#cafd00] text-[#1a1919] shadow-[0_0_10px_rgba(202,253,0,0.2)]" : "text-[#adaaaa] hover:text-white"}`}
                         >
-                            {f === "ALL" ? "Todas" : f === "CONFIRMED" ? "Pagadas" : "Por Pagar"}
+                            {f === "ALL" ? "ALL" : f === "CONFIRMED" ? "PAID" : "PENDING"}
                         </button>
                     ))}
                 </div>
@@ -72,29 +72,29 @@ export function UpcomingBookingsWidget({
                 <div className="flex-1 overflow-x-auto min-h-0">
                     <div className="w-full h-full flex flex-col relative overflow-y-auto">
                         {paginatedBookings.map((b, i) => (
-                            <div key={b.id || i} className="group shrink-0 hover:bg-foreground/[0.02] transition-colors border-b border-border/50 py-3 px-6 flex justify-between items-center gap-4 cursor-pointer" onClick={() => setSelectedBooking(b)}>
+                            <div key={b.id || i} className="group shrink-0 hover:bg-[#262626] transition-colors border-b border-[#484847]/15 py-4 px-6 flex justify-between items-center gap-4 cursor-pointer" onClick={() => setSelectedBooking(b)}>
                                 <div className="flex flex-col gap-1 w-1/3">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                                            <MapPin className="w-3 h-3 text-accent" />
+                                        <div className="w-6 h-6 rounded-lg bg-[#cafd00]/10 flex items-center justify-center shrink-0">
+                                            <MapPin className="w-3 h-3 text-[#cafd00]" />
                                         </div>
-                                        <span className="font-bold text-foreground text-sm truncate leading-tight block w-full">{b.field.name}</span>
+                                        <span className="font-bold text-white text-base font-space-grotesk uppercase tracking-tight truncate leading-tight block w-full">{b.field.name}</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-foreground/50 ml-8 whitespace-nowrap">
-                                        <span className="text-xs">{formatDate(b.startTime)}</span>
-                                        {isToday(b.startTime) && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-accent/15 text-accent line-height-none">Hoy</span>}
+                                    <div className="flex items-center gap-1.5 text-[#adaaaa] ml-8 whitespace-nowrap">
+                                        <span className="text-[10px] uppercase tracking-widest font-mono">{formatDate(b.startTime)}</span>
+                                        {isToday(b.startTime) && <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-[#cafd00]/15 text-[#cafd00] line-height-none">HOY</span>}
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1 w-1/3">
-                                    <div className="flex items-center gap-1.5 text-foreground/50">
+                                    <div className="flex items-center gap-1.5 text-[#adaaaa]">
                                         <Clock className="w-3 h-3" />
-                                        <span className="font-mono text-xs whitespace-nowrap">{formatTime(b.startTime)} - {formatTime(b.endTime || b.startTime)}</span>
+                                        <span className="font-space-grotesk text-xl text-white tracking-tighter whitespace-nowrap">{formatTime(b.startTime)}</span>
                                     </div>
-                                    <span className="font-black text-foreground text-xs mt-0.5">{formatCurrency(b.totalPrice || 0)}</span>
+                                    <span className="font-bold text-[#cafd00] font-mono text-[10px] mt-0.5 tracking-widest">{formatCurrency(b.totalPrice || 0)}</span>
                                 </div>
                                 <div className="w-1/4 text-right flex flex-col items-end gap-1 shrink-0">
                                     <StatusBadge status={b.status} />
-                                    <button className="text-[10px] uppercase font-bold text-foreground/30 group-hover:text-accent transition-colors mt-1">Ver detalles &rarr;</button>
+                                    <button className="text-[9px] uppercase font-bold text-[#777575] group-hover:text-[#cafd00] transition-colors mt-1 tracking-widest font-mono">Ver detalles &rarr;</button>
                                 </div>
                             </div>
                         ))}
@@ -103,14 +103,14 @@ export function UpcomingBookingsWidget({
             )}
 
             {/* Pagination */}
-            <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t border-border bg-foreground/[0.01]">
-                {totalPages > 0 && <span className="text-[10px] text-foreground/40 font-medium">1-{paginatedBookings.length} de {filteredUpcoming.length}</span>}
+            <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t border-[#484847]/15 bg-[#0e0e0e]">
+                {totalPages > 0 && <span className="text-[10px] text-[#adaaaa] font-mono tracking-widest uppercase">{paginatedBookings.length} OF {filteredUpcoming.length}</span>}
                 <div className="flex items-center gap-1 ml-auto">
-                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-6 h-6 rounded border border-border flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/5 disabled:opacity-30 disabled:pointer-events-none transition-all">
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-6 h-6 rounded border border-[#484847]/30 flex items-center justify-center text-[#adaaaa] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:pointer-events-none transition-all">
                         <ChevronLeft className="w-3 h-3" />
                     </button>
-                    <span className="text-[10px] font-bold text-foreground mx-1">{currentPage} / {Math.max(1, totalPages)}</span>
-                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="w-6 h-6 rounded border border-border flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/5 disabled:opacity-30 disabled:pointer-events-none transition-all">
+                    <span className="text-[10px] font-bold text-white font-mono mx-1">{currentPage} / {Math.max(1, totalPages)}</span>
+                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="w-6 h-6 rounded border border-[#484847]/30 flex items-center justify-center text-[#adaaaa] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:pointer-events-none transition-all">
                         <ChevronRight className="w-3 h-3" />
                     </button>
                 </div>

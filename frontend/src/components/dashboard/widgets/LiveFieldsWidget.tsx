@@ -20,11 +20,11 @@ export function LiveFieldsWidget({
 }) {
     return (
         <div className="w-full h-full flex flex-col pt-1">
-            <div className="flex items-center gap-2 mb-3 px-2 flex-shrink-0">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
-                <h2 className="text-xl font-black text-foreground tracking-tight">En Juego Ahora</h2>
-                <span className="text-foreground/40 text-xs ml-2 font-medium bg-foreground/5 px-2 py-1 rounded-md hidden sm:inline-block">
-                    Actualización en vivo
+            <div className="flex items-center gap-2 mb-4 px-2 flex-shrink-0">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#cafd00] animate-pulse shadow-[0_0_12px_#cafd00]" />
+                <h2 className="text-2xl font-black text-foreground font-space-grotesk tracking-tighter uppercase">Live Matches</h2>
+                <span className="text-[#cafd00] text-[10px] ml-2 font-mono bg-[#cafd00]/10 border border-[#cafd00]/30 px-2 py-0.5 rounded-sm hidden sm:inline-block">
+                    [ SYNCING ]
                 </span>
             </div>
 
@@ -37,25 +37,25 @@ export function LiveFieldsWidget({
                     {liveFields.map(field => {
                         const b = field.booking;
                         return (
-                            <div key={field.id} className={`snap-center w-[85vw] sm:w-[320px] xl:w-auto shrink-0 p-5 rounded-[2rem] border backdrop-blur-md transition-all flex flex-col h-full overflow-y-auto hide-scrollbar ${field.isOccupied ? 'bg-white/80 dark:bg-slate-900/80 border-red-500/20 md:shadow-[0_8px_30px_rgba(239,68,68,0.08)]' : 'bg-slate-100/50 dark:bg-slate-900/40 border-emerald-500/10'}`}>
+                            <div key={field.id} className={`snap-center w-[85vw] sm:w-[320px] xl:w-auto shrink-0 p-5 rounded-[1.5rem] border transition-all flex flex-col h-full overflow-y-auto hide-scrollbar ${field.isOccupied ? 'bg-[#1a1919] border-[#cafd00]/30 shadow-[0_8px_30px_rgba(202,253,0,0.05)]' : 'bg-[#131313] border-[#484847]/20'}`}>
 
                                 {/* CABECERA DE LA TARJETA */}
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <h3 className="font-black text-slate-900 dark:text-white text-base truncate pr-2 leading-tight">{field.name.toUpperCase()}</h3>
-                                        <span className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">
-                                            {field.type || 'Deportiva'} • {field.surface || 'Sintético'}
+                                        <h3 className="font-black text-white text-lg font-space-grotesk tracking-tighter uppercase truncate pr-2 leading-tight">{field.name}</h3>
+                                        <span className="text-[10px] uppercase font-mono tracking-widest text-[#adaaaa]">
+                                            {field.type || 'Deportiva'} // {field.surface || 'Sintético'}
                                         </span>
                                     </div>
                                     {field.isOccupied ? (
-                                        <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 px-2 py-1 rounded flex-shrink-0">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                                            En Juego
+                                        <span className="flex items-center gap-1.5 text-[10px] font-bold font-space-grotesk uppercase tracking-widest text-[#1a1919] bg-[#cafd00] px-2 py-1 rounded-full flex-shrink-0">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#1a1919] animate-pulse" />
+                                            ACTIVE
                                         </span>
                                     ) : (
-                                        <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded flex-shrink-0">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                            Libre
+                                        <span className="flex items-center gap-1.5 text-[10px] font-bold font-space-grotesk uppercase tracking-widest text-[#adaaaa] bg-[#484847]/20 border border-[#484847]/30 px-2 py-1 rounded-full flex-shrink-0">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#adaaaa]" />
+                                            STANDBY
                                         </span>
                                     )}
                                 </div>
@@ -94,15 +94,15 @@ export function LiveFieldsWidget({
                                         {/* Barra de Progreso */}
                                         <div className="mb-4">
                                             <div className="flex items-center justify-between text-xs mb-1.5">
-                                                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                                                    <Clock className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
-                                                    <span className="text-[10px] sm:text-xs">Quedan <strong className="text-slate-900 dark:text-white">{field.remainingMins} min</strong></span>
+                                                <div className="flex items-center gap-1.5 text-[#adaaaa]">
+                                                    <Clock className="w-3.5 h-3.5 text-[#cafd00]" />
+                                                    <span className="text-[10px] sm:text-xs font-mono uppercase">T-Minus <strong className="text-white">{field.remainingMins} min</strong></span>
                                                 </div>
-                                                <span className="text-[10px] font-mono text-slate-500">{Math.round(field.progress)}%</span>
+                                                <span className="text-[10px] font-mono text-[#cafd00]">{Math.round(field.progress)}%</span>
                                             </div>
-                                            <div className="w-full bg-slate-200 dark:bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-300 dark:border-white/5">
+                                            <div className="w-full bg-[#0e0e0e] rounded-full h-1.5 overflow-hidden border border-[#484847]/30">
                                                 <div
-                                                    className="bg-gradient-to-r from-red-600 to-red-400 h-1.5 rounded-full transition-all duration-1000 ease-linear relative"
+                                                    className="bg-gradient-to-r from-[#cafd00] to-[#beee00] h-1.5 rounded-full transition-all duration-1000 ease-linear relative shadow-[0_0_10px_#cafd00]"
                                                     style={{ width: `${field.progress}%` }}
                                                 />
                                             </div>
