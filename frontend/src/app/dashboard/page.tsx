@@ -702,15 +702,14 @@ const DashboardPage = () => {
             <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 w-full">
                 <Toaster theme="dark" position="bottom-right" richColors closeButton />
 
-                {/* Header */}
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <h1 className="text-5xl font-black text-foreground font-space-grotesk tracking-tighter mb-2 uppercase">
-                            Command Center
+                        <h1 className="text-5xl font-black text-white font-space-grotesk tracking-tighter mb-2 uppercase">
+                            HOLA, {userName}
                         </h1>
                         <p className="text-foreground/40 flex items-center gap-2 text-sm font-space-grotesk uppercase tracking-widest">
                             <span className="w-2 h-2 bg-[#cafd00] rounded-full animate-pulse shadow-[0_0_10px_#cafd00]" />
-                            System Active // {userName}
+                            Command Center // ACTIVE
                             <span className="ml-2 text-[10px] text-[#cafd00] bg-[#cafd00]/10 border border-[#cafd00]/30 px-2 py-0.5 rounded-full font-mono">HUD v4.0</span>
                         </p>
                     </div>

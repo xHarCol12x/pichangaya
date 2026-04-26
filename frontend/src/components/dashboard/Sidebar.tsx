@@ -235,14 +235,14 @@ const SidebarInner = () => {
     return (
         <>
             {/* ── Desktop Sidebar ── */}
-            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 border-r border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl z-30">
+            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 border-r border-slate-200 dark:border-white/5 bg-white/50 dark:bg-[#0e0e0e]/50 backdrop-blur-xl z-30">
                 <SidebarContent />
             </aside>
 
             {/* ── Mobile Overlay ── */}
             {isMobileOpen && (
                 <div
-                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200"
+                    className="fixed inset-0 bg-[#0e0e0e]/60 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200"
                     onClick={() => setIsMobileOpen(false)}
                 />
             )}
@@ -250,7 +250,7 @@ const SidebarInner = () => {
             {/* ── Mobile Drawer ── */}
             <div
                 className={cn(
-                    "fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-white/5 z-50 lg:hidden transition-transform duration-300 ease-in-out",
+                    "fixed top-0 left-0 h-full w-72 bg-white dark:bg-[#0e0e0e] border-r border-slate-200 dark:border-white/5 z-50 lg:hidden transition-transform duration-300 ease-in-out",
                     isMobileOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
@@ -290,7 +290,7 @@ const SidebarInner = () => {
 };
 
 const Sidebar = () => (
-    <Suspense fallback={<div className="hidden lg:flex w-64 h-screen border-r border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl" />}>
+    <Suspense fallback={<div className="hidden lg:flex w-64 h-screen border-r border-slate-200 dark:border-white/5 bg-white/50 dark:bg-[#0e0e0e]/50 backdrop-blur-xl" />}>
         <SidebarInner />
     </Suspense>
 );

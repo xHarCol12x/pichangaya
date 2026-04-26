@@ -75,14 +75,14 @@ export default function DashboardLayout({
     }, [router, pathname]);
 
     return (
-        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 selection:bg-accent/30 selection:text-white animate-in fade-in duration-1000 relative w-full">
+        <div className="flex min-h-screen bg-slate-50 dark:bg-[#0e0e0e] text-slate-900 dark:text-white transition-colors duration-300 selection:bg-accent/30 selection:text-white animate-in fade-in duration-1000 relative w-full">
             <Sidebar />
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative min-w-0">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-accent/5 rounded-full blur-[120px] -z-10 pointer-events-none" />
 
                 {/* Sticky Header — BENTO V3.2 Forced Migration Wrapper */}
-                <div className="sticky top-0 z-50 w-full bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-accent/20 shadow-sm transition-all duration-300">
+                <div className="sticky top-0 z-50 w-full bg-slate-50/80 dark:bg-[#0e0e0e]/80 backdrop-blur-xl border-b border-[#484847]/30 shadow-sm transition-all duration-300">
                     <TopBar />
                 </div>
                 <main className="p-4 sm:p-6 lg:p-8 flex-1 pb-24 lg:pb-8 max-w-[100vw] overflow-x-hidden">
