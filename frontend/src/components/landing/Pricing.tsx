@@ -211,10 +211,14 @@ const Pricing = () => {
         const fetchPlans = async () => {
             try {
                 // The public endpoint returns active plans
-                const { data } = await api.get('/plans');
+                const response = await api.get('/plans');
+                const data = response.data;
+
+                // Safety check: ensure data is an array
+                const plansArray = Array.isArray(data) ? data : (data?.data || data?.plans || []);
 
                 // Map API data to visual properties
-                const mappedPlans = data.map((apiPlan: any) => {
+                const mappedPlans = plansArray.map((apiPlan: any) => {
                     const twClasses = PLAN_TAILWIND[apiPlan.code] || PLAN_TAILWIND['BASIC'];
                     return {
                         ...apiPlan,

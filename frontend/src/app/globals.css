@@ -9,15 +9,17 @@
   --accent: #0284c7;
   --accent-foreground: #ffffff;
   --border: rgba(15, 23, 42, 0.1);
+  --primary-neon: #CCFF00;
+  --secondary-neon: #00F0FF;
 }
 
 .dark {
-  --background: #0f172a;
+  --background: #050505;
   --foreground: #f8fafc;
-  --card: rgba(30, 41, 59, 0.4);
-  --accent: #38bdf8;
-  --accent-foreground: #0f172a;
-  --border: rgba(255, 255, 255, 0.1);
+  --card: rgba(15, 15, 15, 0.4);
+  --accent: #CCFF00;
+  --accent-foreground: #050505;
+  --border: rgba(255, 255, 255, 0.05);
 }
 
 @theme {
@@ -26,6 +28,29 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
+  --color-primary-neon: var(--primary-neon);
+  --color-secondary-neon: var(--secondary-neon);
+}
+
+/* 3D Utilities */
+.perspective-2000 {
+  perspective: 2000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-12 {
+  transform: rotateY(12deg);
+}
+
+.rotate-x-12 {
+  transform: rotateX(12deg);
 }
 
 body {

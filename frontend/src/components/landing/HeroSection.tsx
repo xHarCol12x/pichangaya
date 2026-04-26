@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
-import { ArrowRight, Play, TrendingUp, Users, Wallet, X } from "lucide-react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ArrowRight, Play, TrendingUp, X, Zap, Shield, Star } from "lucide-react";
 import FloatingCard from "./FloatingCard";
-import TransitionLink from "@/components/ui/TransitionLink";
+import TransitionLink from "../ui/TransitionLink";
+import MagneticButton from "../ui/MagneticButton";
+
 // Video Demo Modal Component
 const VideoModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
     const modalRef = useRef<HTMLDivElement>(null);
@@ -37,29 +40,28 @@ const VideoModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     return (
         <div
             ref={modalRef}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl"
             onClick={onClose}
         >
             <div
                 ref={contentRef}
-                className="relative w-full max-w-4xl aspect-video bg-slate-900 rounded-2xl overflow-hidden"
+                className="relative w-full max-w-5xl aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(204,255,0,0.15)]"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+                    className="absolute top-6 right-6 z-10 w-12 h-12 bg-white/5 hover:bg-accent/20 rounded-full flex items-center justify-center text-white transition-all hover:rotate-90"
                     aria-label="Cerrar video"
                 >
-                    <X className="w-5 h-5" />
+                    <X className="w-6 h-6" />
                 </button>
 
-                {/* Placeholder for video - replace with actual video embed */}
                 <div className="w-full h-full flex flex-col items-center justify-center text-white">
-                    <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center mb-6">
-                        <Play className="w-10 h-10 text-accent fill-accent" />
+                    <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center mb-8 animate-pulse">
+                        <Play className="w-12 h-12 text-accent fill-accent" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-2">Demo de PichangaLibre</h3>
-                    <p className="text-slate-400 text-sm">Video proximamente disponible</p>
+                    <h3 className="text-3xl font-black mb-3 tracking-tight font-space-grotesk">EXPERIENCIA PICHANGALIBRE</h3>
+                    <p className="text-slate-400 text-lg">Descubre el futuro de la gestión deportiva</p>
                 </div>
             </div>
         </div>
@@ -72,195 +74,231 @@ const HeroSection = () => {
     const titleRef = useRef<HTMLHeadingElement>(null);
     const subtitleRef = useRef<HTMLParagraphElement>(null);
     const ctasRef = useRef<HTMLDivElement>(null);
+    const dashboardContainerRef = useRef<HTMLDivElement>(null);
     const dashboardRef = useRef<HTMLDivElement>(null);
+    const ballRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 1 } });
+    useGSAP(() => {
+        if (!containerRef.current) return;
+
+        const tl = gsap.timeline({ defaults: { ease: "expo.out", duration: 1.5 } });
 
         tl.fromTo(
             titleRef.current,
-            { y: 60, opacity: 0 },
-            { y: 0, opacity: 1, delay: 0.2 }
+            { y: 100, opacity: 0, skewY: 7 },
+            { y: 0, opacity: 1, skewY: 0, delay: 0.5 }
         )
             .fromTo(
                 subtitleRef.current,
-                { y: 40, opacity: 0 },
+                { y: 50, opacity: 0 },
                 { y: 0, opacity: 1 },
-                "-=0.6"
+                "-=1"
             )
             .fromTo(
                 ctasRef.current,
-                { y: 20, opacity: 0 },
-                { y: 0, opacity: 1 },
-                "-=0.6"
+                { scale: 0.8, opacity: 0 },
+                { scale: 1, opacity: 1, ease: "back.out(1.7)" },
+                "-=0.8"
             )
             .fromTo(
-                dashboardRef.current,
-                { scale: 0.95, opacity: 0, y: 100 },
-                { scale: 1, opacity: 1, y: 0, duration: 1.2 },
-                "-=0.8"
+                dashboardContainerRef.current,
+                { rotateX: 45, rotateY: -15, y: 200, opacity: 0, scale: 0.8 },
+                { rotateX: 15, rotateY: -10, y: 0, opacity: 1, scale: 1, duration: 2 },
+                "-=1"
             );
-    }, []);
+
+        // Floating animation for the dashboard
+        if (dashboardRef.current) {
+            gsap.to(dashboardRef.current, {
+                y: -20,
+                duration: 3,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+        }
+
+        // Mouse move effect for 3D rotation
+        const handleMouseMove = (e: globalThis.MouseEvent) => {
+            if (!dashboardContainerRef.current) return;
+            const { clientX, clientY } = e;
+            const xPos = (clientX / window.innerWidth - 0.5) * 10;
+            const yPos = (clientY / window.innerHeight - 0.5) * 10;
+
+            gsap.to(dashboardContainerRef.current, {
+                rotateY: -10 + xPos,
+                rotateX: 15 - yPos,
+                duration: 0.5,
+                ease: "power2.out"
+            });
+        };
+
+        window.addEventListener("mousemove", handleMouseMove);
+        return () => window.removeEventListener("mousemove", handleMouseMove);
+    }, { scope: containerRef });
 
     return (
         <>
             <section
                 ref={containerRef}
-                className="relative pt-32 pb-20 overflow-hidden min-h-screen flex flex-col items-center justify-center hero-gradient"
+                className="relative pt-40 pb-32 overflow-hidden min-h-screen flex flex-col items-center justify-center bg-[#050505]"
             >
-                <div
-                    className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
-                    style={{
-                        backgroundImage: "linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)",
-                        backgroundSize: "60px 60px",
-                    }}
+                {/* Background Glows */}
+                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent/10 rounded-full blur-[150px] pointer-events-none" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/5 rounded-full blur-[150px] pointer-events-none" />
+                
+                {/* Grid Background */}
+                <div 
+                    className="absolute inset-0 opacity-[0.05] pointer-events-none" 
+                    style={{ 
+                        backgroundImage: `linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px)`,
+                        backgroundSize: '40px 40px',
+                        maskImage: 'radial-gradient(ellipse at center, black, transparent 80%)'
+                    }} 
                 />
-                {/* Background Orbs */}
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/20 rounded-full blur-[128px] -z-10" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[128px] -z-10" />
 
                 <div className="max-w-7xl mx-auto px-6 text-center z-10">
+                    <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 px-4 py-2 rounded-full mb-8 animate-fade-in">
+                        <Star className="w-4 h-4 text-accent fill-accent" />
+                        <span className="text-accent text-xs font-bold uppercase tracking-widest">Plataforma #1 en Gestión Deportiva</span>
+                    </div>
+
                     <h1
                         ref={titleRef}
-                        className="text-5xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-foreground flex items-center justify-center gap-2"
+                        className="text-6xl md:text-[10rem] font-black tracking-tight mb-8 leading-[0.9] text-white flex flex-col items-center justify-center font-space-grotesk"
                     >
-                        Pichanga<span className="text-accent">Libre</span>
+                        <span>Pichanga</span>
+                        <span className="text-accent">Libre</span>
                     </h1>
 
                     <p
                         ref={subtitleRef}
-                        className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed"
+                        className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed font-medium"
                     >
-                        Optimiza la operación de tu club con IA. Reservas automatizadas, pagos simplificados y analítica avanzada en una sola plataforma.
+                        Revoluciona tu club con el sistema de gestión más avanzado del mercado. <span className="text-white">Potenciado por IA</span> para maximizar tu rentabilidad.
                     </p>
 
                     <div
                         ref={ctasRef}
-                        className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
+                        className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24"
                     >
-                        <TransitionLink
-                            href="/register"
-                            className="group bg-accent text-accent-foreground px-8 py-4 rounded-full text-lg font-bold flex items-center gap-2 transition-transform hover:scale-105"
-                        >
-                            Comenzar Gratis
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </TransitionLink>
-                        <button
-                            onClick={() => setIsVideoOpen(true)}
-                            className="group glass text-foreground px-8 py-4 rounded-full text-lg font-bold flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/10 transition-all"
-                        >
-                            <Play className="w-5 h-5 fill-foreground" />
-                            Ver Demo
-                        </button>
+                        <MagneticButton>
+                            <TransitionLink
+                                href="/register"
+                                className="group relative bg-accent text-accent-foreground px-10 py-5 rounded-xl text-xl font-black flex items-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(204,255,0,0.3)] hover:shadow-[0_0_50px_rgba(204,255,0,0.5)]"
+                            >
+                                ¡EMPIEZA AHORA!
+                                <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                            </TransitionLink>
+                        </MagneticButton>
+                        <MagneticButton>
+                            <button
+                                onClick={() => setIsVideoOpen(true)}
+                                className="group glass text-white px-10 py-5 rounded-xl text-xl font-bold flex items-center gap-3 hover:bg-white/10 transition-all border border-white/10"
+                            >
+                                <Play className="w-6 h-6 fill-white" />
+                                VER DEMO
+                            </button>
+                        </MagneticButton>
                     </div>
 
-                    {/* Mockup Dashboard Area */}
-                    <div className="relative w-full max-w-5xl mx-auto">
+                    {/* 3D Dashboard Mockup Container */}
+                    <div className="perspective-2000 w-full max-w-6xl mx-auto">
                         <div
-                            ref={dashboardRef}
-                            className="relative glass rounded-3xl p-4 md:p-8 aspect-video md:aspect-[21/9] group shadow-2xl z-20"
+                            ref={dashboardContainerRef}
+                            className="preserve-3d relative w-full h-full"
                         >
-                            {/* Background Image Wrapper (keeps border radius clean without clipping floating cards) */}
-                            <div className="absolute inset-0 rounded-3xl overflow-hidden -z-10">
-                                <img
-                                    src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop"
-                                    alt="Elite Sports Field"
-                                    className="absolute inset-0 w-full h-full object-cover opacity-20 dark:opacity-50 group-hover:scale-110 transition-transform duration-1000"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-                            </div>
-
-                            <div className="relative w-full h-full border border-border rounded-2xl overflow-hidden bg-background/80 dark:bg-slate-950/40 backdrop-blur-md">
-                                <div className="w-full h-12 bg-foreground/5 dark:bg-white/10 border-b border-border flex items-center px-4 gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-red-400" />
-                                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                                    <div className="w-3 h-3 rounded-full bg-green-400" />
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-300 font-bold ml-2 uppercase tracking-widest">PichangaLibre Control Center</span>
-                                </div>
-                                <div className="p-4 md:p-6 h-full overflow-hidden flex flex-col">
-                                    <div className="grid grid-cols-6 gap-4 mb-6">
-                                        <div className="col-span-2 space-y-3">
-                                            <div className="h-4 w-24 bg-accent/20 rounded-lg" />
-                                            <div className="h-20 bg-foreground/5 dark:bg-white/5 border border-border dark:border-white/5 rounded-xl p-3 flex flex-col justify-center gap-2">
-                                                <div className="h-2 w-full bg-foreground/10 dark:bg-white/10 rounded-full" />
-                                                <div className="h-2 w-2/3 bg-foreground/10 dark:bg-white/10 rounded-full" />
-                                            </div>
+                            <div
+                                ref={dashboardRef}
+                                className="relative glass rounded-[2.5rem] p-2 md:p-4 aspect-video shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border border-white/10"
+                            >
+                                {/* Inner Screen Container */}
+                                <div className="relative w-full h-full rounded-[2rem] overflow-hidden bg-[#0A0A0A] border border-white/5">
+                                    {/* OS Top Bar */}
+                                    <div className="w-full h-10 bg-white/5 border-b border-white/5 flex items-center px-6 gap-2">
+                                        <div className="flex gap-1.5">
+                                            <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                                            <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                                            <div className="w-3 h-3 rounded-full bg-green-500/50" />
                                         </div>
-                                        <div className="col-span-4 h-28 bg-foreground/5 dark:bg-white/5 border border-border dark:border-white/5 rounded-xl flex items-end p-4 gap-2">
-                                            {[40, 70, 45, 90, 65, 80, 50, 85, 95, 60, 75, 55].map((h, i) => (
-                                                <div key={i} className="flex-1 bg-accent/30 dark:bg-accent/30 rounded-t-sm" style={{ height: `${h}%` }} />
-                                            ))}
-                                        </div>
+                                        <div className="mx-auto text-[10px] text-white/30 font-bold uppercase tracking-[0.2em]">PichangaLibre v2.0 - Dashboard Elite</div>
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div className="h-32 bg-foreground/5 border border-border rounded-xl p-4 flex flex-col justify-between">
-                                            <div className="flex justify-between items-start">
-                                                <div className="h-2 w-12 bg-foreground/20 rounded-full" />
-                                                <div className="w-6 h-6 rounded-lg bg-accent/20" />
-                                            </div>
-                                            <div className="h-4 w-full bg-foreground/10 rounded-full" />
-                                            <div className="h-2 w-2/3 bg-foreground/5 rounded-full" />
-                                        </div>
-                                        <div className="h-32 bg-foreground/5 border border-border rounded-xl p-4 flex flex-col gap-3">
-                                            <div className="h-2 w-16 bg-foreground/20 rounded-full" />
-                                            <div className="flex-1 flex items-end gap-1">
-                                                {[30, 50, 40, 60, 45, 70].map((h, i) => (
-                                                    <div key={i} className="flex-1 bg-emerald-500/20 rounded-t-sm" style={{ height: `${h}%` }} />
+                                    {/* Dashboard Content Mockup */}
+                                    <div className="p-8 h-full">
+                                        <div className="grid grid-cols-12 gap-6 h-full">
+                                            {/* Sidebar Mockup */}
+                                            <div className="col-span-3 space-y-6">
+                                                <div className="h-12 w-full bg-accent/20 rounded-xl flex items-center px-4 gap-3">
+                                                    <TrendingUp className="w-5 h-5 text-accent" />
+                                                    <div className="h-2 w-20 bg-accent/40 rounded-full" />
+                                                </div>
+                                                {[1, 2, 3, 4].map((i) => (
+                                                    <div key={i} className="h-10 w-full bg-white/5 rounded-xl flex items-center px-4 gap-3 opacity-50">
+                                                        <div className="w-5 h-5 rounded-lg bg-white/10" />
+                                                        <div className="h-2 w-24 bg-white/10 rounded-full" />
+                                                    </div>
                                                 ))}
                                             </div>
-                                        </div>
-                                        <div className="h-32 bg-foreground/5 border border-border rounded-xl p-4">
-                                            <div className="h-full w-full rounded-full border-4 border-foreground/5 border-t-accent/40" />
+
+                                            {/* Main View Mockup */}
+                                            <div className="col-span-9 space-y-6">
+                                                <div className="grid grid-cols-3 gap-6">
+                                                    {[1, 2, 3].map((i) => (
+                                                        <div key={i} className="h-24 bg-white/5 border border-white/5 rounded-2xl p-4">
+                                                            <div className="h-2 w-12 bg-white/20 rounded-full mb-4" />
+                                                            <div className="h-6 w-20 bg-white/40 rounded-lg" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="h-[250px] bg-white/5 border border-white/5 rounded-[2rem] p-6 flex flex-col justify-end gap-4 relative overflow-hidden">
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-accent/10 to-transparent" />
+                                                    <div className="flex items-end gap-3 h-40">
+                                                        {[40, 70, 45, 90, 65, 80, 50, 85, 95, 60, 75, 55, 80, 40, 60].map((h, i) => (
+                                                            <div 
+                                                                key={i} 
+                                                                className="flex-1 bg-accent/30 rounded-t-lg hover:bg-accent transition-colors cursor-pointer" 
+                                                                style={{ height: `${h}%` }} 
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Floating 3D Elements */}
+                                <FloatingCard className="absolute -top-12 -left-12 hidden lg:flex scale-110 shadow-2xl" delay={2}>
+                                    <div className="w-14 h-14 rounded-2xl bg-accent/20 flex items-center justify-center shrink-0 border border-accent/20">
+                                        <Zap className="text-accent w-8 h-8 fill-accent" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Eficiencia</p>
+                                        <p className="text-2xl font-black text-white">+40%</p>
+                                    </div>
+                                </FloatingCard>
+
+                                <FloatingCard className="absolute top-1/4 -right-16 hidden lg:flex scale-110 shadow-2xl" delay={2.5}>
+                                    <div className="w-14 h-14 rounded-2xl bg-[#00F0FF]/20 flex items-center justify-center shrink-0 border border-[#00F0FF]/20">
+                                        <Shield className="text-[#00F0FF] w-8 h-8" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Seguridad</p>
+                                        <p className="text-2xl font-black text-white">PRO</p>
+                                    </div>
+                                </FloatingCard>
                             </div>
-
-                            {/* Floating Insight Cards */}
-                            <FloatingCard className="absolute -top-6 -left-8 hidden lg:flex" delay={1.4}>
-                                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-                                    <TrendingUp className="text-blue-400 w-6 h-6" />
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Reservas Hoy</p>
-                                    <p className="text-xl font-bold text-foreground">48</p>
-                                </div>
-                            </FloatingCard>
-
-                            <FloatingCard className="absolute top-1/2 -right-8 hidden lg:flex" delay={1.8}>
-                                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                                    <Wallet className="text-emerald-400 w-6 h-6" />
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ingresos</p>
-                                    <p className="text-xl font-bold text-foreground">S/ 12,450</p>
-                                </div>
-                            </FloatingCard>
-
-                            <FloatingCard className="absolute -bottom-6 left-1/4 hidden lg:flex" delay={2.2}>
-                                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-                                    <Users className="text-amber-400 w-6 h-6" />
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ocupación</p>
-                                    <div className="flex items-end gap-2">
-                                        <p className="text-xl font-bold text-foreground">87%</p>
-                                        <span className="text-emerald-500 dark:text-emerald-400 text-[10px] mb-1 font-bold">+12% vs sem. pasada</span>
-                                    </div>
-                                </div>
-                            </FloatingCard>
                         </div>
                     </div>
                 </div>
             </section>
+            
             <VideoModal
                 isOpen={isVideoOpen}
                 onClose={() => setIsVideoOpen(false)}
             />
-
         </>
-
     );
 };
 

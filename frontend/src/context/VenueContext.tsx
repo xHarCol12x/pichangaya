@@ -30,7 +30,11 @@ export function VenueProvider({ children }: { children: ReactNode }) {
         setIsLoadingVenues(true);
         try {
             const res = await venuesApi.getAll();
-            const userVenues = res.data || [];
+            const data = res.data;
+            
+            // Safety check: ensure userVenues is an array
+            const userVenues = Array.isArray(data) ? data : (data?.data || data?.venues || []);
+            
             setVenues(userVenues);
 
             // Set initial selected venue from localStorage or fallback to first one

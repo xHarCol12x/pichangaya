@@ -93,6 +93,7 @@ const Tooltip = ({ text, visible }: { text: string; visible: boolean }) => {
 const FeatureCard = ({ feature, index }: { feature: typeof features[0]; index: number }) => {
     const [hovered, setHovered] = useState(false);
     const [tooltipVisible, setTooltipVisible] = useState(false);
+    const cardRef = useRef<HTMLDivElement>(null);
     const lineRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -104,14 +105,48 @@ const FeatureCard = ({ feature, index }: { feature: typeof features[0]; index: n
         });
     }, [hovered]);
 
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current) return;
+        const rect = cardRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = (y - centerY) / 10;
+        const rotateY = (centerX - x) / 10;
+
+        gsap.to(cardRef.current, {
+            rotateX: rotateX,
+            rotateY: rotateY,
+            duration: 0.5,
+            ease: "power2.out",
+        });
+    };
+
+    const handleMouseLeave = () => {
+        setHovered(false);
+        setTooltipVisible(false);
+        if (!cardRef.current) return;
+        gsap.to(cardRef.current, {
+            rotateX: 0,
+            rotateY: 0,
+            duration: 0.5,
+            ease: "power2.out",
+        });
+    };
+
     return (
         <div
+            ref={cardRef}
+            onMouseMove={handleMouseMove}
             onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => { setHovered(false); setTooltipVisible(false); }}
-            className="feature-card glass p-8 rounded-3xl border-border hover:border-accent/40 transition-all duration-500 group relative overflow-visible flex flex-col"
+            onMouseLeave={handleMouseLeave}
+            className="feature-card glass p-8 rounded-3xl border-border hover:border-accent/40 transition-all duration-500 group relative overflow-visible flex flex-col perspective-2000 preserve-3d"
         >
             {/* Número decorativo */}
-            <span className="absolute top-6 right-7 text-6xl font-black text-foreground/[0.04] group-hover:text-foreground/[0.07] transition-colors duration-500 select-none leading-none">
+            <span className="absolute top-6 right-7 text-6xl font-black text-foreground/[0.04] group-hover:text-foreground/[0.07] transition-colors duration-500 select-none leading-none transform-gpu translate-z-20">
                 {String(index + 1).padStart(2, "0")}
             </span>
 
@@ -123,25 +158,25 @@ const FeatureCard = ({ feature, index }: { feature: typeof features[0]; index: n
             />
 
             {/* Ícono */}
-            <div className="w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center mb-6 group-hover:bg-accent/10 group-hover:scale-110 transition-all duration-500">
+            <div className="w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center mb-6 group-hover:bg-accent/10 group-hover:scale-110 transition-all duration-500 transform-gpu translate-z-40">
                 <feature.icon className="w-7 h-7 text-accent" />
             </div>
 
             {/* Stat pill */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 w-fit mb-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 w-fit mb-4 transform-gpu translate-z-30">
                 <span className="text-[10px] font-black text-accent uppercase tracking-widest">{feature.stat}</span>
             </div>
 
-            <h4 className="text-xl font-bold text-foreground group-hover:text-accent transition-colors duration-300 mb-3">
+            <h4 className="text-xl font-bold text-foreground group-hover:text-accent transition-colors duration-300 mb-3 transform-gpu translate-z-30">
                 {feature.title}
             </h4>
 
-            <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-sm flex-1">
+            <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-sm flex-1 transform-gpu translate-z-20">
                 {feature.description}
             </p>
 
             {/* Saber más + Tooltip */}
-            <div className="relative mt-5">
+            <div className="relative mt-5 transform-gpu translate-z-50">
                 <Tooltip text={feature.tooltip} visible={tooltipVisible} />
                 <button
                     onMouseEnter={() => setTooltipVisible(true)}
