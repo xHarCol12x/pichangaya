@@ -39,19 +39,19 @@ export default function BookingDetailModal({ booking, onClose, onPay }: BookingD
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-lg relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
+            <div className="absolute inset-0 bg-[#0e0e0e]/90 backdrop-blur-md" onClick={onClose} />
+            <div className="bg-[#1a1919] border border-[#484847]/30 rounded-[2rem] w-full max-w-lg relative z-10 shadow-[0_25px_60px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
                 {/* Header (Status Banner) */}
-                <div className={`p-6 border-b border-slate-200 dark:border-white/5 relative overflow-hidden ${isConfirmed ? 'bg-emerald-500/10' : isCancelled ? 'bg-red-500/10' : 'bg-amber-500/10'}`}>
+                <div className={`p-6 border-b border-[#484847]/20 relative overflow-hidden ${isConfirmed ? 'bg-emerald-500/5' : isCancelled ? 'bg-red-500/5' : 'bg-[#cafd00]/5'}`}>
                     <div className="flex justify-between items-start relative z-10">
                         <div>
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-3 ${isConfirmed ? 'bg-emerald-500 text-white' : isCancelled ? 'bg-red-500 text-white' : 'bg-amber-500 text-amber-950'}`}>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 ${isConfirmed ? 'bg-emerald-500 text-white' : isCancelled ? 'bg-red-500 text-white' : 'bg-[#cafd00] text-[#0e0e0e]'}`}>
                                 {isConfirmed ? <Check className="w-3 h-3" /> : isCancelled ? <X className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                                {isConfirmed ? 'COMPLETADO' : isCancelled ? 'CANCELADO' : 'PENDIENTE DE PAGO'}
+                                {isConfirmed ? 'COMPLETED' : isCancelled ? 'CANCELLED' : 'PENDING PAYMENT'}
                             </span>
-                            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">S/ {booking.totalPrice}</h2>
+                            <h2 className="text-3xl font-black text-white font-space-grotesk tracking-tighter uppercase leading-none">S/ {booking.totalPrice}</h2>
                         </div>
-                        <button onClick={onClose} className="text-slate-500 hover:text-slate-900 dark:hover:text-white bg-white/50 dark:bg-black/20 hover:bg-white dark:hover:bg-black/40 p-2 rounded-full transition-colors backdrop-blur-md">
+                        <button onClick={onClose} className="text-[#adaaaa] hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors backdrop-blur-md">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
@@ -60,28 +60,28 @@ export default function BookingDetailModal({ booking, onClose, onPay }: BookingD
                 <div className="p-6 space-y-6">
                     {/* Client Info */}
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center text-sm font-black text-accent shadow-inner">
+                        <div className="w-12 h-12 rounded-2xl bg-[#cafd00]/10 flex items-center justify-center text-sm font-black text-[#cafd00] border border-[#cafd00]/20 shadow-[0_0_20px_rgba(202,253,0,0.1)]">
                             {booking.client?.name?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '?'}
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Cliente Asignado</p>
-                            <p className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{booking.client?.name || 'Cliente de Paso'}</p>
+                            <p className="text-[10px] font-mono text-[#adaaaa] uppercase tracking-widest">Operator / Client</p>
+                            <p className="text-xl font-black text-white font-space-grotesk tracking-tight leading-tight uppercase">{booking.client?.name || 'Local Player'}</p>
                             {booking.client?.phone && (
-                                <p className="text-sm text-slate-500 flex items-center gap-1 mt-0.5"><Phone className="w-3 h-3" /> {booking.client.phone}</p>
+                                <p className="text-xs text-[#777575] font-mono flex items-center gap-1 mt-0.5"><Phone className="w-3 h-3" /> {booking.client.phone}</p>
                             )}
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-white/5 text-center">
-                            <MapPin className="w-5 h-5 text-accent mx-auto mb-2 opacity-80" />
-                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Cancha</p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{booking.field?.name}</p>
+                        <div className="bg-[#262626]/50 p-4 rounded-2xl border border-[#484847]/20 text-center">
+                            <MapPin className="w-5 h-5 text-[#cafd00] mx-auto mb-2 opacity-80" />
+                            <p className="text-[9px] uppercase font-mono font-black text-[#777575] tracking-widest mb-1">Sector</p>
+                            <p className="text-sm font-black text-white font-space-grotesk uppercase truncate">{booking.field?.name}</p>
                         </div>
-                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-white/5 text-center">
-                            <Clock className="w-5 h-5 text-accent mx-auto mb-2 opacity-80" />
-                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Duración</p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{(new Date(booking.endTime).getTime() - new Date(booking.startTime).getTime()) / 60000} minutos</p>
+                        <div className="bg-[#262626]/50 p-4 rounded-2xl border border-[#484847]/20 text-center">
+                            <Clock className="w-5 h-5 text-[#cafd00] mx-auto mb-2 opacity-80" />
+                            <p className="text-[9px] uppercase font-mono font-black text-[#777575] tracking-widest mb-1">Timeframe</p>
+                            <p className="text-sm font-black text-white font-space-grotesk uppercase truncate">{(new Date(booking.endTime).getTime() - new Date(booking.startTime).getTime()) / 60000} MINS</p>
                         </div>
                     </div>
 
@@ -113,8 +113,8 @@ export default function BookingDetailModal({ booking, onClose, onPay }: BookingD
                 {/* Footer Actions */}
                 <div className="p-6 pt-0 mt-2">
                     {booking.status === 'PENDING' && !isPayingQuick && (
-                        <button onClick={() => setIsPayingQuick(true)} className="w-full bg-accent text-slate-950 font-black py-4 rounded-2xl hover:bg-accent/90 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.2)]">
-                            <DollarSign className="w-5 h-5" /> Cobrar Reserva Ahora
+                        <button onClick={() => setIsPayingQuick(true)} className="w-full bg-[#cafd00] text-[#0e0e0e] font-black font-space-grotesk py-4 rounded-2xl hover:bg-[#beee00] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(202,253,0,0.2)] uppercase tracking-tighter">
+                            <DollarSign className="w-5 h-5" /> Process Payment
                         </button>
                     )}
 

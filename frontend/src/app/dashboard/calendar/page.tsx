@@ -242,17 +242,17 @@ export default function CalendarPage() {
         const topPosition = (startMinutes / 60) * 80; // 80px per hour
         const height = (durationMinutes / 60) * 80;
 
-        let bgColor = "bg-accent/15 border-accent/30 text-sky-900 dark:text-sky-100 shadow-[inset_0_0_15px_rgba(56,189,248,0.1)]";
-        if (b.status === "PENDING") bgColor = "bg-orange-500/15 border-orange-500/30 text-orange-900 dark:text-orange-100 shadow-[inset_0_0_15px_rgba(249,115,22,0.1)]";
+        let bgColor = "bg-[#cafd00]/10 border-[#cafd00]/20 text-[#cafd00] shadow-[inset_0_0_15px_rgba(202,253,0,0.05)]";
+        if (b.status === "PENDING") bgColor = "bg-orange-500/10 border-orange-500/20 text-orange-400 shadow-[inset_0_0_15px_rgba(249,115,22,0.05)]";
 
         return {
             top: `${topPosition}px`,
             height: `${height}px`,
             position: 'absolute' as 'absolute',
-            left: '4px',
-            right: '4px',
+            left: '6px',
+            right: '6px',
             zIndex: 10,
-            className: `rounded-2xl border backdrop-blur-md p-3 text-xs overflow-hidden transition-all duration-300 hover:z-20 hover:shadow-xl hover:scale-[1.01] hover:border-white/20 cursor-pointer group ${bgColor}`
+            className: `rounded-2xl border backdrop-blur-md p-3 text-[11px] overflow-hidden transition-all duration-300 hover:z-20 hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:scale-[1.02] hover:border-white/20 cursor-pointer group ${bgColor}`
         };
     };
 
@@ -293,11 +293,11 @@ export default function CalendarPage() {
         <div className="flex flex-col h-[calc(100vh-6rem)]">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                        <CalendarIcon className="w-8 h-8 text-accent" />
-                        Agenda Visual
+                    <h1 className="text-4xl font-black text-white font-space-grotesk tracking-tighter flex items-center gap-3 uppercase">
+                        <CalendarIcon className="w-8 h-8 text-[#cafd00]" />
+                        Visual Agenda
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Organiza y visualiza las reservas diarias de tus canchas.</p>
+                    <p className="text-[#adaaaa] font-mono text-[10px] uppercase tracking-widest mt-1">Strategic Operations // Daily Control</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
@@ -306,14 +306,14 @@ export default function CalendarPage() {
                     >
                         Hoy
                     </button>
-                    <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
-                        <button onClick={handlePrevDay} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                    <div className="flex items-center bg-[#1a1919] border border-[#484847]/30 rounded-xl p-1 shadow-sm">
+                        <button onClick={handlePrevDay} className="p-2 text-[#adaaaa] hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                             <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <span className="px-4 text-sm font-bold text-slate-900 dark:text-white min-w-[200px] text-center capitalize">
+                        <span className="px-4 text-sm font-black text-white font-space-grotesk tracking-tight min-w-[220px] text-center uppercase">
                             {formatDateHeading(currentDate)}
                         </span>
-                        <button onClick={handleNextDay} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <button onClick={handleNextDay} className="p-2 text-[#adaaaa] hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                             <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
@@ -328,17 +328,17 @@ export default function CalendarPage() {
             </div>
 
             {/* Config & Summary */}
-            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-3 rounded-2xl mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 shadow-lg shadow-slate-200/20 dark:shadow-none">
+            <div className="bg-[#1a1919]/80 backdrop-blur-xl border border-[#484847]/30 p-3 rounded-2xl mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
                 <div className="flex flex-wrap items-center gap-2">
-                    <Navigation className="w-5 h-5 text-accent shrink-0" />
+                    <Navigation className="w-5 h-5 text-[#cafd00] shrink-0" />
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
                         {venues.map(v => (
                             <button
                                 key={v.id}
                                 onClick={() => setSelectedVenueId(v.id)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${selectedVenueId === v.id
-                                    ? 'bg-accent text-slate-950 shadow-lg shadow-accent/20'
-                                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${selectedVenueId === v.id
+                                    ? 'bg-[#cafd00] text-[#0e0e0e] shadow-[0_0_15px_rgba(202,253,0,0.3)]'
+                                    : 'bg-white/5 text-[#adaaaa] hover:text-white hover:bg-white/10'
                                     }`}
                             >
                                 {v.name}
@@ -346,9 +346,9 @@ export default function CalendarPage() {
                         ))}
                     </div>
                 </div>
-                <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-accent shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> Confirmada</div>
-                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"></span> Pendiente</div>
+                <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-widest text-[#777575]">
+                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#cafd00] shadow-[0_0_8px_rgba(202,253,0,0.5)]"></span> Confirmed</div>
+                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"></span> Pending</div>
                 </div>
             </div>
 
@@ -363,16 +363,16 @@ export default function CalendarPage() {
 
 
                 {/* Headers (Fields) */}
-                <div className="flex border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 shrink-0">
-                    <div className="w-20 shrink-0 border-r border-slate-200 dark:border-white/10 flex items-center justify-center">
-                        <Clock className="w-4 h-4 text-slate-400" />
+                <div className="flex border-b border-[#484847]/30 bg-[#151515] shrink-0">
+                    <div className="w-20 shrink-0 border-r border-[#484847]/30 flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-[#777575]" />
                     </div>
                     <div className="flex-1 flex overflow-x-auto no-scrollbar scroll-smooth">
                         {fields.length === 0 ? (
-                            <div className="flex-1 py-4 text-center text-sm font-bold text-slate-500">No hay canchas creadas en esta sede</div>
+                            <div className="flex-1 py-4 text-center text-[10px] font-mono uppercase tracking-widest text-[#777575]">No sectors operational</div>
                         ) : (
                             fields.map((f: any) => (
-                                <div key={f.id} className="flex-1 min-w-[200px] py-4 text-center border-r border-slate-200 dark:border-white/10 last:border-0 font-bold text-slate-900 dark:text-white text-sm">
+                                <div key={f.id} className="flex-1 min-w-[200px] py-4 text-center border-r border-[#484847]/30 last:border-0 font-black text-white font-space-grotesk tracking-tighter text-sm uppercase">
                                     {f.name}
                                 </div>
                             ))
@@ -385,11 +385,11 @@ export default function CalendarPage() {
                 <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth group">
                     <div className="flex min-w-full">
                         {/* Time labels column */}
-                        <div className="w-20 shrink-0 border-r border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900">
+                        <div className="w-20 shrink-0 border-r border-[#484847]/30 bg-[#0e0e0e]">
                             {hoursArr.map(hour => (
-                                <div key={`label-${hour}`} className="h-[80px] border-b border-slate-200 dark:border-white/5 relative">
-                                    <span className="absolute -top-3 left-0 right-0 text-center text-[10px] font-bold text-slate-400 bg-slate-50/80 dark:bg-slate-900/80">
-                                        {hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
+                                <div key={`label-${hour}`} className="h-[80px] border-b border-[#484847]/10 relative">
+                                    <span className="absolute -top-3 left-0 right-0 text-center text-[9px] font-mono font-black text-[#777575] bg-[#0e0e0e]">
+                                        {hour === 12 ? '12:00 PM' : hour > 12 ? `${hour - 12}:00 PM` : `${hour}:00 AM`}
                                     </span>
                                 </div>
                             ))}

@@ -216,12 +216,12 @@ const FieldMiniMap: React.FC<FieldMiniMapProps> = ({ type, surface }) => {
 
         // Default premium look
         return {
-            bg: "bg-[#0a0f1c]",
-            border: "border-accent/30",
-            line: "border-accent/20 text-accent/20",
-            glow: "shadow-[0_0_40px_rgba(56,189,248,0.15)]",
-            dotLocal: "bg-accent shadow-[0_0_10px_rgba(56,189,248,0.8)]",
-            dotAway: "bg-slate-500"
+            bg: "bg-[#0e0e0e]",
+            border: "border-[#484847]/30",
+            line: "border-[#cafd00]/20 text-[#cafd00]/20",
+            glow: "shadow-[0_0_40px_rgba(202,253,0,0.05)]",
+            dotLocal: "bg-[#cafd00] shadow-[0_0_10px_rgba(202,253,0,0.8)]",
+            dotAway: "bg-[#adaaaa]"
         };
     };
 

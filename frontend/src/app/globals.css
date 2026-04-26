@@ -14,12 +14,12 @@
 }
 
 .dark {
-  --background: #050505;
+  --background: #0e0e0e;
   --foreground: #f8fafc;
-  --card: rgba(15, 15, 15, 0.4);
-  --accent: #CCFF00;
-  --accent-foreground: #050505;
-  --border: rgba(255, 255, 255, 0.05);
+  --card: rgba(26, 25, 25, 0.8);
+  --accent: #cafd00;
+  --accent-foreground: #0e0e0e;
+  --border: rgba(72, 72, 71, 0.2);
 }
 
 @theme {
@@ -61,12 +61,16 @@ body {
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
+.font-space-grotesk {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
 .glass {
   background: var(--card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
-  transition: background-color 0.5s ease, border-color 0.5s ease;
+  transition: background-color 0.4s ease, border-color 0.4s ease;
 }
 
 .text-gradient {

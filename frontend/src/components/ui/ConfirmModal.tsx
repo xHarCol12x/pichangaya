@@ -113,11 +113,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             case "info":
             default:
                 return {
-                    bg: "bg-accent/10",
-                    text: "text-accent",
-                    border: "border-accent/20",
-                    glow: "bg-accent",
-                    button: "bg-accent hover:bg-sky-400 text-slate-950 shadow-[0_0_24px_rgba(56,189,248,0.35)]",
+                    bg: "bg-[#cafd00]/10",
+                    text: "text-[#cafd00]",
+                    border: "border-[#cafd00]/20",
+                    glow: "bg-[#cafd00]",
+                    button: "bg-[#cafd00] hover:bg-[#beee00] text-[#0e0e0e] shadow-[0_0_24px_rgba(202,253,0,0.35)]",
                 };
         }
     };
@@ -128,15 +128,15 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
-                ref={backdropRef}
-                className="absolute inset-0 bg-slate-950/75 backdrop-blur-md"
+                 Paradis                ref={backdropRef}
+                className="absolute inset-0 bg-[#0e0e0e]/90 backdrop-blur-md"
                 onClick={handleClose}
             />
 
             {/* Card */}
             <div
                 ref={cardRef}
-                className="relative glass border border-white/10 rounded-3xl w-full max-w-sm p-8 overflow-hidden shadow-2xl"
+                className="relative bg-[#1a1919] border border-[#484847]/30 rounded-[2rem] w-full max-w-sm p-8 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
             >
                 {/* Glow decorativo */}
                 <div className={`absolute -top-8 -right-8 w-36 h-36 rounded-full blur-3xl opacity-15 ${colors.glow}`} />
@@ -155,10 +155,10 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                         {renderIcon()}
                     </div>
 
-                    <h3 className="text-xl font-black text-foreground mb-2 tracking-tight">
+                    <h3 className="text-2xl font-black text-white font-space-grotesk tracking-tighter mb-2 uppercase">
                         {title}
                     </h3>
-                    <p className="text-foreground/50 text-sm leading-relaxed mb-8">
+                    <p className="text-[#adaaaa] text-sm leading-relaxed mb-8">
                         {message}
                     </p>
 

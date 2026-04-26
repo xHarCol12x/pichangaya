@@ -116,26 +116,26 @@ export default function BookingFormModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/90 backdrop-blur-md" onClick={onClose} />
-            <div className="bg-white dark:bg-slate-950/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2rem] w-full max-w-5xl max-h-[95vh] lg:max-h-[90vh] relative z-10 shadow-2xl flex flex-col lg:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="absolute inset-0 bg-[#0e0e0e]/90 backdrop-blur-md" onClick={onClose} />
+            <div className="bg-[#0e0e0e] border border-[#484847]/30 rounded-[2rem] w-full max-w-5xl max-h-[95vh] lg:max-h-[90vh] relative z-10 shadow-[0_30px_100px_rgba(0,0,0,0.7)] flex flex-col lg:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-300">
 
 
                 {/* Left Column - Minimap & Invoice Preview */}
-                <div className="w-full lg:w-[40%] bg-slate-50 dark:bg-slate-950/50 p-5 sm:p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5 flex flex-col relative overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
+                <div className="w-full lg:w-[40%] bg-[#1a1919] p-5 sm:p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-[#484847]/20 flex flex-col relative overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full">
 
-                    <div className={`absolute -top-10 -left-10 w-40 h-40 rounded-full blur-[80px] opacity-20 ${form.status === 'CONFIRMED' ? 'bg-emerald-500' : form.status === 'CANCELLED' ? 'bg-red-500' : 'bg-accent'}`} />
+                    <div className={`absolute -top-10 -left-10 w-40 h-40 rounded-full blur-[80px] opacity-20 ${form.status === 'CONFIRMED' ? 'bg-emerald-500' : form.status === 'CANCELLED' ? 'bg-red-500' : 'bg-[#cafd00]'}`} />
 
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Resumen Táctico</h3>
+                    <h3 className="text-xl font-black text-white font-space-grotesk tracking-tighter mb-6 uppercase">Tactical Summary</h3>
 
                     {/* SVG MiniMap Component */}
                     <div className="w-full relative z-10 bg-white dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-200 dark:border-white/5 mb-6 shadow-sm dark:shadow-none">
                         {activeField ? (
                             <>
                                 <div className="flex justify-between items-center mb-4">
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-accent" /> {activeField.name}
+                                    <span className="text-sm font-black text-white font-space-grotesk flex items-center gap-2 uppercase tracking-tighter">
+                                        <MapPin className="w-4 h-4 text-[#cafd00]" /> {activeField.name}
                                     </span>
-                                    <span className="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 uppercase border border-slate-200 dark:border-transparent">
+                                    <span className="text-[10px] font-mono font-black px-2 py-1 rounded bg-[#cafd00]/10 text-[#cafd00] uppercase border border-[#cafd00]/20">
                                         {activeField.type} • {activeField.surface || 'Sintético'}
                                     </span>
                                 </div>
@@ -170,10 +170,10 @@ export default function BookingFormModal({
                             </div>
                         </div>
 
-                        <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex justify-between items-end">
-                            <span className="text-slate-700 dark:text-slate-300 font-medium">Total a cobrar</span>
-                            <span className="text-4xl font-black text-slate-900 dark:text-white flex items-start gap-1">
-                                <span className="text-xl text-emerald-500 dark:text-emerald-400 mt-1">S/.</span>
+                        <div className="pt-4 border-t border-[#484847]/20 flex justify-between items-end">
+                            <span className="text-[#adaaaa] font-mono text-[10px] uppercase tracking-widest">Total Amount</span>
+                            <span className="text-4xl font-black text-[#cafd00] font-space-grotesk tracking-tighter flex items-start gap-1">
+                                <span className="text-xl text-[#cafd00]/50 mt-1">S/</span>
                                 {form.totalPrice.toFixed(2)}
                             </span>
                         </div>
@@ -181,16 +181,16 @@ export default function BookingFormModal({
                 </div>
 
                 {/* Right Column - Booking Form */}
-                <div className="w-full lg:w-[60%] p-5 sm:p-6 lg:p-8 bg-transparent flex flex-col justify-start overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
+                <div className="w-full lg:w-[60%] p-5 sm:p-6 lg:p-8 bg-[#0e0e0e] flex flex-col justify-start overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full">
 
                     <div className="flex justify-between items-start mb-6 lg:mb-8 text-left">
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                                {isEditMode ? "Editar Reserva" : "Programar Nueva Reserva"}
+                            <h2 className="text-3xl font-black text-white font-space-grotesk tracking-tighter uppercase">
+                                {isEditMode ? "Modify Entry" : "New Strategy"}
                             </h2>
-                            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">Organiza e ingresa los datos del cliente al ecosistema.</p>
+                            <p className="text-[#adaaaa] font-mono text-[10px] uppercase tracking-widest mt-1">Deploying reservation to tactical grid</p>
                         </div>
-                        <button onClick={onClose} className="text-slate-500 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 p-2 rounded-full transition-colors">
+                        <button onClick={onClose} className="text-[#777575] hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
@@ -392,21 +392,21 @@ export default function BookingFormModal({
                         )}
 
                         {/* Submit & Actions */}
-                        <div className="pt-5 mt-2 border-t border-slate-200 dark:border-white/5 flex gap-3">
+                        <div className="pt-5 mt-2 border-t border-[#484847]/30 flex gap-3">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-6 py-4 rounded-xl font-bold border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                className="px-6 py-4 rounded-xl font-bold font-mono text-[10px] uppercase tracking-widest border border-[#484847]/30 text-[#adaaaa] hover:bg-white/5 hover:text-white transition-colors"
                             >
-                                Cancelar
+                                Abort
                             </button>
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex-1 bg-accent text-slate-950 py-4 rounded-xl font-black text-lg hover:bg-accent/90 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:scale-[1.02] active:scale-95"
+                                className="flex-1 bg-[#cafd00] text-[#0e0e0e] py-4 rounded-xl font-black font-space-grotesk text-xl hover:bg-[#beee00] transition-all flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(202,253,0,0.3)] hover:scale-[1.01] active:scale-95 uppercase tracking-tighter"
                             >
                                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <CalendarIcon className="w-5 h-5" />}
-                                {isEditMode ? "Guardar Cambios" : "Confirmar Reserva"}
+                                {isEditMode ? "Commit Changes" : "Deploy Reservation"}
                             </button>
                         </div>
                     </form>
