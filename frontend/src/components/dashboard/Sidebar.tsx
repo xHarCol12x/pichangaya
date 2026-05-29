@@ -26,6 +26,7 @@ import { useSidebar } from "@/context/SidebarContext";
 
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { useTransition } from "@/components/ui/TransitionOverlay";
+import { useLogout } from "@/context/LogoutContext";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import api from "@/lib/api";
@@ -54,11 +55,13 @@ const SidebarInner = () => {
 
     const { navigateWithTransition } = useTransition();
     const { isOpen: isMobileOpen, setIsOpen: setIsMobileOpen, toggleSidebar } = useSidebar();
-    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const { showLogoutConfirm, isLoggingOut } = useLogout();
     const [showHomeModal, setShowHomeModal] = useState(false);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
 
-
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Close drawer when route changes (user tapped a link on mobile)
     useEffect(() => {
@@ -75,26 +78,12 @@ const SidebarInner = () => {
         return () => { document.body.style.overflow = ""; };
     }, [isMobileOpen]);
 
-    const handleLogout = async () => {
-        setIsLoggingOut(true);
-        try {
-            await api.post("/auth/logout").catch(() => { });
-        } finally {
-            localStorage.removeItem("fieldiq_token");
-            localStorage.removeItem("fieldiq_user");
-            sessionStorage.clear();
-            setTimeout(() => {
-                navigateWithTransition("/login");
-            }, 300);
-        }
-    };
-
     const handleGoHome = () => {
         navigateWithTransition("/");
     };
 
     const getMenuItems = () => {
-        if (typeof window === "undefined") {
+        if (!isMounted) {
             return [
                 { icon: LayoutDashboard, label: "Vista General", href: "/dashboard" },
                 { icon: Calendar, label: "Reservas", href: "/dashboard/bookings" },
@@ -221,7 +210,7 @@ const SidebarInner = () => {
             {/* Logout */}
             <div className="pt-4 border-t border-slate-200 dark:border-white/5 mt-auto px-4 pb-4">
                 <button
-                    onClick={() => setShowLogoutModal(true)}
+                    onClick={showLogoutConfirm}
                     disabled={isLoggingOut}
                     className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all focus:outline-none disabled:opacity-50"
                 >
@@ -259,19 +248,6 @@ const SidebarInner = () => {
 
 
 
-
-            {/* Modal logout */}
-            <ConfirmModal
-                isOpen={showLogoutModal}
-                onClose={() => setShowLogoutModal(false)}
-                onConfirm={handleLogout}
-                title="¿Cerrar Sesión?"
-                message="Tendrás que volver a ingresar tus credenciales para acceder a tu panel de control."
-                confirmText="Cerrar sesión"
-                cancelText="Cancelar"
-                type="danger"
-                icon="logout"
-            />
 
             {/* Modal ir a home */}
             <ConfirmModal

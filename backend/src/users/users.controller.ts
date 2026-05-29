@@ -1,13 +1,17 @@
 import { Controller, Get, Patch, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Get()
+    @Roles(Role.SUPER_ADMIN)
     findAll() {
         return this.usersService.findAll();
     }
@@ -26,18 +30,21 @@ export class UsersController {
 
     // GET /users/tenants — lista todos los tenants (ADMIN)
     @Get('tenants')
+    @Roles(Role.SUPER_ADMIN)
     findTenants() {
         return this.usersService.findTenants();
     }
 
     // GET /users/tenants/:id — detalle completo de un tenant
     @Get('tenants/:id')
+    @Roles(Role.SUPER_ADMIN)
     findTenantById(@Param('id') id: string) {
         return this.usersService.findTenantById(id);
     }
 
     // PATCH /users/tenants/:id/subscription — actualizar suscripción
     @Patch('tenants/:id/subscription')
+    @Roles(Role.SUPER_ADMIN)
     updateSubscription(
         @Param('id') id: string,
         @Body() body: {

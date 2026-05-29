@@ -10,7 +10,6 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { PrismaService } from './prisma.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { TasksService } from './tasks/tasks.service';
 import { TasksModule } from './tasks/tasks.module';
 import { MercadoPagoModule } from './modules/mercadopago/mercadopago.module';
 import { ClientsModule } from './clients/clients.module';
@@ -38,6 +37,6 @@ import { AiToolsModule } from './ai-tools/ai-tools.module';
     AiToolsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService, TasksService],
+  providers: [AppService, PrismaService],
 })
 export class AppModule { }

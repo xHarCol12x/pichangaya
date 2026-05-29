@@ -46,8 +46,8 @@ export function UpcomingBookingsWidget({
         <div className="bg-[#1a1919] rounded-[1.5rem] border border-[#484847]/15 overflow-hidden w-full h-full flex flex-col justify-between">
             <div className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4 border-b border-[#484847]/15 gap-4 shrink-0">
                 <div>
-                    <h2 className="text-xl font-black text-white font-space-grotesk tracking-tighter uppercase">Upcoming Bookings</h2>
-                    <p className="text-[#adaaaa] font-mono text-[10px] mt-0.5 uppercase tracking-widest">{filteredUpcoming.length} ENTRIES FOUND</p>
+                    <h2 className="text-xl font-black text-white font-space-grotesk tracking-tighter uppercase">Próximas Reservas</h2>
+                    <p className="text-[#adaaaa] font-mono text-[10px] mt-0.5 uppercase tracking-widest">{filteredUpcoming.length} ENCONTRADAS</p>
                 </div>
 
                 <div className="flex items-center gap-1 bg-[#0e0e0e] border border-[#484847]/20 p-1 rounded-xl">
@@ -57,7 +57,7 @@ export function UpcomingBookingsWidget({
                             onClick={() => { setBookingFilter(f); setCurrentPage(1); }}
                             className={`px-3 py-1 rounded-lg text-[10px] font-bold font-space-grotesk uppercase tracking-wider transition-all ${bookingFilter === f ? "bg-[#cafd00] text-[#1a1919] shadow-[0_0_10px_rgba(202,253,0,0.2)]" : "text-[#adaaaa] hover:text-white"}`}
                         >
-                            {f === "ALL" ? "ALL" : f === "CONFIRMED" ? "PAID" : "PENDING"}
+                            {f === "ALL" ? "TODAS" : f === "CONFIRMED" ? "PAGADAS" : "PENDIENTES"}
                         </button>
                     ))}
                 </div>
@@ -104,7 +104,7 @@ export function UpcomingBookingsWidget({
 
             {/* Pagination */}
             <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t border-[#484847]/15 bg-[#0e0e0e]">
-                {totalPages > 0 && <span className="text-[10px] text-[#adaaaa] font-mono tracking-widest uppercase">{paginatedBookings.length} OF {filteredUpcoming.length}</span>}
+                {totalPages > 0 && <span className="text-[10px] text-[#adaaaa] font-mono tracking-widest uppercase">{paginatedBookings.length} DE {filteredUpcoming.length}</span>}
                 <div className="flex items-center gap-1 ml-auto">
                     <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-6 h-6 rounded border border-[#484847]/30 flex items-center justify-center text-[#adaaaa] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:pointer-events-none transition-all">
                         <ChevronLeft className="w-3 h-3" />

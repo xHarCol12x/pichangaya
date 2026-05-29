@@ -27,6 +27,13 @@ export function VenueProvider({ children }: { children: ReactNode }) {
     const [isLoadingVenues, setIsLoadingVenues] = useState(true);
 
     const refreshVenues = async () => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem("fieldiq_token") : null;
+        if (!token) {
+            setVenues([]);
+            setIsLoadingVenues(false);
+            return;
+        }
+
         setIsLoadingVenues(true);
         try {
             const res = await venuesApi.getAll();

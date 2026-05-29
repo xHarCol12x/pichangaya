@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
-import { Prisma } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreateBookingDto } from './dto/create-booking.dto';
+import { UpdateBookingDto } from './dto/update-booking.dto';
 
 @Controller('bookings')
 @UseGuards(JwtAuthGuard)
@@ -19,27 +20,22 @@ export class BookingsController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.bookingsService.findOne(id);
+    findOne(@Param('id') id: string, @Request() req) {
+        return this.bookingsService.findOne(id, req.user.userId);
     }
 
     @Post()
-    create(@Body() data: Prisma.BookingCreateInput, @Request() req) {
-        // Ensure the booking is for the logged in user if they are not admin
-        // This is a simplified version
-        return this.bookingsService.create({
-            ...data,
-            user: { connect: { id: req.user.userId } }
-        });
+    create(@Body() createBookingDto: CreateBookingDto, @Request() req) {
+        return this.bookingsService.create(req.user.userId, createBookingDto);
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() data: Prisma.BookingUpdateInput) {
-        return this.bookingsService.update(id, data);
+    update(@Param('id') id: string, @Body() updateBookingDto: UpdateBookingDto, @Request() req) {
+        return this.bookingsService.update(id, req.user.userId, updateBookingDto);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.bookingsService.remove(id);
+    remove(@Param('id') id: string, @Request() req) {
+        return this.bookingsService.remove(id, req.user.userId);
     }
 }

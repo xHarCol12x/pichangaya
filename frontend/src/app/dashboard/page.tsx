@@ -33,6 +33,7 @@ import {
     AiInsightWidget
 } from "@/components/dashboard/widgets";
 import { getDashboardCache, setDashboardCache } from "@/lib/dashboardCache";
+import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
 
 
 
@@ -671,30 +672,7 @@ const DashboardPage = () => {
 
     // ── Onboarding / Bloqueo si no hay Sede ─────────────────────────────────
     if (!loading && myVenues.length === 0) {
-        return (
-            <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[80vh] flex items-center justify-center">
-                <div className="glass max-w-2xl w-full rounded-[3rem] p-12 text-center border border-border flex flex-col items-center animate-in fade-in zoom-in-95 duration-700">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-20 h-20 bg-accent rounded-3xl flex items-center justify-center rotate-3 shadow-[0_0_40px_rgba(56,189,248,0.4)] mb-6">
-                            <Activity className="text-accent-foreground w-10 h-10" />
-                        </div>
-                        <h1 className="text-5xl font-black tracking-tight text-foreground flex items-center gap-1">
-                            Field<span className="text-accent">IQ</span>
-                        </h1>
-                    </div>
-                    <p className="text-foreground/60 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
-                        Estás a un paso de empezar a recibir reservas. El primer paso obligatorio es registrar tu sede deportiva principal.
-                    </p>
-                    <a
-                        href="/dashboard/fields"
-                        className="bg-accent text-accent-foreground px-8 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform flex items-center gap-3 shadow-[0_0_40px_rgba(56,189,248,0.2)]"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Crear mi Primera Sede
-                    </a>
-                </div>
-            </div>
-        );
+        return <NoVenuePlaceholder />;
     }
 
     return (
@@ -709,7 +687,7 @@ const DashboardPage = () => {
                         </h1>
                         <p className="text-foreground/40 flex items-center gap-2 text-sm font-space-grotesk uppercase tracking-widest">
                             <span className="w-2 h-2 bg-[#cafd00] rounded-full animate-pulse shadow-[0_0_10px_#cafd00]" />
-                            Command Center // ACTIVE
+                            Centro de Comando // ACTIVO
                             <span className="ml-2 text-[10px] text-[#cafd00] bg-[#cafd00]/10 border border-[#cafd00]/30 px-2 py-0.5 rounded-full font-mono">HUD v4.0</span>
                         </p>
                     </div>
@@ -1029,14 +1007,14 @@ const DashboardPage = () => {
                         const start = new Date(qbForm.startTime);
                         const end = new Date(start.getTime() + qbForm.duration * 60000);
                         const payload: any = {
-                            field: { connect: { id: qbForm.fieldId } },
+                            fieldId: qbForm.fieldId,
                             startTime: start.toISOString(),
                             endTime: end.toISOString(),
                             status: "CONFIRMED",
                             totalPrice: qbPrice,
                             paymentMethod: qbForm.paymentMethod || undefined,
                         };
-                        if (qbForm.clientId) payload.client = { connect: { id: qbForm.clientId } };
+                        if (qbForm.clientId) payload.clientId = qbForm.clientId;
 
                         await bookingsApi.create(payload);
 

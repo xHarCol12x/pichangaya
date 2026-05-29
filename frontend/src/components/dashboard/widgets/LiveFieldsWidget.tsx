@@ -22,9 +22,9 @@ export function LiveFieldsWidget({
         <div className="w-full h-full flex flex-col pt-1">
             <div className="flex items-center gap-2 mb-4 px-2 flex-shrink-0">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#cafd00] animate-pulse shadow-[0_0_12px_#cafd00]" />
-                <h2 className="text-2xl font-black text-foreground font-space-grotesk tracking-tighter uppercase">Live Matches</h2>
+                <h2 className="text-2xl font-black text-foreground font-space-grotesk tracking-tighter uppercase">Partidos en Vivo</h2>
                 <span className="text-[#cafd00] text-[10px] ml-2 font-mono bg-[#cafd00]/10 border border-[#cafd00]/30 px-2 py-0.5 rounded-sm hidden sm:inline-block">
-                    [ SYNCING ]
+                    [ SINCRONIZANDO ]
                 </span>
             </div>
 
@@ -50,14 +50,15 @@ export function LiveFieldsWidget({
                                     {field.isOccupied ? (
                                         <span className="flex items-center gap-1.5 text-[10px] font-bold font-space-grotesk uppercase tracking-widest text-[#1a1919] bg-[#cafd00] px-2 py-1 rounded-full flex-shrink-0">
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#1a1919] animate-pulse" />
-                                            ACTIVE
+                                            ACTIVO
                                         </span>
                                     ) : (
                                         <span className="flex items-center gap-1.5 text-[10px] font-bold font-space-grotesk uppercase tracking-widest text-[#adaaaa] bg-[#484847]/20 border border-[#484847]/30 px-2 py-1 rounded-full flex-shrink-0">
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#adaaaa]" />
-                                            STANDBY
+                                            DISPONIBLE
                                         </span>
                                     )}
+
                                 </div>
 
                                 {/* CUERPO DE LA TARJETA */}
@@ -96,7 +97,7 @@ export function LiveFieldsWidget({
                                             <div className="flex items-center justify-between text-xs mb-1.5">
                                                 <div className="flex items-center gap-1.5 text-[#adaaaa]">
                                                     <Clock className="w-3.5 h-3.5 text-[#cafd00]" />
-                                                    <span className="text-[10px] sm:text-xs font-mono uppercase">T-Minus <strong className="text-white">{field.remainingMins} min</strong></span>
+                                                    <span className="text-[10px] sm:text-xs font-mono uppercase">Faltan <strong className="text-white">{field.remainingMins} min</strong></span>
                                                 </div>
                                                 <span className="text-[10px] font-mono text-[#cafd00]">{Math.round(field.progress)}%</span>
                                             </div>

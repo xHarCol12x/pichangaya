@@ -17,6 +17,27 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Add a response interceptor to handle global errors (like 401 Unauthorized)
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            if (typeof window !== 'undefined') {
+                // Clear invalid/expired session
+                localStorage.removeItem('fieldiq_token');
+                localStorage.removeItem('fieldiq_user');
+                
+                // Redirect to login only if we are not already on login, register, or landing pages
+                const path = window.location.pathname;
+                if (path !== '/' && !path.startsWith('/login') && !path.startsWith('/register')) {
+                    window.location.href = '/login';
+                }
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export const venues = {
     getAll: () => api.get('/venues'),
     create: (data: any) => api.post('/venues', data),

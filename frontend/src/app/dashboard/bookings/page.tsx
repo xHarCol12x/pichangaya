@@ -9,6 +9,7 @@ import BookingFormModal from "@/components/bookings/BookingFormModal";
 import BookingDetailModal from "@/components/bookings/BookingDetailModal";
 import { useVenue } from "@/context/VenueContext";
 import { Navigation } from "lucide-react";
+import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
 
 
 export default function BookingsPage() {
@@ -61,8 +62,12 @@ export default function BookingsPage() {
     const [form, setForm] = useState(getInitialForm());
 
     useEffect(() => {
-        if (selectedVenueId) loadData();
-    }, [selectedVenueId]);
+        if (selectedVenueId) {
+            loadData();
+        } else if (!isLoadingVenues && myVenues.length === 0) {
+            setIsLoading(false);
+        }
+    }, [selectedVenueId, isLoadingVenues, myVenues]);
 
     const activeField = fields.find(f => f.id === form.fieldId);
 
@@ -133,7 +138,7 @@ export default function BookingsPage() {
             const endDate = new Date(startDate.getTime() + formData.duration * 60000);
 
             const payload: any = {
-                field: { connect: { id: formData.fieldId } },
+                fieldId: formData.fieldId,
                 startTime: startDate.toISOString(),
                 endTime: endDate.toISOString(),
                 status: formData.status,
@@ -142,9 +147,9 @@ export default function BookingsPage() {
             };
 
             if (formData.clientId) {
-                payload.client = { connect: { id: formData.clientId } };
+                payload.clientId = formData.clientId;
             } else if (targetId && bookingToEdit?.clientId) {
-                payload.client = { disconnect: true };
+                payload.clientId = null;
             }
 
             const fieldObj = fields.find((f: any) => f.id === formData.fieldId) || { name: "Cancha" };
@@ -212,7 +217,12 @@ export default function BookingsPage() {
         }
     };
 
-    const maxBookings = (userPlan === 'basic') ? 200 : (userPlan === 'free_trial' || userPlan === 'starter') ? 50 : 9999;
+    const userStr = localStorage.getItem("fieldiq_user");
+    const user = userStr ? JSON.parse(userStr) : null;
+    const planDetails = user?.planDetails;
+    
+    // In a real scenario, limits should come from planDetails. But we have a fallback for safety.
+    const maxBookings = planDetails?.limitBookings ?? ((userPlan === 'basic') ? 200 : (userPlan === 'free_trial' || userPlan === 'starter') ? 50 : 9999);
 
     // Count current month bookings to enforce limits
     const currentMonthBookings = useMemo(() => {
@@ -291,30 +301,7 @@ export default function BookingsPage() {
 
 
     if (!isLoading && myVenues.length === 0) {
-        return (
-            <div className="max-w-[1400px] w-full mx-auto px-4 py-8 min-h-[80vh] flex items-center justify-center">
-                <div className="glass max-w-2xl w-full rounded-[3rem] p-12 text-center border border-white/5 flex flex-col items-center animate-in fade-in zoom-in-95 duration-700">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-20 h-20 bg-accent rounded-3xl flex items-center justify-center rotate-3 shadow-[0_0_40px_rgba(56,189,248,0.4)] mb-6">
-                            <Activity className="text-accent-foreground w-10 h-10" />
-                        </div>
-                        <h1 className="text-5xl font-black tracking-tight text-white flex items-center gap-1">
-                            Field<span className="text-accent">IQ</span>
-                        </h1>
-                    </div>
-                    <p className="text-slate-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
-                        Estás a un paso de empezar a recibir reservas. El primer paso obligatorio es registrar tu sede deportiva principal.
-                    </p>
-                    <a
-                        href="/dashboard/fields"
-                        className="bg-accent text-slate-950 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-accent/90 transition-colors flex items-center gap-3 shadow-[0_0_40px_rgba(56,189,248,0.2)]"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Crear mi Primera Sede
-                    </a>
-                </div>
-            </div>
-        );
+        return <NoVenuePlaceholder />;
     }
 
     return (

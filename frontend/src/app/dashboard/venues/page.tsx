@@ -88,8 +88,14 @@ export default function VenuesPage() {
 
     const openModal = (venue?: any) => {
         if (!venue) {
-            // Check limits
-            const maxVenues = (plan === "free_trial" || plan === "basic") ? 1 : (plan === "pro" ? 2 : 10);
+            // Check limits dynamically from local storage or context if possible
+            // For now, we'll try to get it from a potential planDetails object
+            const userStr = localStorage.getItem("fieldiq_user");
+            const user = userStr ? JSON.parse(userStr) : null;
+            const planDetails = user?.planDetails;
+            
+            const maxVenues = planDetails?.limitVenues || ((plan === "free_trial" || plan === "basic") ? 1 : (plan === "pro" ? 2 : 10));
+            
             if (venues.length >= maxVenues) {
                 setUpgradeMessage(`tu plan actual (${plan.toUpperCase()}) solo permite un máximo de ${maxVenues} sede(s).`);
                 setIsUpgradeModalOpen(true);
@@ -124,7 +130,7 @@ export default function VenuesPage() {
             if (venueToEdit) {
                 await venuesApi.update(venueToEdit.id, form);
             } else {
-                await venuesApi.create({ ...form, ownerId: user?.id });
+                await venuesApi.create(form);
             }
             await refreshVenues();
             setIsModalOpen(false);

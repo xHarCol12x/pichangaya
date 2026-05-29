@@ -3,11 +3,13 @@ import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
 import { Search, Monitor, Building2, Ticket, Users, Calendar, Settings, LogOut, FileText, Activity } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useLogout } from '@/context/LogoutContext';
 
 export default function CommandPalette() {
     const [open, setOpen] = useState(false);
     const router = useRouter();
     const { theme, setTheme } = useTheme();
+    const { showLogoutConfirm } = useLogout();
     const [userRole, setUserRole] = useState<string | null>(null);
 
     useEffect(() => {
@@ -42,11 +44,7 @@ export default function CommandPalette() {
         command();
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("fieldiq_token");
-        localStorage.removeItem("fieldiq_user");
-        router.push("/login");
-    };
+
 
     return (
         <Command.Dialog
@@ -143,7 +141,7 @@ export default function CommandPalette() {
                             <Monitor className="w-4 h-4" /> Cambiar Tema
                         </Command.Item>
                         <Command.Item
-                            onSelect={() => runCommand(() => handleLogout())}
+                            onSelect={() => runCommand(() => showLogoutConfirm())}
                             className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer text-sm text-red-500 aria-selected:bg-red-500/10 aria-selected:text-red-400 transition-colors"
                         >
                             <LogOut className="w-4 h-4" /> Cerrar Sesión

@@ -29,9 +29,9 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { TransitionProvider } from "@/components/ui/TransitionOverlay";
-import { StripeProvider } from "@/components/providers/StripeProvider";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { VenueProvider } from "@/context/VenueContext";
+import { LogoutProvider } from "@/context/LogoutContext";
 
 export default function RootLayout({
   children,
@@ -48,15 +48,15 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem
         >
-          <StripeProvider>
-            <TransitionProvider>
+          <TransitionProvider>
+            <LogoutProvider>
               <VenueProvider>
                 <SidebarProvider>
                   {children}
                 </SidebarProvider>
               </VenueProvider>
-            </TransitionProvider>
-          </StripeProvider>
+            </LogoutProvider>
+          </TransitionProvider>
         </ThemeProvider>
 
         {/* PWA Service Worker Registration */}

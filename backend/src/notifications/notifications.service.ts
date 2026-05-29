@@ -3,11 +3,17 @@ import { PrismaService } from '../prisma.service';
 import * as webpush from 'web-push';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-webpush.setVapidDetails(
-    'mailto:admin@pichangalibre.xyz',
-    process.env.VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!,
-);
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+const isWebPushConfigured = Boolean(vapidPublicKey && vapidPrivateKey);
+
+if (isWebPushConfigured) {
+    webpush.setVapidDetails(
+        'mailto:admin@pichangalibre.xyz',
+        vapidPublicKey!,
+        vapidPrivateKey!,
+    );
+}
 
 @Injectable()
 export class NotificationsService {
@@ -41,6 +47,8 @@ export class NotificationsService {
         this.eventEmitter.emit(`notification.${userId}`, payload);
 
         // 2. Send Background Web Push Notification
+        if (!isWebPushConfigured) return [];
+
         const subs = await this.prisma.pushSubscription.findMany({ where: { userId } });
         if (subs.length === 0) return [];
 

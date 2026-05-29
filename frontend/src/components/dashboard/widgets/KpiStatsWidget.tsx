@@ -43,36 +43,36 @@ export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFiel
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard
-                title="Total Revenue"
+                title="Ingresos Totales"
                 value={formatCurrency(revenue)}
-                sub={`${formatCurrency(todayRevenue)} today`}
+                sub={`${formatCurrency(todayRevenue)} hoy`}
                 change="+14.2%"
                 positive={true}
                 icon={CreditCard}
                 accent="#cafd00"
             />
             <KpiCard
-                title="Confirmed Bookings"
+                title="Reservas Confirmadas"
                 value={confirmedCount}
-                sub={`${todayCount} for today`}
+                sub={`${todayCount} para hoy`}
                 change="+8.1%"
                 positive={true}
                 icon={CalendarCheck}
                 accent="#818cf8"
             />
             <KpiCard
-                title="Pending Payments"
+                title="Pagos Pendientes"
                 value={pendingCount}
-                sub="Requires Attention"
-                change={pendingCount > 0 ? `${pendingCount} active` : "Cleared"}
+                sub="Requiere Atención"
+                change={pendingCount > 0 ? `${pendingCount} activos` : "Al día"}
                 positive={pendingCount === 0}
                 icon={AlertCircle}
                 accent="#f59e0b"
             />
             <KpiCard
-                title="Daily Occupancy"
+                title="Ocupación Diaria"
                 value={`${occupancy}%`}
-                sub={`${allFieldsLength} sectors total`}
+                sub={`${allFieldsLength} sectores en total`}
                 change="+5.4%"
                 positive={true}
                 icon={Activity}
@@ -80,4 +80,5 @@ export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFiel
             />
         </div>
     );
+
 }

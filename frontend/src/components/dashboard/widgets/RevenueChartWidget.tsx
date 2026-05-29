@@ -11,16 +11,16 @@ export function RevenueChartWidget({ globalDateRange, stats, chartData }: { glob
                 <div>
                     <h2 className="text-xl font-black text-white font-space-grotesk tracking-tighter mb-1 uppercase leading-tight flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#cafd00] animate-pulse shadow-[0_0_8px_#cafd00]" />
-                        Revenue // {
-                            globalDateRange === "TODAY" ? "Today" :
-                                globalDateRange === "WEEK" ? "Weekly" :
-                                    globalDateRange === "MONTH" ? "Monthly" : "Historical"
+                        Ingresos // {
+                            globalDateRange === "TODAY" ? "Hoy" :
+                                globalDateRange === "WEEK" ? "Semanal" :
+                                    globalDateRange === "MONTH" ? "Mensual" : "Histórico"
                         }
                     </h2>
-                    <p className="text-[10px] text-[#adaaaa] font-mono uppercase tracking-widest hidden sm:block">Verified Bookings Only</p>
+                    <p className="text-[10px] text-[#adaaaa] font-mono uppercase tracking-widest hidden sm:block">Solo reservas verificadas</p>
                 </div>
                 <div className="text-right">
-                    <p className="text-[9px] text-[#777575] font-mono uppercase tracking-widest hidden sm:block">TOTAL PERIOD</p>
+                    <p className="text-[9px] text-[#777575] font-mono uppercase tracking-widest hidden sm:block">TOTAL PERIODO</p>
                     <p className="text-xl sm:text-3xl font-black text-[#cafd00] font-space-grotesk tracking-tighter leading-tight">{formatCurrency(stats.revenue)}</p>
                 </div>
             </div>

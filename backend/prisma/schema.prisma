@@ -39,9 +39,12 @@ model Venue {
   ownerId     String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
   fields      Field[]
   clients     Client[]
   owner       User     @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId])
 }
 
 model Field {
@@ -53,8 +56,11 @@ model Field {
   venueId      String
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
   bookings     Booking[]
   venue        Venue     @relation(fields: [venueId], references: [id])
+
+  @@index([venueId])
 }
 
 model Client {
@@ -66,8 +72,12 @@ model Client {
   venueId   String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
   venue     Venue     @relation(fields: [venueId], references: [id])
   bookings  Booking[]
+
+  @@index([venueId])
+  @@index([phone])
 }
 
 model Booking {
@@ -84,10 +94,15 @@ model Booking {
   reminderSent  Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
   client        Client?  @relation(fields: [clientId], references: [id])
   field         Field    @relation(fields: [fieldId], references: [id])
   payment       Payment? @relation(fields: [paymentId], references: [id])
   user          User     @relation(fields: [userId], references: [id])
+
+  @@index([fieldId, startTime, endTime])
+  @@index([userId])
+  @@index([status])
 }
 
 model Payment {
@@ -144,7 +159,6 @@ model SubscriptionPlan {
   limitFields       Int
   isActive          Boolean  @default(true)
   isPopular         Boolean  @default(false)
-  stripePriceId     String?
   mercadopagoPlanId String?
   features          String[] @default([])
   icon              String   @default("Star")

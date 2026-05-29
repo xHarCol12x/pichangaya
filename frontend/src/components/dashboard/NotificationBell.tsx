@@ -112,7 +112,12 @@ const NotificationBell = () => {
         };
 
         eventSource.onerror = (error) => {
-            console.error("SSE error, reconnecting...", error);
+            if (eventSource.readyState === EventSource.CLOSED) {
+                console.error("SSE connection closed.");
+            } else if (eventSource.readyState === EventSource.CONNECTING) {
+                // Routine reconnection, no need to log as an error
+                console.log("SSE reconnecting in background...");
+            }
         };
 
         return () => {

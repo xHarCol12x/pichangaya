@@ -10,6 +10,7 @@ import { clients as clientsApi, venues, users } from "@/lib/api";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { useVenue } from "@/context/VenueContext";
 import { Navigation } from "lucide-react";
+import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
 
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
@@ -124,8 +125,12 @@ export default function ClientsPage() {
     const [form, setForm] = useState(emptyForm);
 
     useEffect(() => {
-        if (selectedVenueId) loadClients();
-    }, [selectedVenueId]);
+        if (selectedVenueId) {
+            loadClients();
+        } else if (!isLoadingVenues && myVenues.length === 0) {
+            setIsLoading(false);
+        }
+    }, [selectedVenueId, isLoadingVenues, myVenues]);
 
     useEffect(() => {
         loadBasicInfo();
@@ -238,13 +243,10 @@ export default function ClientsPage() {
 
 
     if (myVenues.length === 0) return (
-        <div className="flex h-64 items-center justify-center">
-            <div className="glass rounded-3xl p-12 text-center border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-transparent">
-                <Users className="w-12 h-12 text-accent/50 dark:text-accent/30 mx-auto mb-4" />
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Primero crea tu sede</h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm">Necesitas una sede deportiva para gestionar clientes.</p>
-            </div>
-        </div>
+        <NoVenuePlaceholder 
+            message="Necesitas registrar tu sede deportiva principal antes de poder gestionar tus contactos y clientes."
+            icon={Users}
+        />
     );
 
     const isPremium = userPlan === 'pro' || userPlan === 'enterprise';

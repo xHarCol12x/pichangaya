@@ -19,9 +19,9 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { users } from "@/lib/api";
 import NotificationBell from "./NotificationBell";
-import axios from "axios";
 import { useVenue } from "@/context/VenueContext";
 import { useSidebar } from "@/context/SidebarContext";
+import { useLogout } from "@/context/LogoutContext";
 
 
 
@@ -60,6 +60,7 @@ const TopBar = () => {
     const [isVenueDropdownOpen, setIsVenueDropdownOpen] = useState(false);
     const venueDropdownRef = useRef<HTMLDivElement>(null);
     const { isOpen, setIsOpen, toggleSidebar } = useSidebar();
+    const { showLogoutConfirm } = useLogout();
     const router = useRouter();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -119,30 +120,7 @@ const TopBar = () => {
         fetchMe();
     }, [setTheme]);
 
-    const handleLogout = async () => {
-        // 1. Clean up push subscription so notifications stop after logout
-        try {
-            if ('serviceWorker' in navigator) {
-                const reg = await navigator.serviceWorker.getRegistration('/sw.js');
-                if (reg) {
-                    const sub = await reg.pushManager.getSubscription();
-                    if (sub) {
-                        const token = localStorage.getItem('fieldiq_token');
-                        await axios.delete(`${API_URL}/notifications/subscribe`, {
-                            data: { endpoint: sub.endpoint },
-                            headers: { Authorization: `Bearer ${token}` },
-                        }).catch(() => { });
-                        await sub.unsubscribe();
-                    }
-                }
-            }
-        } catch { /* never block logout */ }
 
-        // 2. Clear session
-        localStorage.removeItem('fieldiq_token');
-        localStorage.removeItem('fieldiq_user');
-        router.push('/login');
-    };
 
     const handleThemeToggle = async () => {
         const newTheme = resolvedTheme === "dark" ? "light" : "dark";
@@ -298,7 +276,7 @@ const TopBar = () => {
                                 </p>
                             ) : currentPlan ? (
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-red-500/90">
-                                    Suscripción Escindida / Suspendida
+                                    Suscripción Expirada / Suspendida
                                 </p>
                             ) : (
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-red-500/70">
@@ -352,7 +330,7 @@ const TopBar = () => {
                             </div>
                             <div className="p-2 border-t border-slate-100 dark:border-white/10">
                                 <button
-                                    onClick={handleLogout}
+                                    onClick={showLogoutConfirm}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                                 >
                                     <LogOut className="w-4 h-4" />

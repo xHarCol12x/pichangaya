@@ -37,8 +37,12 @@ export default function FieldsPage() {
     const [fieldForm, setFieldForm] = useState({ name: "", type: "Fútbol 5", surface: "Sintético", pricePerHour: 0 });
 
     useEffect(() => {
-        if (selectedVenueId) loadFields();
-    }, [selectedVenueId]);
+        if (selectedVenueId) {
+            loadFields();
+        } else if (!isLoadingVenues && myVenues.length === 0) {
+            setIsLoading(false);
+        }
+    }, [selectedVenueId, isLoadingVenues, myVenues]);
 
     const loadFields = async () => {
         setIsLoading(true);
@@ -81,10 +85,7 @@ export default function FieldsPage() {
             const userStr = localStorage.getItem('fieldiq_user');
             if (userStr) {
                 const user = JSON.parse(userStr);
-                await venues.create({
-                    ...venueForm,
-                    ownerId: user.id
-                });
+                await venues.create(venueForm);
                 await refreshVenues();
                 setIsVenueModalOpen(false);
                 setVenueForm({ name: "", address: "" });
@@ -158,13 +159,19 @@ export default function FieldsPage() {
     }
 
 
-    const maxVenues = (plan === "free_trial" || plan === "basic") ? 1 : (plan === "pro" ? 2 : 10);
+    const userStr = localStorage.getItem('fieldiq_user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const planDetails = user?.planDetails;
+
+    const maxVenues = planDetails?.limitVenues ?? ((plan === "free_trial" || plan === "basic") ? 1 : (plan === "pro" ? 2 : 10));
 
     // Field Limits
-    let maxFields = 9999;
-    if (plan === "free_trial") maxFields = 2;
-    if (plan === "basic") maxFields = 5;
-    if (plan === "pro") maxFields = 200;
+    let maxFields = planDetails?.limitFields ?? 9999;
+    if (!planDetails) {
+        if (plan === "free_trial") maxFields = 2;
+        if (plan === "basic") maxFields = 5;
+        if (plan === "pro") maxFields = 200;
+    }
 
 
     const canCreateVenue = myVenues.length < maxVenues;

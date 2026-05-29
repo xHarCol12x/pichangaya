@@ -29,18 +29,54 @@ export class UsersService {
                 email: true,
                 role: true,
                 isActive: true,
-                plan: true,
                 subscriptionEndsAt: true,
                 featureOverrides: true,
+                plan: true,
             }
         });
         if (!user) return null;
 
-        const planObj = await this.prisma.subscriptionPlan.findUnique({ where: { code: user.plan } });
+        let isActuallyActive = user.isActive;
+        if (isActuallyActive && user.subscriptionEndsAt) {
+            const now = new Date();
+            if (new Date(user.subscriptionEndsAt) <= now) {
+                isActuallyActive = false;
+            }
+        }
+
+        let planDetails: any = null;
+        try {
+            if (user.plan) {
+                const planObj = await this.prisma.subscriptionPlan.findUnique({ where: { code: user.plan } });
+                if (planObj) {
+                    planDetails = {
+                        code: planObj.code,
+                        name: planObj.name,
+                        limitVenues: planObj.limitVenues,
+                        limitFields: planObj.limitFields,
+                        permissions: planObj.permissions
+                    };
+                }
+            }
+        } catch (e) {
+            console.error('[STABILITY-LOG] Error fetching plan details in findMe:', e);
+        }
+
+        // Parse featureOverrides if it's a string
+        let overrides = user.featureOverrides || {};
+        if (typeof overrides === 'string') {
+            try {
+                overrides = JSON.parse(overrides);
+            } catch (e) {
+                overrides = {};
+            }
+        }
 
         return {
             ...user,
-            planPermissions: planObj?.permissions || {}
+            isActive: isActuallyActive,
+            featureOverrides: overrides,
+            planDetails
         };
     }
 

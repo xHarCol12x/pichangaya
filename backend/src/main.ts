@@ -1,9 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+  
+  // Configure strict global validation
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }));
+
+  // Secure CORS configuration
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  app.enableCors({
+    origin: [frontendUrl, 'http://localhost:3000'],
+    credentials: true,
+  });
   
   // Explicitly parse port as integer and use 0.0.0.0 for public access
   const port = parseInt(process.env.PORT || '3001', 10);

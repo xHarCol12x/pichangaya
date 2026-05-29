@@ -20,6 +20,24 @@ export default function DashboardLayout({
 
     useEffect(() => {
         const token = localStorage.getItem("fieldiq_token");
+        if (token) {
+            import('@/lib/api').then(({ users }) => {
+                users.getMe().then(response => {
+                    const freshUser = response.data;
+                    localStorage.setItem("fieldiq_user", JSON.stringify(freshUser));
+                    setUserRole(freshUser.role);
+                }).catch(err => {
+                    console.error("Error refreshing user data:", err);
+                    if (err.response?.status === 401) {
+                        router.push("/login");
+                    }
+                });
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        const token = localStorage.getItem("fieldiq_token");
         const userStr = localStorage.getItem("fieldiq_user");
 
         if (!token || !userStr) {

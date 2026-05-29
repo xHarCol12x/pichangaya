@@ -10,6 +10,7 @@ import BookingFormModal from "@/components/bookings/BookingFormModal";
 import BookingDetailModal from "@/components/bookings/BookingDetailModal";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Loader2, Plus, Navigation } from "lucide-react";
 import { useVenue } from "@/context/VenueContext";
+import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
 
 
 export default function CalendarPage() {
@@ -100,7 +101,7 @@ export default function CalendarPage() {
         setLoading(true);
         try {
             await bookingsApi.update(bookingId, {
-                field: { connect: { id: targetFieldId } },
+                fieldId: targetFieldId,
                 startTime: newStart.toISOString(),
                 endTime: newEnd.toISOString()
             });
@@ -286,6 +287,15 @@ export default function CalendarPage() {
                     </p>
                 </div>
             </div>
+        );
+    }
+
+    if (!isLoadingVenues && venues.length === 0) {
+        return (
+            <NoVenuePlaceholder 
+                message="Necesitas registrar tu sede deportiva principal antes de poder ver la agenda visual."
+                icon={CalendarIcon}
+            />
         );
     }
 
@@ -533,7 +543,21 @@ export default function CalendarPage() {
                     initialData={initialFormData}
                     fields={fields}
                     clientsList={clientsList}
-                    saveBookingApi={async (form: any) => { return await bookingsApi.create(form); }}
+                    saveBookingApi={async (form: any) => {
+                        const startDate = new Date(form.startTime);
+                        const endDate = new Date(startDate.getTime() + form.duration * 60000);
+                        const payload = {
+                            fieldId: form.fieldId,
+                            startTime: startDate.toISOString(),
+                            endTime: endDate.toISOString(),
+                            status: form.status,
+                            totalPrice: Number(form.totalPrice),
+                            paymentMethod: form.paymentMethod || undefined,
+                            clientId: form.clientId || undefined
+                        };
+                        const res = await bookingsApi.create(payload);
+                        return res.data;
+                    }}
 
                 />
             )}

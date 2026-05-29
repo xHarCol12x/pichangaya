@@ -1,20 +1,22 @@
 import { Controller, Post, Body, UseGuards, Request, Get, HttpCode, Param, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
 
     @Post('register')
-    async register(@Body() body: any) {
-        return await this.authService.register(body);
+    async register(@Body() registerDto: RegisterDto) {
+        return await this.authService.register(registerDto);
     }
 
     @Post('login')
     @HttpCode(200)
-    async login(@Body() body: any) {
-        const user = await this.authService.validateUser(body.email, body.password);
+    async login(@Body() loginDto: LoginDto) {
+        const user = await this.authService.validateUser(loginDto.email, loginDto.password);
         return this.authService.login(user);
     }
 
@@ -36,6 +38,13 @@ export class AuthController {
     @Get('profile')
     getProfile(@Request() req) {
         return req.user;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('logout')
+    @HttpCode(200)
+    async logout() {
+        return { message: 'Sesión cerrada exitosamente.' };
     }
 
     @UseGuards(JwtAuthGuard)

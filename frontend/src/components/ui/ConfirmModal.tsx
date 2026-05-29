@@ -126,9 +126,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            {/* Backdrop */}
             <div
-                 Paradis                ref={backdropRef}
+                ref={backdropRef}
                 className="absolute inset-0 bg-[#0e0e0e]/90 backdrop-blur-md"
                 onClick={handleClose}
             />
