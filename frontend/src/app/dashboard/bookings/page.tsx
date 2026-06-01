@@ -217,7 +217,7 @@ export default function BookingsPage() {
         }
     };
 
-    const userStr = localStorage.getItem("fieldiq_user");
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem("fieldiq_user") : null;
     const user = userStr ? JSON.parse(userStr) : null;
     const planDetails = user?.planDetails;
     
@@ -470,7 +470,7 @@ export default function BookingsPage() {
                                                     </span>
                                                 </td>
                                                 <td className="p-4 pr-6 text-right">
-                                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex justify-end gap-2">
                                                         <button onClick={() => setBookingToView(booking)} className="text-slate-400 hover:text-sky-400 p-1.5 rounded-lg hover:bg-white/10 transition-colors" title="Ver Detalles"><Info className="w-4 h-4" /></button>
                                                         <button onClick={() => openEditModal(booking)} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors" title="Editar"><Edit2 className="w-4 h-4" /></button>
                                                         

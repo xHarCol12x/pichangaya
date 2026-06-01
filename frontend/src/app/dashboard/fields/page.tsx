@@ -159,7 +159,7 @@ export default function FieldsPage() {
     }
 
 
-    const userStr = localStorage.getItem('fieldiq_user');
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem('fieldiq_user') : null;
     const user = userStr ? JSON.parse(userStr) : null;
     const planDetails = user?.planDetails;
 

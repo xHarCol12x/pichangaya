@@ -90,7 +90,7 @@ export default function VenuesPage() {
         if (!venue) {
             // Check limits dynamically from local storage or context if possible
             // For now, we'll try to get it from a potential planDetails object
-            const userStr = localStorage.getItem("fieldiq_user");
+            const userStr = typeof window !== 'undefined' ? localStorage.getItem("fieldiq_user") : null;
             const user = userStr ? JSON.parse(userStr) : null;
             const planDetails = user?.planDetails;
             
