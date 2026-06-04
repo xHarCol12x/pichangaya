@@ -14,20 +14,104 @@ import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
-    private prisma: PrismaService,
-    private emailService: EmailService,
-  ) {}
+    constructor(
+        private usersService: UsersService,
+        private jwtService: JwtService,
+        private prisma: PrismaService,
+        private emailService: EmailService,
+    ) { }
 
-  async validateUser(email: string, pass: string): Promise<any> {
-    console.log(`[STABILITY-LOG] Validation attempt for: ${email}`);
-    try {
-      if (!email) {
-        console.error('[STABILITY-LOG] Email is missing in validateUser');
-        throw new BadRequestException('El correo es obligatorio');
-      }
+    async validateUser(email: string, pass: string): Promise<any> {
+        try {
+            if (!email) {
+                throw new BadRequestException('El correo es obligatorio');
+            }
+            
+            const user = await this.usersService.findOne(email);
+            if (!user) {
+                throw new UnauthorizedException('No encontramos ninguna cuenta con ese correo.');
+            }
+
+            const isMatch = await bcrypt.compare(pass, user.password);
+            if (!isMatch) {
+                throw new UnauthorizedException('Contraseña incorrecta. Por favor verifica e intenta de nuevo.');
+            }
+
+            
+            return {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                plan: user.plan,
+                isActive: user.isActive,
+                subscriptionEndsAt: user.subscriptionEndsAt,
+                featureOverrides: user.featureOverrides
+            };
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async login(user: any) {
+        try {
+            let isActuallyActive = user.isActive;
+            // Logic for subscription expiry
+            if (isActuallyActive && user.subscriptionEndsAt) {
+                const now = new Date();
+                if (new Date(user.subscriptionEndsAt) <= now) {
+                    isActuallyActive = false;
+                }
+            }
+
+            const payload = {
+                email: user.email,
+                sub: user.id,
+                role: user.role,
+                plan: user.plan,
+                isActive: isActuallyActive,
+                subscriptionEndsAt: user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt).toISOString() : null
+            };
+
+            let planObjPermissions = {};
+            try {
+                if (user.plan) {
+                    const planObj = await this.prisma.subscriptionPlan.findUnique({ where: { code: user.plan } });
+                    planObjPermissions = planObj?.permissions || {};
+                }
+            } catch (e) {
+            }
+
+            // Ensure featureOverrides is an object
+            let featureOverrides = user.featureOverrides || {};
+            if (typeof featureOverrides === 'string') {
+                try {
+                    featureOverrides = JSON.parse(featureOverrides);
+                } catch (e) {
+                    featureOverrides = {};
+                }
+            }
+
+            const token = this.jwtService.sign(payload);
+
+            return {
+                access_token: token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    plan: user.plan,
+                    isActive: isActuallyActive,
+                    subscriptionEndsAt: user.subscriptionEndsAt,
+                    featureOverrides: featureOverrides,
+                    planPermissions: planObjPermissions
+                },
+            };
+        } catch (err) {
+            throw err;
+        }
+    }
 
       const user = await this.usersService.findOne(email);
       if (!user) {
