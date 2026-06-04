@@ -338,9 +338,11 @@ const DashboardPage = () => {
 
             setFeatureOverrides(overridesParsed);
 
-            if (!needsMigration && overridesParsed?.dashboardLayouts) {
+            if (needsMigration) {
+                setLayouts(DEFAULT_LAYOUT);
+            } else if (overridesParsed?.dashboardLayouts) {
                 setLayouts(overridesParsed.dashboardLayouts);
-            } else if (!needsMigration && overridesParsed?.dashboardLayout) {
+            } else if (overridesParsed?.dashboardLayout) {
                 const l = overridesParsed.dashboardLayout;
                 setLayouts({ lg: l, md: l, sm: l, xs: l, xxs: l });
             }
