@@ -8,27 +8,7 @@ describe('AiToolsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AiToolsService,
-        {
-          provide: PrismaService,
-          useValue: {
-            field: {
-              findMany: jest.fn(),
-              findUnique: jest.fn(),
-            },
-            booking: {
-              findMany: jest.fn(),
-              findFirst: jest.fn(),
-              create: jest.fn(),
-            },
-            venue: {
-              findUnique: jest.fn(),
-            },
-            $transaction: jest.fn(),
-          },
-        },
-      ],
+      providers: [AiToolsService, { provide: PrismaService, useValue: {} }],
     }).compile();
 
     service = module.get<AiToolsService>(AiToolsService);
