@@ -16,7 +16,7 @@ export class AuthService {
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
-        console.log(`[STABILITY-LOG] Validation attempt for: ${email}`);
+        console.log(`[STABILITY-LOG] Validation attempt`);
         try {
             if (!email) {
                 console.error('[STABILITY-LOG] Email is missing in validateUser');
@@ -25,18 +25,18 @@ export class AuthService {
             
             const user = await this.usersService.findOne(email);
             if (!user) {
-                console.log(`[STABILITY-LOG] User not found: ${email}`);
+                console.log(`[STABILITY-LOG] User not found`);
                 throw new UnauthorizedException('No encontramos ninguna cuenta con ese correo.');
             }
 
             console.log(`[STABILITY-LOG] User found in DB, comparing passwords...`);
             const isMatch = await bcrypt.compare(pass, user.password);
             if (!isMatch) {
-                console.log(`[STABILITY-LOG] Password mismatch for: ${email}`);
+                console.log(`[STABILITY-LOG] Password mismatch`);
                 throw new UnauthorizedException('Contraseña incorrecta. Por favor verifica e intenta de nuevo.');
             }
 
-            console.log(`[STABILITY-LOG] Password matches. Success for: ${email}`);
+            console.log(`[STABILITY-LOG] Password matches. Success`);
             
             return {
                 id: user.id,
@@ -55,14 +55,14 @@ export class AuthService {
     }
 
     async login(user: any) {
-        console.log(`[STABILITY-LOG] Starting login construction for user: ${user.email}`);
+        console.log(`[STABILITY-LOG] Starting login construction for user`);
         try {
             let isActuallyActive = user.isActive;
             // Logic for subscription expiry
             if (isActuallyActive && user.subscriptionEndsAt) {
                 const now = new Date();
                 if (new Date(user.subscriptionEndsAt) <= now) {
-                    console.log(`[STABILITY-LOG] User subscription expired: ${user.email}`);
+                    console.log(`[STABILITY-LOG] User subscription expired`);
                     isActuallyActive = false;
                 }
             }
@@ -84,7 +84,7 @@ export class AuthService {
                     planObjPermissions = planObj?.permissions || {};
                     console.log(`[STABILITY-LOG] Plan found: ${user.plan}`);
                 } else {
-                    console.warn(`[STABILITY-LOG] User has no plan code: ${user.email}`);
+                    console.warn(`[STABILITY-LOG] User has no plan code`);
                 }
             } catch (e) {
                 console.error('[STABILITY-LOG] Error fetching plan permissions during login:', e);
@@ -95,7 +95,7 @@ export class AuthService {
             if (typeof featureOverrides === 'string') {
                 try {
                     featureOverrides = JSON.parse(featureOverrides);
-                    console.log(`[STABILITY-LOG] Parsed featureOverrides from string for: ${user.email}`);
+                    console.log(`[STABILITY-LOG] Parsed featureOverrides from string`);
                 } catch (e) {
                     console.error('[STABILITY-LOG] Failed to parse featureOverrides string:', e);
                     featureOverrides = {};
