@@ -8,6 +8,10 @@ import { JwtStrategy } from './jwt.strategy';
 import { PrismaService } from '../prisma.service';
 import { EmailModule } from '../email/email.module';
 
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is not defined');
+}
+
 @Module({
   imports: [
     UsersModule,

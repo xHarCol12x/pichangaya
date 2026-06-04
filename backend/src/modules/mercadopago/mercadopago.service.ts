@@ -129,10 +129,10 @@ export class MercadoPagoService {
                 description.includes('BASIC') ||
                 description.includes('BÁSICO')
               )
-                assignedPlan = 'BASIC';
-              else if (description.includes('PRO')) assignedPlan = 'PRO';
+                assignedPlan = 'BASIC' as any;
+              else if (description.includes('PRO')) assignedPlan = 'PRO' as any;
               else if (description.includes('ENTERPRISE'))
-                assignedPlan = 'ENTERPRISE';
+                assignedPlan = 'ENTERPRISE' as any;
 
               await this.prisma.user.update({
                 where: { id: userId },
