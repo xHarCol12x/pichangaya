@@ -26,22 +26,33 @@ export class TasksService {
             },
         });
 
-        for (const user of expiredUsers) {
-            await this.prisma.user.update({
-                where: { id: user.id },
+        if (expiredUsers.length > 0) {
+            const expiredUserIds = expiredUsers.map(user => user.id);
+
+            // Bulk update users to inactive
+            await this.prisma.user.updateMany({
+                where: {
+                    id: {
+                        in: expiredUserIds,
+                    },
+                },
                 data: { isActive: false },
             });
 
-            // Audit Trail
-            await this.prisma.analyticsLog.create({
-                data: {
-                    event: 'SUBSCRIPTION_EXPIRED_AUTO',
-                    userId: user.id,
-                    metadata: { reason: 'Cron job detected past due date' },
-                },
+            // Bulk create audit logs
+            const auditLogs = expiredUserIds.map(userId => ({
+                event: 'SUBSCRIPTION_EXPIRED_AUTO',
+                userId: userId,
+                metadata: { reason: 'Cron job detected past due date' },
+            }));
+
+            await this.prisma.analyticsLog.createMany({
+                data: auditLogs,
             });
 
-            this.logger.log(`Deactivated expired account for Tenant: ${user.email}`);
+            // Bulk log for visibility without I/O bottleneck
+            const deactivatedEmails = expiredUsers.map(user => user.email).join(', ');
+            this.logger.log(`Deactivated expired accounts for Tenants: ${deactivatedEmails}`);
         }
 
         this.logger.debug(`Subscription check finished. Deactivated ${expiredUsers.length} accounts.`);
