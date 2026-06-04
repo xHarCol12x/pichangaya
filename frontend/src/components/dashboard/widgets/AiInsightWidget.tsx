@@ -3,7 +3,7 @@
 import React from "react";
 import { BrainCircuit, ChevronRight, Zap } from "lucide-react";
 
-export function AiInsightWidget({ plan, prediction }: { plan: string, prediction: any }) {
+export function AiInsightWidget({ plan, prediction }: { plan: string, prediction: { pct: string; avg: string; text: string } }) {
     const isPro = plan?.toLowerCase() === "pro" || plan?.toLowerCase() === "enterprise" || plan?.toLowerCase() === "super_admin";
     if (isPro) {
         return (
