@@ -11,7 +11,7 @@ export class AiToolsService {
         const startOfDay = new Date(`${date}T00:00:00.000Z`);
         const endOfDay = new Date(`${date}T23:59:59.999Z`);
 
-        const fields = await this.prisma.field.findMany({ where: { venueId } });
+        const fields = await this.prisma.field.findMany({ where: { venueId, deletedAt: null } });
         const bookings = await this.prisma.booking.findMany({
             where: {
                 field: { venueId },
@@ -42,7 +42,7 @@ export class AiToolsService {
     }
 
     async getPrice(fieldId: string, hours: number) {
-        const field = await this.prisma.field.findUnique({ where: { id: fieldId } });
+        const field = await this.prisma.field.findFirst({ where: { id: fieldId, deletedAt: null } });
         if (!field) throw new BadRequestException("Field not found");
         return {
             fieldId,
@@ -57,10 +57,12 @@ export class AiToolsService {
         const eTime = new Date(endTime);
 
         // Find Venue Owner (userId)
-        const venue = await this.prisma.venue.findUnique({ where: { id: venueId } });
+        const venue = await this.prisma.venue.findFirst({ where: { id: venueId, deletedAt: null } });
         if (!venue) throw new BadRequestException("Venue not found");
 
-        const field = await this.prisma.field.findUnique({ where: { id: fieldId } });
+        const field = await this.prisma.field.findFirst({
+            where: { id: fieldId, venueId },
+        });
         if (!field) throw new BadRequestException("Field not found");
 
         const hours = (eTime.getTime() - sTime.getTime()) / 3600000;

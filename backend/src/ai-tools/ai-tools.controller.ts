@@ -6,7 +6,8 @@ export class AiToolsController {
     constructor(private aiToolsService: AiToolsService) { }
 
     private checkAuth(token: string) {
-        if (!token || token !== process.env.JWT_SECRET) {
+        const expectedToken = process.env.AI_SERVICE_TOKEN;
+        if (!expectedToken || token !== expectedToken) {
             throw new UnauthorizedException('Invalid AI Token');
         }
     }

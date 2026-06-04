@@ -37,8 +37,8 @@ export class NotificationsService {
     }
 
     /** Remove a subscription (user unsubscribed) */
-    async unsubscribe(endpoint: string) {
-        return this.prisma.pushSubscription.deleteMany({ where: { endpoint } });
+    async unsubscribe(userId: string, endpoint: string) {
+        return this.prisma.pushSubscription.deleteMany({ where: { endpoint, userId } });
     }
 
     /** Send a push notification to all subscriptions of a user */

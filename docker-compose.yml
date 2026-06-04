@@ -24,6 +24,8 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-fieldiq}?schema=public
       DIRECT_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-fieldiq}?schema=public
       JWT_SECRET: ${JWT_SECRET}
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
       AI_SERVICE_URL: http://ai-service:8000
       FRONTEND_URL: http://localhost:3000
       BACKEND_URL: http://localhost:3001

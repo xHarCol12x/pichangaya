@@ -162,7 +162,8 @@ export class AuthService {
             email: data.email,
             password: hashedPassword,
             name: data.name,
-            role: data.role || 'ADMIN',
+            // Public registration always creates a tenant-level account.
+            role: 'ADMIN',
             plan: plan as any,
             subscriptionEndsAt: subscriptionEndsAt,
             isActive: isActive

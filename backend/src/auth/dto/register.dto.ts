@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, MinLength, IsOptional, Matches } from 'class-validator';
 
 export class RegisterDto {
     @IsEmail({}, { message: 'El correo electrónico proporcionado no es válido.' })
@@ -14,9 +14,9 @@ export class RegisterDto {
     @IsOptional()
     name?: string;
 
-    @IsString({ message: 'El rol debe ser una cadena de texto.' })
+    @Matches(/^\d{9}$/, { message: 'El teléfono debe tener exactamente 9 dígitos.' })
     @IsOptional()
-    role?: string;
+    phone?: string;
 
     @IsString({ message: 'El plan debe ser una cadena de texto.' })
     @IsOptional()

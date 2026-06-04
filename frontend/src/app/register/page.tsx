@@ -11,7 +11,7 @@ import api from "@/lib/api";
 const RegisterContent = () => {
     const searchParams = useSearchParams();
     const selectedPlan = searchParams.get("plan");
-    const [formData, setFormData] = useState({ name: "", email: "", phone: "", password: "", role: "ADMIN" });
+    const [formData, setFormData] = useState({ name: "", email: "", phone: "", password: "" });
     const [error, setError] = useState("");
     const [phoneError, setPhoneError] = useState("");
     const [loading, setLoading] = useState(false);
