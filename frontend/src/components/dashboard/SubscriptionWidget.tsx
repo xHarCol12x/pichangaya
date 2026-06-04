@@ -133,9 +133,11 @@ const SubscriptionWidget = () => {
         setCollapsed(c => !c);
     };
 
-    if (!ready || !plan) return null;
+    if (!ready) return null;
 
-    const cfg = planConfig[plan] ?? planConfig["basic"];
+    const activePlan = plan ?? "basic";
+
+    const cfg = planConfig[activePlan] ?? planConfig["basic"];
     const Icon = cfg.icon;
     const daysLeft = endsAt ? getDaysLeft(endsAt) : null;
     const isExpiringSoon = daysLeft !== null && daysLeft <= 7;
@@ -162,7 +164,7 @@ const SubscriptionWidget = () => {
                     </div>
 
                     {/* Solo plan pro y enterprise pueden colapsar el widget */}
-                    {canCollapse(plan!) && (
+                    {(activePlan === "pro" || activePlan === "enterprise") && (
                         <button
                             onClick={handleCollapse}
                             className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
@@ -224,7 +226,7 @@ const SubscriptionWidget = () => {
                         )}
 
                         <button
-                            onClick={() => router.push("/dashboard/billing?apply_plan=" + plan.toUpperCase())}
+                            onClick={() => router.push("/dashboard/billing?apply_plan=" + activePlan.toUpperCase())}
                             className="w-full bg-white/15 hover:bg-white/25 border border-white/10 text-white text-xs font-black uppercase tracking-widest py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95"
                         >
                             Actualizar Plan
