@@ -12,8 +12,7 @@ import {
     Moon, 
     MapPin, 
     ChevronDown, 
-    Menu, 
-    CreditCard 
+    Menu
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -24,8 +23,6 @@ import { useSidebar } from "@/context/SidebarContext";
 import { useLogout } from "@/context/LogoutContext";
 
 
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 // Gradiente por plan
 const planConfig: Record<string, { gradient: string; label: string; glow: string }> = {
@@ -59,10 +56,10 @@ const TopBar = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isVenueDropdownOpen, setIsVenueDropdownOpen] = useState(false);
     const venueDropdownRef = useRef<HTMLDivElement>(null);
-    const { isOpen, setIsOpen, toggleSidebar } = useSidebar();
+    const { toggleSidebar } = useSidebar();
     const { showLogoutConfirm } = useLogout();
     const router = useRouter();
-    const { theme, setTheme, resolvedTheme } = useTheme();
+    const { setTheme, resolvedTheme } = useTheme();
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -113,7 +110,7 @@ const TopBar = () => {
                         setPlan(user.plan || null);
                         setRole(user.role || null);
                     }
-                } catch (_) { }
+                } catch { }
             }
         };
 
@@ -133,7 +130,7 @@ const TopBar = () => {
                 const parsed = JSON.parse(stored);
                 localStorage.setItem("fieldiq_user", JSON.stringify({ ...parsed, themePreference: newTheme }));
             }
-        } catch (e) {
+        } catch {
             console.error("Error updating theme preference");
         }
     };
