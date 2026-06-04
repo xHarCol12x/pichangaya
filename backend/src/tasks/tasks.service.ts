@@ -26,22 +26,29 @@ export class TasksService {
             },
         });
 
-        for (const user of expiredUsers) {
-            await this.prisma.user.update({
-                where: { id: user.id },
+        if (expiredUsers.length > 0) {
+            const userIds = expiredUsers.map(user => user.id);
+
+            // Batch update users
+            await this.prisma.user.updateMany({
+                where: { id: { in: userIds } },
                 data: { isActive: false },
             });
 
-            // Audit Trail
-            await this.prisma.analyticsLog.create({
-                data: {
-                    event: 'SUBSCRIPTION_EXPIRED_AUTO',
-                    userId: user.id,
-                    metadata: { reason: 'Cron job detected past due date' },
-                },
+            // Batch create analytics logs
+            const analyticsLogs = expiredUsers.map(user => ({
+                event: 'SUBSCRIPTION_EXPIRED_AUTO',
+                userId: user.id,
+                metadata: { reason: 'Cron job detected past due date' },
+            }));
+
+            await this.prisma.analyticsLog.createMany({
+                data: analyticsLogs,
             });
 
-            this.logger.log(`Deactivated expired account for Tenant: ${user.email}`);
+            for (const user of expiredUsers) {
+                this.logger.log(`Deactivated expired account for Tenant: ${user.email}`);
+            }
         }
 
         this.logger.debug(`Subscription check finished. Deactivated ${expiredUsers.length} accounts.`);
