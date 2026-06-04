@@ -7,7 +7,11 @@ export class EmailService {
   private fromEmail = 'PichangaLibre <noreply@pichangalibre.xyz>';
 
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY || 're_dummykey1234567890');
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY environment variable is required but not set.');
+    }
+    this.resend = new Resend(apiKey);
   }
 
   async sendWelcomeEmail(name: string, email: string): Promise<void> {
