@@ -4,8 +4,8 @@ import { MercadoPagoController } from './mercadopago.controller';
 import { PrismaService } from '../../prisma.service';
 
 @Module({
-    providers: [MercadoPagoService, PrismaService],
-    controllers: [MercadoPagoController],
-    exports: [MercadoPagoService],
+  providers: [MercadoPagoService, PrismaService],
+  controllers: [MercadoPagoController],
+  exports: [MercadoPagoService],
 })
-export class MercadoPagoModule { }
+export class MercadoPagoModule {}
