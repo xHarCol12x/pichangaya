@@ -158,7 +158,7 @@ const SubscriptionWidget = () => {
                     </div>
 
                     {/* Solo plan pro y enterprise pueden colapsar el widget */}
-                    {(plan === "pro" || plan === "enterprise") && (
+                    {canCollapse(plan!) && (
                         <button
                             onClick={handleCollapse}
                             className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
