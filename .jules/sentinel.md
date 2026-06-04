@@ -1,0 +1,4 @@
+## 2024-06-04 - Secret Reuse and Network Exposure
+**Vulnerability:** The application's main authentication JWT signing secret (`JWT_SECRET`) was being reused as the token for authorizing internal requests to the `ai-tools` endpoint (`x-ai-token`).
+**Learning:** This is a critical security vulnerability. Exposing the primary `JWT_SECRET` over the network (even internally) as a header significantly increases the risk of it being intercepted or logged. If compromised, an attacker could forge arbitrary JWT tokens, completely bypassing the authentication system. Master secrets must never be transmitted over the network or reused for different purposes.
+**Prevention:** Use a dedicated, separate secret (e.g., `AI_SERVICE_TOKEN`) for service-to-service communication. Ensure that if the dedicated secret is not configured, the authorization check fails securely (fail-closed) rather than failing open.

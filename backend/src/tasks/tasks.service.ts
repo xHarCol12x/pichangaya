@@ -57,5 +57,9 @@ export class TasksService {
 
         this.logger.debug(`Subscription check finished. Deactivated ${expiredUsers.length} accounts.`);
     }
-}
 
+    this.logger.debug(
+      `Subscription check finished. Deactivated ${expiredUsers.length} accounts.`,
+    );
+  }
+}
