@@ -116,8 +116,12 @@ const SubscriptionWidget = () => {
         if (!collapsed) {
             gsap.to(el, { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" });
         } else {
-            gsap.set(el, { height: "auto", opacity: 1 });
+            // Mide scrollHeight antes de animar sin causar parpadeos visuales
+            const prevHeight = el.style.height;
+            el.style.height = "auto";
             const fullHeight = el.scrollHeight;
+            el.style.height = prevHeight;
+
             gsap.fromTo(el,
                 { height: 0, opacity: 0 },
                 {
