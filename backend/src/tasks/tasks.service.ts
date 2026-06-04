@@ -4,44 +4,54 @@ import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class TasksService {
-  private readonly logger = new Logger(TasksService.name);
+    private readonly logger = new Logger(TasksService.name);
 
-  constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
 
-  // Run every midnight
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async handleSubscriptionExpiration() {
-    this.logger.debug('Running daily subscription check...');
+    // Run every midnight
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    async handleSubscriptionExpiration() {
+        this.logger.debug('Running daily subscription check...');
 
-    const now = new Date();
+        const now = new Date();
 
-    // Find all users who are active but their subscription has ended
-    const expiredUsers = await this.prisma.user.findMany({
-      where: {
-        isActive: true,
-        subscriptionEndsAt: {
-          lt: now, // Less than current date
-        },
-        role: 'ADMIN', // Only affect Tenants
-      },
-    });
+        // Find all users who are active but their subscription has ended
+        const expiredUsers = await this.prisma.user.findMany({
+            where: {
+                isActive: true,
+                subscriptionEndsAt: {
+                    lt: now, // Less than current date
+                },
+                role: 'ADMIN', // Only affect Tenants
+            },
+        });
 
-    for (const user of expiredUsers) {
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { isActive: false },
-      });
+        if (expiredUsers.length > 0) {
+            const userIds = expiredUsers.map(user => user.id);
 
-      // Audit Trail
-      await this.prisma.analyticsLog.create({
-        data: {
-          event: 'SUBSCRIPTION_EXPIRED_AUTO',
-          userId: user.id,
-          metadata: { reason: 'Cron job detected past due date' },
-        },
-      });
+            // Batch update users
+            await this.prisma.user.updateMany({
+                where: { id: { in: userIds } },
+                data: { isActive: false },
+            });
 
-      this.logger.log(`Deactivated expired account for Tenant: ${user.email}`);
+            // Batch create analytics logs
+            const analyticsLogs = expiredUsers.map(user => ({
+                event: 'SUBSCRIPTION_EXPIRED_AUTO',
+                userId: user.id,
+                metadata: { reason: 'Cron job detected past due date' },
+            }));
+
+            await this.prisma.analyticsLog.createMany({
+                data: analyticsLogs,
+            });
+
+            for (const user of expiredUsers) {
+                this.logger.log(`Deactivated expired account for Tenant: ${user.email}`);
+            }
+        }
+
+        this.logger.debug(`Subscription check finished. Deactivated ${expiredUsers.length} accounts.`);
     }
 
     this.logger.debug(
