@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarX, Clock, MapPin, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarX, Clock, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const StatusBadge = ({ status }: { status: string }) => {
     const map: Record<string, { label: string; className: string }> = {
@@ -26,16 +26,34 @@ const isToday = (iso: string) => {
     return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 };
 
+
+export interface Booking {
+    id: string;
+    startTime: string;
+    endTime?: string;
+    totalPrice?: number;
+    status: string;
+    field: {
+        name: string;
+        type?: string;
+        surface?: string;
+    };
+    client?: {
+        name: string;
+        phone?: string;
+    };
+}
+
 export function UpcomingBookingsWidget({
     filteredUpcoming,
     bookingFilter,
     setBookingFilter,
     setSelectedBooking
 }: {
-    filteredUpcoming: any[];
+    filteredUpcoming: Booking[];
     bookingFilter: string;
     setBookingFilter: (f: string) => void;
-    setSelectedBooking: (b: any) => void;
+    setSelectedBooking: (b: Booking) => void;
 }) {
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 3; // Reducido para Bento Box
