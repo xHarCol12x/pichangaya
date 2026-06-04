@@ -1,13 +1,23 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { TrendingUp, TrendingDown, CreditCard, CalendarCheck, AlertCircle, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, CreditCard, CalendarCheck, AlertCircle, Activity, LucideIcon } from "lucide-react";
 import gsap from "gsap";
 
 const formatCurrency = (n: number) =>
     `S/ ${n.toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
 
-const KpiCard = ({ title, value, sub, change, positive, icon: Icon, accent }: any) => {
+interface KpiCardProps {
+    title: string;
+    value: string | number;
+    sub?: string;
+    change: string;
+    positive: boolean;
+    icon: LucideIcon;
+    accent: string;
+}
+
+const KpiCard = ({ title, value, sub, change, positive, icon: Icon, accent }: KpiCardProps) => {
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         gsap.fromTo(ref.current,
@@ -31,7 +41,19 @@ const KpiCard = ({ title, value, sub, change, positive, icon: Icon, accent }: an
     );
 };
 
-export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFieldsLength: number }) {
+interface KpiStatsWidgetProps {
+    stats?: {
+        revenue?: number;
+        todayRevenue?: number;
+        confirmed?: any[];
+        todayBookings?: any[];
+        pending?: any[];
+        occupancy?: number;
+    };
+    allFieldsLength: number;
+}
+
+export function KpiStatsWidget({ stats, allFieldsLength }: KpiStatsWidgetProps) {
     // Defensive normalization
     const revenue = stats?.revenue || 0;
     const todayRevenue = stats?.todayRevenue || 0;
