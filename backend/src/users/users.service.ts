@@ -17,7 +17,7 @@ export class UsersService {
         updatedAt: true,
         password: false,
       } as any,
-    });
+    }) as unknown as Promise<User[]>;
   }
 
   async findMe(id: string) {

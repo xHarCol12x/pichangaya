@@ -21,8 +21,16 @@ export class AiToolsService {
       },
     });
 
+    const bookingsByField = new Map<string, typeof bookings>();
+    for (const booking of bookings) {
+      if (!bookingsByField.has(booking.fieldId)) {
+        bookingsByField.set(booking.fieldId, []);
+      }
+      bookingsByField.get(booking.fieldId)!.push(booking);
+    }
+
     const summary = fields.map((f) => {
-      const fieldBookings = bookings.filter((b) => b.fieldId === f.id);
+      const fieldBookings = bookingsByField.get(f.id) || [];
       return {
         id: f.id,
         name: f.name,

@@ -18,7 +18,7 @@ if (!process.env.JWT_SECRET) {
     PassportModule,
     EmailModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET as string,
+      secret: process.env.JWT_SECRET || 'super-secret-key',
       signOptions: { expiresIn: '1d' },
     }),
   ],
