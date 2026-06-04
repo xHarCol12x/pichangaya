@@ -102,7 +102,10 @@ export class EmailService {
     });
   }
 
-  async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+  async sendPasswordResetEmail(
+    email: string,
+    resetLink: string,
+  ): Promise<void> {
     await this.resend.emails.send({
       from: this.fromEmail,
       to: email,

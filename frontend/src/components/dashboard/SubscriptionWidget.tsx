@@ -116,8 +116,12 @@ const SubscriptionWidget = () => {
         if (!collapsed) {
             gsap.to(el, { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" });
         } else {
-            gsap.set(el, { height: "auto", opacity: 1 });
+            // Mide scrollHeight antes de animar sin causar parpadeos visuales
+            const prevHeight = el.style.height;
+            el.style.height = "auto";
             const fullHeight = el.scrollHeight;
+            el.style.height = prevHeight;
+
             gsap.fromTo(el,
                 { height: 0, opacity: 0 },
                 {
@@ -158,7 +162,7 @@ const SubscriptionWidget = () => {
                     </div>
 
                     {/* Solo plan pro y enterprise pueden colapsar el widget */}
-                    {(plan === "pro" || plan === "enterprise") && (
+                    {canCollapse(plan!) && (
                         <button
                             onClick={handleCollapse}
                             className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
