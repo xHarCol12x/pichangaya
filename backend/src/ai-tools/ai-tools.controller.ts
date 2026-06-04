@@ -13,9 +13,11 @@ import { AiToolsService } from './ai-tools.service';
 export class AiToolsController {
   constructor(private aiToolsService: AiToolsService) {}
 
-  private checkAuth(token: string) {
-    if (!token || token !== process.env.JWT_SECRET) {
-      throw new UnauthorizedException('Invalid AI Token');
+    private checkAuth(token: string) {
+        const expectedToken = process.env.AI_SERVICE_TOKEN;
+        if (!expectedToken || !token || token !== expectedToken) {
+            throw new UnauthorizedException('Invalid AI Token');
+        }
     }
   }
 
