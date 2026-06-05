@@ -9,7 +9,8 @@ async function main() {
     {
       code: 'FREE_TRIAL',
       name: 'Prueba Gratis',
-      description: 'Prueba todas las funciones premium gratis por 7 días. Ideal para conocer FieldIQ antes de decidirte.',
+      description:
+        'Prueba todas las funciones premium gratis por 7 días. Ideal para conocer FieldIQ antes de decidirte.',
       priceMensual: 0,
       priceAnual: 0,
       limitVenues: 1,
@@ -24,20 +25,21 @@ async function main() {
         'Hasta 1 sede',
         'Hasta 2 canchas',
         'Calendario en tiempo real',
-        'Soporte básico'
+        'Soporte básico',
       ],
       permissions: {
         canAddFields: true,
         canViewAnalytics: true,
         canUseAi: true,
-      }
+      },
     },
     {
       code: 'BASIC',
       name: 'Plan Básico',
-      description: 'La solución esencial para complejos deportivos que están empezando a digitalizar su gestión.',
-      priceMensual: 29.90,
-      priceAnual: 23.90,
+      description:
+        'La solución esencial para complejos deportivos que están empezando a digitalizar su gestión.',
+      priceMensual: 29.9,
+      priceAnual: 23.9,
       limitVenues: 1,
       limitFields: 3,
       isActive: true,
@@ -50,20 +52,21 @@ async function main() {
         'Hasta 3 canchas',
         'Gestión de clientes ilimitada',
         'Calendario de reservas mensual',
-        'Soporte por email'
+        'Soporte por email',
       ],
       permissions: {
         canAddFields: true,
         canViewAnalytics: true,
         canUseAi: false,
-      }
+      },
     },
     {
       code: 'PRO',
       name: 'Plan Profesional',
-      description: 'Nuestra opción más popular para complejos en crecimiento que necesitan control total y analítica.',
-      priceMensual: 59.90,
-      priceAnual: 47.90,
+      description:
+        'Nuestra opción más popular para complejos en crecimiento que necesitan control total y analítica.',
+      priceMensual: 59.9,
+      priceAnual: 47.9,
       limitVenues: 3,
       limitFields: 10,
       isActive: true,
@@ -76,20 +79,21 @@ async function main() {
         'Hasta 10 canchas',
         'Analítica avanzada de ingresos',
         'WhatsApp API integration',
-        'Soporte prioritario 24/7'
+        'Soporte prioritario 24/7',
       ],
       permissions: {
         canAddFields: true,
         canViewAnalytics: true,
         canUseAi: true,
-      }
+      },
     },
     {
       code: 'ENTERPRISE',
       name: 'Plan Empresarial',
-      description: 'Máximo rendimiento para grandes clubes y franquicias con necesidades de escala y seguridad.',
-      priceMensual: 199.90,
-      priceAnual: 159.90,
+      description:
+        'Máximo rendimiento para grandes clubes y franquicias con necesidades de escala y seguridad.',
+      priceMensual: 199.9,
+      priceAnual: 159.9,
       limitVenues: 99,
       limitFields: 99,
       isActive: true,
@@ -102,25 +106,37 @@ async function main() {
         'API personalizada',
         'Account Manager dedicado',
         'Reportes forenses',
-        'Panel de administración multinivel'
+        'Panel de administración multinivel',
       ],
       permissions: {
         canAddFields: true,
         canViewAnalytics: true,
         canUseAi: true,
-      }
-    }
+      },
+    },
   ];
 
-  for (const plan of plans) {
-    await prisma.subscriptionPlan.upsert({
+  const start = performance.now();
+
+  const upserts = plans.map((plan) =>
+    prisma.subscriptionPlan.upsert({
       where: { code: plan.code },
       update: plan,
       create: plan,
-    });
+    }),
+  );
+
+  await prisma.$transaction(upserts);
+
+  const end = performance.now();
+
+  for (const plan of plans) {
     console.log(`✅ Plan ${plan.name} (${plan.code}) sincronizado.`);
   }
 
+  console.log(
+    `⏱️ Performance: Upsert de planes completado en ${(end - start).toFixed(2)} ms.`,
+  );
   console.log('✨ Siembra de planes finalizada con éxito.');
 }
 
