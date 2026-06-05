@@ -11,7 +11,15 @@ import BookingDetailModal from "@/components/bookings/BookingDetailModal";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Loader2, Plus, Navigation } from "lucide-react";
 import { useVenue } from "@/context/VenueContext";
 import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
+import { cn } from "@/lib/utils";
 
+export const getBookingCardClassName = (status: string) => {
+    const baseClass = "rounded-2xl border backdrop-blur-md p-3 text-[11px] overflow-hidden transition-all duration-300 hover:z-20 hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:scale-[1.02] hover:border-white/20 cursor-pointer group";
+    const statusClass = status === "PENDING"
+        ? "bg-orange-500/10 border-orange-500/20 text-orange-400 shadow-[inset_0_0_15px_rgba(249,115,22,0.05)]"
+        : "bg-[#cafd00]/10 border-[#cafd00]/20 text-[#cafd00] shadow-[inset_0_0_15px_rgba(202,253,0,0.05)]";
+    return cn(baseClass, statusClass);
+};
 
 export default function CalendarPage() {
     const { navigateWithTransition } = useTransition();
@@ -243,9 +251,6 @@ export default function CalendarPage() {
         const topPosition = (startMinutes / 60) * 80; // 80px per hour
         const height = (durationMinutes / 60) * 80;
 
-        let bgColor = "bg-[#cafd00]/10 border-[#cafd00]/20 text-[#cafd00] shadow-[inset_0_0_15px_rgba(202,253,0,0.05)]";
-        if (b.status === "PENDING") bgColor = "bg-orange-500/10 border-orange-500/20 text-orange-400 shadow-[inset_0_0_15px_rgba(249,115,22,0.05)]";
-
         return {
             top: `${topPosition}px`,
             height: `${height}px`,
@@ -253,7 +258,7 @@ export default function CalendarPage() {
             left: '6px',
             right: '6px',
             zIndex: 10,
-            className: `rounded-2xl border backdrop-blur-md p-3 text-[11px] overflow-hidden transition-all duration-300 hover:z-20 hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:scale-[1.02] hover:border-white/20 cursor-pointer group ${bgColor}`
+            className: getBookingCardClassName(b.status)
         };
     };
 
@@ -462,7 +467,7 @@ export default function CalendarPage() {
                                                         zIndex: draggedBookingId === b.id ? 50 : style.zIndex, 
                                                         opacity: draggedBookingId === b.id ? 0.5 : 1 
                                                     }}
-                                                    className={style.className + " cursor-grab active:cursor-grabbing group/card"}
+                                                    className={cn(style.className, "cursor-grab active:cursor-grabbing group/card")}
                                                     title={`${b.client?.name || 'Cliente local'} - ${b.status}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation(); 

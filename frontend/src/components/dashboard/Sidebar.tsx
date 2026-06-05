@@ -27,13 +27,8 @@ import { useSidebar } from "@/context/SidebarContext";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { useTransition } from "@/components/ui/TransitionOverlay";
 import { useLogout } from "@/context/LogoutContext";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 import api from "@/lib/api";
-
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
+import { cn } from "@/lib/utils";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Vista General", href: "/dashboard" },

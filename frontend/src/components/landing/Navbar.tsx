@@ -5,12 +5,7 @@ import Link from "next/link";
 import TransitionLink from "@/components/ui/TransitionLink";
 import { Activity, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
+import { cn } from "@/lib/utils";
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
