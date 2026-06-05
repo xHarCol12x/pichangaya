@@ -33,6 +33,9 @@ import {
     AiInsightWidget
 } from "@/components/dashboard/widgets";
 import { getDashboardCache, setDashboardCache } from "@/lib/dashboardCache";
+import { BookingDetailsModal } from "@/components/dashboard/modals/BookingDetailsModal";
+import { PaymentModal } from "@/components/dashboard/modals/PaymentModal";
+import { QuickBookingModal } from "@/components/dashboard/modals/QuickBookingModal";
 import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
 
 
@@ -131,21 +134,8 @@ const KpiCard = ({ title, value, sub, change, positive, icon: Icon, accent }: an
     );
 };
 
-// ─── Status Badge ────────────────────────────────────────────────────────────
 
-const StatusBadge = ({ status }: { status: string }) => {
-    const map: Record<string, { label: string; className: string }> = {
-        CONFIRMED: { label: "Confirmada", className: "bg-emerald-500/10 text-emerald-400" },
-        PENDING: { label: "Pendiente", className: "bg-amber-500/10 text-amber-400" },
-        CANCELLED: { label: "Cancelada", className: "bg-red-500/10 text-red-400" },
-    };
-    const s = map[status] ?? { label: status, className: "bg-slate-500/10 text-slate-400" };
-    return (
-        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${s.className}`}>
-            {s.label}
-        </span>
-    );
-};
+
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
@@ -273,16 +263,6 @@ const DashboardPage = () => {
 
     // Quick Booking State
     const [allClientsList, setAllClientsList] = useState<any[]>([]);
-    const [qbClientSearch, setQbClientSearch] = useState("");
-    const [qbShowDrop, setQbShowDrop] = useState(false);
-    const [qbSubmitting, setQbSubmitting] = useState(false);
-    const getQbInitial = () => {
-        const now = new Date(); now.setMinutes(0, 0, 0); now.setHours(now.getHours() + 1);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`;
-        return { fieldId: "", startTime: fmt(now), duration: 60, paymentMethod: "Efectivo", clientId: "", totalPrice: 0 };
-    };
-    const [qbForm, setQbForm] = useState(getQbInitial);
 
     // Tick del reloj
     useEffect(() => {
@@ -850,381 +830,28 @@ const DashboardPage = () => {
                     </div>
                 </div>
             </div>
-            {/* Modal: Detalles de Reserva */}
-            {selectedBooking && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setSelectedBooking(null)} />
-                    <div className="glass border border-white/10 rounded-[2rem] w-full max-w-4xl relative z-10 shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <BookingDetailsModal
+                selectedBooking={selectedBooking}
+                setSelectedBooking={setSelectedBooking}
+                handleUpdateStatus={handleUpdateStatus}
+                actionLoading={actionLoading}
+            />
 
-                        {/* Left Side: Field Preview */}
-                        <div className="w-full md:w-[45%] bg-slate-900/40 p-8 border-b md:border-b-0 md:border-r border-white/5 flex flex-col justify-center items-center relative overflow-hidden">
-                            <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-[80px]" />
+            <PaymentModal
+                payModalBooking={payModalBooking}
+                setPayModalBooking={setPayModalBooking}
+                payLoading={payLoading}
+                handlePaymentSubmit={handlePaymentSubmit}
+            />
 
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-6 relative z-10">Vista Táctica</p>
-
-                            <div className="w-full relative z-10">
-                                <FieldMiniMap
-                                    type={selectedBooking.field?.type || "Fútbol 5"}
-                                    surface={selectedBooking.field?.surface || "Sintético"}
-                                />
-                            </div>
-
-                            <div className="mt-8 text-center relative z-10">
-                                <span className="text-2xl font-black text-white">{selectedBooking.field?.name}</span>
-                                <div className="flex items-center justify-center gap-2 mt-2">
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/5 text-slate-400 uppercase tracking-wider">
-                                        {selectedBooking.field?.type}
-                                    </span>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent/20 text-accent uppercase tracking-wider">
-                                        {selectedBooking.field?.surface || 'Sintético'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Side: Details & Actions */}
-                        <div className="w-full md:w-[55%] p-6 md:p-8 bg-slate-900/20 flex flex-col max-h-[50vh] md:max-h-[none] overflow-y-auto">
-                            <div className="flex justify-between items-start mb-6 md:mb-8 sticky top-0 bg-slate-900/80 backdrop-blur-md pt-2 pb-2 -mt-2 z-10 rounded-b-xl">
-                                <div>
-                                    <h3 className="text-xl font-black text-white tracking-tight">Detalles de Reserva</h3>
-                                    <p className="text-slate-500 text-xs mt-1 uppercase tracking-widest font-bold">Resumen de Alquiler</p>
-                                </div>
-                                <button onClick={() => setSelectedBooking(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-slate-400 transition-colors">
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="space-y-4 mb-auto">
-                                <div className="flex justify-between p-4 rounded-2xl bg-white/5 border border-white/5 items-center">
-                                    <span className="text-slate-400 text-sm font-medium">Estado del Pago</span>
-                                    <StatusBadge status={selectedBooking.status} />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                                        <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest block mb-1">Fecha</span>
-                                        <span className="text-white font-bold">{formatDate(selectedBooking.startTime)}</span>
-                                    </div>
-                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                                        <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest block mb-1">Horario</span>
-                                        <span className="text-white font-bold font-mono">{formatTime(selectedBooking.startTime)} - {formatTime(selectedBooking.endTime)}</span>
-                                    </div>
-                                </div>
-
-                                <div className="p-5 rounded-2xl bg-accent/5 border border-accent/10 flex justify-between items-center group">
-                                    <div>
-                                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Inversión Total</p>
-                                        <div className="flex items-baseline gap-1 mt-1">
-                                            <span className="text-accent text-sm font-bold">S/</span>
-                                            <span className="text-3xl font-black text-white leading-none">
-                                                {selectedBooking.totalPrice || selectedBooking.price || 0}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <CreditCard className="text-accent w-6 h-6" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3 mt-8">
-                                {selectedBooking.status?.toUpperCase() !== "CONFIRMED" && (
-                                    <button
-                                        onClick={() => handleUpdateStatus(selectedBooking.id, "CONFIRMED")}
-                                        disabled={actionLoading}
-                                        className="w-full bg-emerald-500 text-slate-950 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all flex justify-center items-center gap-2 active:scale-95"
-                                    >
-                                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                                        Confirmar Pago
-                                    </button>
-                                )}
-                                {/* Cancel button is available for all plans */}
-                                {selectedBooking.status?.toUpperCase() !== "CANCELLED" && (
-                                    <button
-                                        onClick={() => handleUpdateStatus(selectedBooking.id, "CANCELLED")}
-                                        disabled={actionLoading}
-                                        className="w-full bg-white/5 text-slate-400 hover:text-white hover:bg-red-500/20 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex justify-center items-center gap-2 active:scale-95"
-                                    >
-                                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarX className="w-4 h-4" />}
-                                        Cancelar
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal: Referir Método de Pago para Cobrar */}
-            {payModalBooking && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setPayModalBooking(null)} />
-                    <div className="relative bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-white/10 w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-6">
-                            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Confirmar Pago</h3>
-                            <p className="text-sm text-slate-500 mb-6">Selecciona el método de pago por <strong className="text-accent">S/{payModalBooking.totalPrice || payModalBooking.price || 0}</strong>.</p>
-
-                            <div className="grid grid-cols-2 gap-2 mb-6">
-                                {['Efectivo', 'Yape', 'Plin', 'Tarjeta', 'Transferencia', 'Otro'].map(m => (
-                                    <button
-                                        key={m}
-                                        disabled={payLoading}
-                                        onClick={() => handlePaymentSubmit(m)}
-                                        className="py-3 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold hover:bg-accent hover:border-accent hover:text-slate-950 transition-all text-sm disabled:opacity-50"
-                                    >
-                                        {payLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : m}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <button
-                                onClick={() => setPayModalBooking(null)}
-                                disabled={payLoading}
-                                className="w-full py-3 text-slate-400 font-bold text-sm hover:text-slate-700 dark:hover:text-white transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal: Reserva Rápida (Walk-in) */}
-            {showQuickBooking && (() => {
-                const qbField = allFields.find(f => f.id === qbForm.fieldId);
-                const qbPrice = qbField ? +(qbField.pricePerHour * qbForm.duration / 60).toFixed(2) : 0;
-                const qbClient = allClientsList.find(c => c.id === qbForm.clientId);
-
-                // --- 1. Función actualizada con Sonner y TypeScript estricto ---
-                const handleQbSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                    e.preventDefault();
-                    if (!qbForm.fieldId) return;
-
-                    const loadingToast = toast.loading("Registrando reserva...");
-                    setQbSubmitting(true);
-
-                    try {
-                        const start = new Date(qbForm.startTime);
-                        const end = new Date(start.getTime() + qbForm.duration * 60000);
-                        const payload: any = {
-                            fieldId: qbForm.fieldId,
-                            startTime: start.toISOString(),
-                            endTime: end.toISOString(),
-                            status: "CONFIRMED",
-                            totalPrice: qbPrice,
-                            paymentMethod: qbForm.paymentMethod || undefined,
-                        };
-                        if (qbForm.clientId) payload.clientId = qbForm.clientId;
-
-                        await bookingsApi.create(payload);
-
-                        toast.success("¡Reserva registrada con éxito!", { id: loadingToast });
-                        closeQuickBooking();
-                        setQbForm(getQbInitial());
-                        setQbClientSearch("");
-                        loadData(true);
-                    } catch (err: any) {
-                        const msg = err?.response?.data?.message || err?.message || "Error al crear reserva.";
-                        toast.error(typeof msg === 'string' ? msg : "Verifica los datos de la reserva", { id: loadingToast });
-                    } finally {
-                        setQbSubmitting(false);
-                    }
-                };
-
-                // --- 2. Renderizado del Modal ---
-                return (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-
-                        <style>{`
-                            @keyframes modal-in {
-                                0% { opacity: 0; transform: scale(0.95) translateY(15px); }
-                                100% { opacity: 1; transform: scale(1) translateY(0); }
-                            }
-                            @keyframes modal-out {
-                                0% { opacity: 1; transform: scale(1) translateY(0); }
-                                100% { opacity: 0; transform: scale(0.95) translateY(15px); }
-                            }
-                            @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-                            @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
-                            
-                            .animate-modal-in { animation: modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-                            .animate-modal-out { animation: modal-out 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-                            .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
-                            .animate-fade-out { animation: fade-out 0.3s ease-out forwards; }
-                        `}</style>
-
-                        {/* Backdrop */}
-                        <div
-                            className={`absolute inset-0 bg-white/80 dark:bg-[#020817]/80 backdrop-blur-sm ${isClosingQB ? 'animate-fade-out' : 'animate-fade-in'}`}
-                            onClick={closeQuickBooking}
-                        />
-
-                        {/* Contenedor del Modal */}
-                        <div className={`bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-[2rem] w-full max-w-xl relative z-10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[90vh] overflow-hidden ${isClosingQB ? 'animate-modal-out' : 'animate-modal-in'}`}>
-
-                            {/* Header (Fijo) */}
-                            <div className="px-8 py-6 border-b border-slate-200 dark:border-white/5 flex items-center gap-4 flex-shrink-0 bg-slate-50 dark:bg-white/[0.02]">
-                                <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center flex-shrink-0">
-                                    <Zap className="w-6 h-6" />
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Reserva Rápida</h3>
-                                    <p className="text-slate-500 text-xs mt-0.5">Registra un walk-in en segundos</p>
-                                </div>
-                                <button type="button" onClick={closeQuickBooking} className="p-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleQbSubmit} className="flex flex-col flex-1 min-h-0">
-
-                                {/* Body del formulario */}
-                                <div className="flex-1 overflow-y-auto p-8 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-
-                                    {/* Client picker */}
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
-                                            Cliente <span className="text-slate-400 dark:text-slate-500 font-normal normal-case tracking-normal text-[10px]">(opcional)</span>
-                                        </label>
-                                        {qbClient ? (
-                                            <div className="flex items-center gap-3 bg-accent/5 border border-accent/20 dark:border-accent/30 rounded-xl p-3">
-                                                <div className="w-9 h-9 rounded-xl bg-accent/10 dark:bg-accent/20 flex items-center justify-center text-xs font-black text-accent flex-shrink-0">
-                                                    {qbClient.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-slate-900 dark:text-white font-bold text-sm truncate">{qbClient.name}</p>
-                                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{qbClient.phone}</p>
-                                                </div>
-                                                <button type="button" onClick={() => setQbForm({ ...qbForm, clientId: '' })} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors">
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="relative">
-                                                <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
-                                                <input
-                                                    type="text"
-                                                    value={qbClientSearch}
-                                                    onFocus={() => setQbShowDrop(true)}
-                                                    onChange={e => { setQbClientSearch(e.target.value); setQbShowDrop(true); }}
-                                                    onBlur={() => setTimeout(() => setQbShowDrop(false), 200)}
-                                                    placeholder="Buscar cliente o dejar en blanco..."
-                                                    className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-sm shadow-sm dark:shadow-none"
-                                                />
-                                                {qbShowDrop && (
-                                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden z-20 shadow-xl dark:shadow-2xl max-h-44 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                                                        {allClientsList.filter(c =>
-                                                            c.name.toLowerCase().includes(qbClientSearch.toLowerCase()) || c.phone.includes(qbClientSearch)
-                                                        ).slice(0, 5).map(c => (
-                                                            <button key={c.id} type="button"
-                                                                onMouseDown={() => { setQbForm({ ...qbForm, clientId: c.id }); setQbClientSearch(''); setQbShowDrop(false); }}
-                                                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left">
-                                                                <div className="w-7 h-7 rounded-lg bg-accent/10 dark:bg-accent/20 text-[10px] font-black text-accent flex items-center justify-center flex-shrink-0">
-                                                                    {c.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-slate-900 dark:text-white text-sm font-medium">{c.name}</p>
-                                                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{c.phone}</p>
-                                                                </div>
-                                                            </button>
-                                                        ))}
-                                                        {allClientsList.length === 0 && (
-                                                            <p className="text-slate-500 dark:text-slate-400 text-xs px-4 py-3">
-                                                                Sin clientes — <a href="/dashboard/users" className="text-accent hover:underline">crear cliente</a>
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Field + Time */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Cancha</label>
-                                            <select required value={qbForm.fieldId}
-                                                onChange={e => setQbForm({ ...qbForm, fieldId: e.target.value })}
-                                                className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-accent transition-all appearance-none text-sm shadow-sm dark:shadow-none">
-                                                <option value="" disabled>Selecciona...</option>
-                                                {allFields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Inicio</label>
-                                            <input required type="datetime-local" value={qbForm.startTime}
-                                                onChange={e => setQbForm({ ...qbForm, startTime: e.target.value })}
-                                                className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-accent transition-all text-sm font-mono shadow-sm dark:shadow-none" />
-                                        </div>
-                                    </div>
-
-                                    {/* Duration pills */}
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Duración</label>
-                                        <div className="flex gap-2">
-                                            {[60, 90, 120].map(min => (
-                                                <button key={min} type="button"
-                                                    onClick={() => setQbForm({ ...qbForm, duration: min })}
-                                                    className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${qbForm.duration === min
-                                                        ? 'bg-accent/10 border-accent text-accent'
-                                                        : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 shadow-sm dark:shadow-none'
-                                                        }`}>
-                                                    {min} min
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Payment Method */}
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Método de Pago</label>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                            {['Efectivo', 'Yape', 'Plin', 'Tarjeta', 'Transferencia', 'Otro'].map(m => (
-                                                <button key={m} type="button"
-                                                    onClick={() => setQbForm({ ...qbForm, paymentMethod: m })}
-                                                    className={`py-2.5 rounded-xl border text-xs font-bold transition-all ${qbForm.paymentMethod === m
-                                                        ? 'bg-slate-900 dark:bg-white/10 border-slate-800 dark:border-white/30 text-white'
-                                                        : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/5 text-slate-900 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 shadow-sm dark:shadow-none'
-                                                        }`}>
-                                                    {m}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Price preview */}
-                                    <div className="bg-accent/5 border border-accent/20 dark:border-accent/15 rounded-xl px-5 py-4 flex justify-between items-center mb-2">
-                                        <div>
-                                            <p className="text-slate-500 text-[10px] uppercase font-black tracking-widest">Total a cobrar</p>
-                                            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
-                                                <span className="text-accent text-base">S/ </span>{qbPrice.toFixed(2)}
-                                            </p>
-                                        </div>
-                                        <p className="text-slate-500 dark:text-slate-400 text-xs">
-                                            {qbField ? `S/${qbField.pricePerHour}/hr × ${qbForm.duration}min` : 'Selecciona una cancha'}
-                                        </p>
-                                    </div>
-
-                                </div>
-
-                                {/* Footer (Fijo) con los Botones de Acción */}
-                                <div className="px-8 py-5 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] flex gap-3 flex-shrink-0">
-                                    <button type="button" onClick={closeQuickBooking}
-                                        className="px-5 py-3 rounded-xl font-bold border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-sm shadow-sm dark:shadow-none bg-white dark:bg-transparent">
-                                        Cancelar
-                                    </button>
-                                    <button type="submit" disabled={qbSubmitting || !qbForm.fieldId}
-                                        className="flex-1 bg-accent text-slate-950 py-3 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-accent/90 transition-all active:scale-95 disabled:opacity-50 text-sm shadow-sm dark:shadow-none">
-                                        {qbSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                                        Confirmar Reserva
-                                    </button>
-                                </div>
-
-                            </form>
-                        </div>
-                    </div>
-                );
-            })()}
+            <QuickBookingModal
+                showQuickBooking={showQuickBooking}
+                isClosingQB={isClosingQB}
+                closeQuickBooking={closeQuickBooking}
+                allFields={allFields}
+                allClientsList={allClientsList}
+                onSuccess={() => loadData(true)}
+            />
 
 
         </>
