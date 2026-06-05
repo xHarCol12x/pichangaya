@@ -21,8 +21,12 @@ import FieldMiniMap from "@/components/fields/FieldMiniMap";
 import { Toaster, toast } from "sonner";
 import { Edit3, Check, Lock } from "lucide-react";
 import dynamic from "next/dynamic";
-const ResponsiveGridLayout = dynamic(
-    () => import("react-grid-layout").then((mod: any) => mod.ResponsiveGridLayout),
+import { ResponsiveProps } from "react-grid-layout";
+
+type ResponsiveGridLayoutProps = ResponsiveProps & { children: React.ReactNode; isDraggable?: boolean; isResizable?: boolean; useCSSTransforms?: boolean; };
+
+const ResponsiveGridLayout = dynamic<ResponsiveGridLayoutProps>(
+    () => import("react-grid-layout").then((mod) => mod.Responsive),
     { ssr: false }
 );
 import {
@@ -806,7 +810,7 @@ const DashboardPage = () => {
                                 <div className="w-10 h-1 bg-white/10 rounded-full" />
                             </div>
                         )}
-                        {/* @ts-ignore */}
+
                         <ResponsiveGridLayout
                             key={(isEditMode ? '_editing' : '_view') + editBreakpoint}
                             width={isEditMode && editBreakpoint === 'sm' ? 400 : (containerWidth || 1200)}
