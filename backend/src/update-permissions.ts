@@ -44,11 +44,19 @@ async function main() {
         }
     };
 
+    const transactions: any[] = [];
     for (const [code, permissions] of Object.entries(planPermissions)) {
-        await prisma.subscriptionPlan.updateMany({
-            where: { code },
-            data: { permissions }
-        });
+        transactions.push(
+            prisma.subscriptionPlan.updateMany({
+                where: { code },
+                data: { permissions }
+            })
+        );
+    }
+
+    await prisma.$transaction(transactions);
+
+    for (const code of Object.keys(planPermissions)) {
         console.log(`✅ Permisos actualizados para el plan: ${code}`);
     }
 
