@@ -7,7 +7,13 @@ export class EmailService {
   private fromEmail = 'PichangaLibre <noreply@pichangalibre.xyz>';
 
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY || 're_dummykey1234567890');
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      throw new Error(
+        'CRITICAL: RESEND_API_KEY environment variable is required.',
+      );
+    }
+    this.resend = new Resend(resendApiKey);
   }
 
   async sendWelcomeEmail(name: string, email: string): Promise<void> {
@@ -98,7 +104,10 @@ export class EmailService {
     });
   }
 
-  async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+  async sendPasswordResetEmail(
+    email: string,
+    resetLink: string,
+  ): Promise<void> {
     await this.resend.emails.send({
       from: this.fromEmail,
       to: email,
