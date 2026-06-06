@@ -5,37 +5,53 @@ import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor(private prisma: PrismaService) {
-        super({
-            jwtFromRequest: ExtractJwt.fromExtractors([
-                ExtractJwt.fromAuthHeaderAsBearerToken(),
-                (req) => {
-                    // Extract token from query param (useful for SSE / EventSource)
-                    return req?.query?.token;
-                }
-            ]),
-            ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET || 'super-secret-key',
-        });
+  constructor(private prisma: PrismaService) {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error(
+        'CRITICAL: JWT_SECRET environment variable is required for security.',
+      );
     }
 
-    async validate(payload: any) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: payload.sub },
-            select: { id: true, email: true, role: true, isActive: true, subscriptionEndsAt: true }
-        });
+    super({
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (req) => {
+          // Extract token from query param (useful for SSE / EventSource)
+          return req?.query?.token;
+        },
+      ]),
+      ignoreExpiration: false,
+      secretOrKey: secret,
+    });
+  }
 
-        if (!user) {
-            throw new UnauthorizedException('Cuenta no encontrada.');
-        }
+  async validate(payload: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true,
+        subscriptionEndsAt: true,
+      },
+    });
 
-        const now = new Date();
-        const isExpired = user.subscriptionEndsAt && new Date(user.subscriptionEndsAt) <= now;
-
-        if (!user.isActive || (user.role === 'ADMIN' && isExpired)) {
-            throw new UnauthorizedException('Tu cuenta está inactiva o tu suscripción ha expirado. Por favor renueva tu plan.');
-        }
-
-        return { userId: user.id, email: user.email, role: user.role };
+    if (!user) {
+      throw new UnauthorizedException('Cuenta no encontrada.');
     }
+
+    const now = new Date();
+    const isExpired =
+      user.subscriptionEndsAt && new Date(user.subscriptionEndsAt) <= now;
+
+    if (!user.isActive || (user.role === 'ADMIN' && isExpired)) {
+      throw new UnauthorizedException(
+        'Tu cuenta está inactiva o tu suscripción ha expirado. Por favor renueva tu plan.',
+      );
+    }
+
+    return { userId: user.id, email: user.email, role: user.role };
+  }
 }

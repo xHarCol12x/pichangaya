@@ -9,17 +9,26 @@ import { PrismaService } from '../prisma.service';
 import { EmailModule } from '../email/email.module';
 
 @Module({
-    imports: [
-        UsersModule,
-        PassportModule,
-        EmailModule,
-        JwtModule.register({
-            secret: process.env.JWT_SECRET || 'super-secret-key',
-            signOptions: { expiresIn: '1d' },
-        }),
-    ],
-    providers: [AuthService, JwtStrategy, PrismaService],
-    controllers: [AuthController],
-    exports: [AuthService],
+  imports: [
+    UsersModule,
+    PassportModule,
+    EmailModule,
+    JwtModule.registerAsync({
+      useFactory: () => {
+        if (!process.env.JWT_SECRET) {
+          throw new Error(
+            'CRITICAL: JWT_SECRET environment variable is required for security.',
+          );
+        }
+        return {
+          secret: process.env.JWT_SECRET,
+          signOptions: { expiresIn: '1d' },
+        };
+      },
+    }),
+  ],
+  providers: [AuthService, JwtStrategy, PrismaService],
+  controllers: [AuthController],
+  exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

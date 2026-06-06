@@ -5,8 +5,11 @@ import { PrismaService } from '../prisma.service';
 
 @Global()
 @Module({
-  providers: [AuditService, typeof PrismaService !== 'undefined' ? PrismaService : Object],
+  providers: [
+    AuditService,
+    typeof PrismaService !== 'undefined' ? PrismaService : Object,
+  ],
   controllers: [AuditController],
   exports: [AuditService],
 })
-export class AuditModule { }
+export class AuditModule {}
