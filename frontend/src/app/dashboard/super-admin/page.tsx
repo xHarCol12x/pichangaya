@@ -1214,7 +1214,11 @@ function CreateTenantModal({ onClose, onCreated }: { onClose: () => void, onCrea
     const generatePassword = () => {
         const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
         let pass = "";
-        for (let i = 0; i < 12; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        const array = new Uint32Array(12);
+        window.crypto.getRandomValues(array);
+        for (let i = 0; i < 12; i++) {
+            pass += chars.charAt(array[i] % chars.length);
+        }
         setPassword(pass);
     };
 
