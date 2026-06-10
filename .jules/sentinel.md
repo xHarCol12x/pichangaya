@@ -1,0 +1,4 @@
+## 2025-02-12 - Fix Hardcoded Fallback Secrets
+**Vulnerability:** The backend `JWT_SECRET` had a hardcoded fallback (`'super-secret-key'`) in `auth.module.ts` and `jwt.strategy.ts`. This means if the environment variable was accidentally omitted, the application would silently use a known, weak key instead of failing securely, allowing an attacker to forge JWT tokens and gain unauthorized access.
+**Learning:** Framework initialization often uses default fallbacks for convenience during development, but leaving these in production creates a critical security risk (token forgery). It's safer to fail fast and explicitly crash the application when a critical secret like `JWT_SECRET` is missing.
+**Prevention:** Do not use `|| 'secret'` pattern for critical configuration values. Enforce environment variable presence using validation libraries (like `joi` or NestJS `ConfigModule` with validation schema) before the application boots.
