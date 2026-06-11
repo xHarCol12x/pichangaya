@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Query, Headers, UnauthorizedException } from '@nestjs/common';
 import { AiToolsService } from './ai-tools.service';
+import * as crypto from 'crypto';
 
 @Controller('ai-tools')
 export class AiToolsController {
@@ -7,7 +8,14 @@ export class AiToolsController {
 
     private checkAuth(token: string) {
         const expectedToken = process.env.AI_SERVICE_TOKEN;
-        if (!expectedToken || token !== expectedToken) {
+        if (!expectedToken || !token) {
+            throw new UnauthorizedException('Invalid AI Token');
+        }
+
+        const tokenBuffer = Buffer.from(token);
+        const expectedTokenBuffer = Buffer.from(expectedToken);
+
+        if (tokenBuffer.length !== expectedTokenBuffer.length || !crypto.timingSafeEqual(tokenBuffer, expectedTokenBuffer)) {
             throw new UnauthorizedException('Invalid AI Token');
         }
     }

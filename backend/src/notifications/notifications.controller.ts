@@ -3,6 +3,7 @@ import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Observable, fromEvent, map } from 'rxjs';
+import * as crypto from 'crypto';
 
 @Controller('notifications')
 export class NotificationsController {
@@ -51,7 +52,14 @@ export class NotificationsController {
         @Body() body: { userId: string, title: string, content: string, url?: string },
     ) {
         const expectedToken = process.env.INTERNAL_API_TOKEN;
-        if (!expectedToken || token !== expectedToken) {
+        if (!expectedToken || !token) {
+            throw new UnauthorizedException('Invalid internal token');
+        }
+
+        const tokenBuffer = Buffer.from(token);
+        const expectedTokenBuffer = Buffer.from(expectedToken);
+
+        if (tokenBuffer.length !== expectedTokenBuffer.length || !crypto.timingSafeEqual(tokenBuffer, expectedTokenBuffer)) {
             throw new UnauthorizedException('Invalid internal token');
         }
 
