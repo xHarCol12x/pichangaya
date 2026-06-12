@@ -3,6 +3,12 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
+  // Sentinel: Enforce presence of JWT_SECRET at startup
+  if (!process.env.JWT_SECRET) {
+    console.error('CRITICAL: JWT_SECRET environment variable is missing.');
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule);
   
   // Configure strict global validation
