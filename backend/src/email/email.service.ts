@@ -7,7 +7,16 @@ export class EmailService {
   private fromEmail = 'PichangaLibre <noreply@pichangalibre.xyz>';
 
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY || 're_dummykey1234567890');
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.warn('WARNING: RESEND_API_KEY environment variable is missing. Email service will not work properly.');
+      // Initialize with an empty string or dummy so the app starts, but log a loud warning,
+      // or optionally we could throw depending on if email is critical for startup.
+      // We will initialize with 'missing-api-key' so it doesn't crash but will fail loudly on send.
+      this.resend = new Resend('missing-api-key');
+    } else {
+      this.resend = new Resend(apiKey);
+    }
   }
 
   async sendWelcomeEmail(name: string, email: string): Promise<void> {
