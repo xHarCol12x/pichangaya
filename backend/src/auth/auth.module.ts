@@ -14,7 +14,7 @@ import { EmailModule } from '../email/email.module';
         PassportModule,
         EmailModule,
         JwtModule.register({
-            secret: process.env.JWT_SECRET || 'super-secret-key',
+            secret: process.env.JWT_SECRET || (() => { throw new Error('FATAL: JWT_SECRET environment variable is not set. Security enforcement failed.') })(),
             signOptions: { expiresIn: '1d' },
         }),
     ],
