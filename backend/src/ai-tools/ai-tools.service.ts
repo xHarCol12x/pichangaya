@@ -60,6 +60,14 @@ export class AiToolsService {
         const venue = await this.prisma.venue.findFirst({ where: { id: venueId, deletedAt: null } });
         if (!venue) throw new BadRequestException("Venue not found");
 
+        // Find a user from the tenant to assign the booking to (usually the owner)
+        const tenantMember = await this.prisma.tenantMembership.findFirst({
+            where: { tenantId: venue.tenantId, role: { in: ['OWNER', 'ADMIN'] } },
+            select: { userId: true }
+        });
+
+        if (!tenantMember) throw new BadRequestException("No se encontró un administrador para este negocio.");
+
         const field = await this.prisma.field.findFirst({
             where: { id: fieldId, venueId },
         });
@@ -106,10 +114,11 @@ export class AiToolsService {
                     totalPrice: price,
                     status: 'PENDING',
                     fieldId: field.id,
-                    userId: venue.ownerId,
+                    userId: tenantMember.userId,
                     clientId: client.id
                 }
             });
+
 
             return {
                 success: true,

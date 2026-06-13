@@ -43,7 +43,8 @@ describe('BookingsService', () => {
   });
 
   describe('create', () => {
-    const ownerId = 'owner-1';
+    const userId = 'user-1';
+    const tenantId = 'tenant-1';
     const bookingData = {
       startTime: '2026-06-12T10:00:00Z',
       endTime: '2026-06-12T11:00:00Z',
@@ -54,24 +55,24 @@ describe('BookingsService', () => {
 
     it('should throw BadRequestException if endTime is before startTime', async () => {
       const invalidData = { ...bookingData, endTime: '2026-06-12T09:00:00Z' };
-      await expect(service.create(ownerId, invalidData)).rejects.toThrow(BadRequestException);
+      await expect(service.create(userId, tenantId, invalidData)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException if field does not exist or not owned', async () => {
       mockPrismaService.field.findFirst.mockResolvedValue(null);
-      await expect(service.create(ownerId, bookingData)).rejects.toThrow(NotFoundException);
+      await expect(service.create(userId, tenantId, bookingData)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException if client does not exist or not owned', async () => {
-      mockPrismaService.field.findFirst.mockResolvedValue({ id: 'field-1', venue: { ownerId } });
+      mockPrismaService.field.findFirst.mockResolvedValue({ id: 'field-1', venue: { tenantId } });
       mockPrismaService.client.findFirst.mockResolvedValue(null);
       
       const dataWithClient = { ...bookingData, clientId: 'client-1' };
-      await expect(service.create(ownerId, dataWithClient)).rejects.toThrow(NotFoundException);
+      await expect(service.create(userId, tenantId, dataWithClient)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ConflictException if there is an overlapping booking', async () => {
-      mockPrismaService.field.findFirst.mockResolvedValue({ id: 'field-1', venue: { ownerId } });
+      mockPrismaService.field.findFirst.mockResolvedValue({ id: 'field-1', venue: { tenantId } });
       mockPrismaService.$transaction.mockImplementation(async (callback) => {
         const tx = {
           booking: {
@@ -81,12 +82,12 @@ describe('BookingsService', () => {
         return callback(tx);
       });
 
-      await expect(service.create(ownerId, bookingData)).rejects.toThrow(ConflictException);
+      await expect(service.create(userId, tenantId, bookingData)).rejects.toThrow(ConflictException);
     });
 
     it('should create a booking successfully', async () => {
       const createdBooking = { id: 'booking-1', ...bookingData };
-      mockPrismaService.field.findFirst.mockResolvedValue({ id: 'field-1', venue: { ownerId } });
+      mockPrismaService.field.findFirst.mockResolvedValue({ id: 'field-1', venue: { tenantId } });
       mockPrismaService.$transaction.mockImplementation(async (callback) => {
         const tx = {
           booking: {
@@ -97,32 +98,33 @@ describe('BookingsService', () => {
         return callback(tx);
       });
 
-      const result = await service.create(ownerId, bookingData);
+      const result = await service.create(userId, tenantId, bookingData);
       expect(result).toEqual(createdBooking);
     });
   });
 
   describe('update', () => {
     const id = 'booking-1';
-    const ownerId = 'owner-1';
+    const userId = 'user-1';
+    const tenantId = 'tenant-1';
     const existingBooking = { 
         id, 
         fieldId: 'field-1', 
         startTime: new Date('2026-06-12T10:00:00Z'), 
         endTime: new Date('2026-06-12T11:00:00Z'),
-        userId: ownerId 
+        userId: userId 
     };
 
     it('should throw NotFoundException if booking not found', async () => {
       mockPrismaService.booking.findFirst.mockResolvedValue(null);
-      await expect(service.update(id, ownerId, {})).rejects.toThrow(NotFoundException);
+      await expect(service.update(id, tenantId, {})).rejects.toThrow(NotFoundException);
     });
 
     it('should prevent cross-tenant field update', async () => {
       mockPrismaService.booking.findFirst.mockResolvedValue(existingBooking);
-      mockPrismaService.field.findFirst.mockResolvedValue(null); // Field not owned
+      mockPrismaService.field.findFirst.mockResolvedValue(null); // Field not owned by tenant
 
-      await expect(service.update(id, ownerId, { fieldId: 'field-other' })).rejects.toThrow(NotFoundException);
+      await expect(service.update(id, tenantId, { fieldId: 'field-other' })).rejects.toThrow(NotFoundException);
     });
   });
 });

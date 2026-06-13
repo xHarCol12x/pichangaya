@@ -11,7 +11,7 @@ export class BookingsController {
 
     @Get()
     findAll(@Request() req) {
-        return this.bookingsService.findAllForOwner(req.user.userId);
+        return this.bookingsService.findAllForTenant(req.user.tenantId);
     }
 
     @Get('my')
@@ -21,21 +21,22 @@ export class BookingsController {
 
     @Get(':id')
     findOne(@Param('id') id: string, @Request() req) {
-        return this.bookingsService.findOne(id, req.user.userId);
+        return this.bookingsService.findOne(id, req.user.tenantId);
     }
 
     @Post()
     create(@Body() createBookingDto: CreateBookingDto, @Request() req) {
-        return this.bookingsService.create(req.user.userId, createBookingDto);
+        return this.bookingsService.create(req.user.userId, req.user.tenantId, createBookingDto);
     }
 
     @Patch(':id')
     update(@Param('id') id: string, @Body() updateBookingDto: UpdateBookingDto, @Request() req) {
-        return this.bookingsService.update(id, req.user.userId, updateBookingDto);
+        return this.bookingsService.update(id, req.user.tenantId, updateBookingDto);
     }
 
     @Delete(':id')
     remove(@Param('id') id: string, @Request() req) {
-        return this.bookingsService.remove(id, req.user.userId);
+        return this.bookingsService.remove(id, req.user.tenantId);
     }
 }
+

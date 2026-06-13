@@ -6,15 +6,15 @@ import { Field } from '@prisma/client';
 export class FieldsService {
     constructor(private prisma: PrismaService) { }
 
-    async findAllByOwner(ownerId: string): Promise<Field[]> {
+    async findAllByTenant(tenantId: string): Promise<Field[]> {
         return this.prisma.field.findMany({
-            where: { venue: { ownerId }, deletedAt: null },
+            where: { venue: { tenantId }, deletedAt: null },
             include: { venue: true },
         });
     }
 
-    async findByVenue(venueId: string, ownerId: string): Promise<Field[]> {
-        const venue = await this.prisma.venue.findFirst({ where: { id: venueId, ownerId, deletedAt: null } });
+    async findByVenue(venueId: string, tenantId: string): Promise<Field[]> {
+        const venue = await this.prisma.venue.findFirst({ where: { id: venueId, tenantId, deletedAt: null } });
         if (!venue) {
             throw new NotFoundException('Sede no encontrada o no tienes permisos.');
         }
@@ -23,9 +23,9 @@ export class FieldsService {
         });
     }
 
-    async findOne(id: string, ownerId: string): Promise<Field | null> {
+    async findOne(id: string, tenantId: string): Promise<Field | null> {
         const field = await this.prisma.field.findFirst({
-            where: { id, venue: { ownerId }, deletedAt: null },
+            where: { id, venue: { tenantId }, deletedAt: null },
             include: { venue: true },
         });
         if (!field) {
@@ -34,37 +34,37 @@ export class FieldsService {
         return field;
     }
 
-    async create(ownerId: string, data: { name: string; type: string; surface?: string; pricePerHour: number; venueId: string }): Promise<Field> {
+    async create(tenantId: string, data: { name: string; type: string; surface?: string; pricePerHour: number; venueId: string }): Promise<Field> {
         const venue = await this.prisma.venue.findFirst({
-            where: { id: data.venueId, ownerId, deletedAt: null }
+            where: { id: data.venueId, tenantId, deletedAt: null }
         });
         if (!venue) {
             throw new NotFoundException('Sede no encontrada o no tienes permisos.');
         }
 
-        // 1. Get user and their plan
-        const user = await this.prisma.user.findUnique({
-            where: { id: ownerId },
+        // 1. Get tenant and their plan
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
             select: { plan: true }
         });
 
-        if (!user) throw new NotFoundException('Usuario no encontrado');
+        if (!tenant) throw new NotFoundException('Tenant no encontrado');
 
         const plan = await this.prisma.subscriptionPlan.findUnique({
-            where: { code: user.plan }
+            where: { code: tenant.plan }
         });
 
         if (!plan) throw new ForbiddenException('Plan de suscripción no válido');
 
-        // 2. Count current active fields for this user (across all venues)
+        // 2. Count current active fields for this tenant (across all venues)
         const currentFieldsCount = await this.prisma.field.count({
-            where: { venue: { ownerId }, deletedAt: null }
+            where: { venue: { tenantId }, deletedAt: null }
         });
 
         // 3. Validate limit
         if (currentFieldsCount >= plan.limitFields) {
             throw new ForbiddenException(
-                `Has alcanzado el límite de canchas (${plan.limitFields}) para tu plan ${plan.name}. Mejora tu suscripción.`
+                `Has alcanzado el límite de canchas (${plan.limitFields}) para el plan ${plan.name}. Mejora tu suscripción.`
             );
         }
 
@@ -79,18 +79,18 @@ export class FieldsService {
         });
     }
 
-    async update(id: string, ownerId: string, data: { name?: string; type?: string; surface?: string; pricePerHour?: number; venueId?: string }): Promise<Field> {
+    async update(id: string, tenantId: string, data: { name?: string; type?: string; surface?: string; pricePerHour?: number; venueId?: string }): Promise<Field> {
         const existing = await this.prisma.field.findFirst({
-            where: { id, venue: { ownerId }, deletedAt: null }
+            where: { id, venue: { tenantId }, deletedAt: null }
         });
         if (!existing) {
             throw new NotFoundException('Cancha no encontrada o no tienes permisos.');
         }
 
         if (data.venueId && data.venueId !== existing.venueId) {
-            const venue = await this.prisma.venue.findFirst({ where: { id: data.venueId, ownerId, deletedAt: null } });
+            const venue = await this.prisma.venue.findFirst({ where: { id: data.venueId, tenantId, deletedAt: null } });
             if (!venue) {
-                throw new NotFoundException('La nueva sede no pertenece a este usuario o ha sido eliminada.');
+                throw new NotFoundException('La nueva sede no pertenece a tu organización.');
             }
         }
 
@@ -104,9 +104,9 @@ export class FieldsService {
         });
     }
 
-    async remove(id: string, ownerId: string): Promise<Field> {
+    async remove(id: string, tenantId: string): Promise<Field> {
         const existing = await this.prisma.field.findFirst({
-            where: { id, venue: { ownerId }, deletedAt: null }
+            where: { id, venue: { tenantId }, deletedAt: null }
         });
         if (!existing) {
             throw new NotFoundException('Cancha no encontrada o no tienes permisos.');
@@ -119,3 +119,4 @@ export class FieldsService {
         });
     }
 }
+

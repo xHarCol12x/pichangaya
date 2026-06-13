@@ -11,26 +11,27 @@ export class VenuesController {
 
     @Get()
     findAll(@Request() req) {
-        return this.venuesService.findAll(req.user.userId);
+        return this.venuesService.findAll(req.user.tenantId);
     }
 
     @Get(':id')
     findOne(@Param('id') id: string, @Request() req) {
-        return this.venuesService.findOne(id, req.user.userId);
+        return this.venuesService.findOne(id, req.user.tenantId);
     }
 
     @Post()
     create(@Body() createVenueDto: CreateVenueDto, @Request() req) {
-        return this.venuesService.create(req.user.userId, createVenueDto);
+        return this.venuesService.create(req.user.tenantId, createVenueDto);
     }
 
     @Patch(':id')
     update(@Param('id') id: string, @Body() updateVenueDto: UpdateVenueDto, @Request() req) {
-        return this.venuesService.update(id, req.user.userId, updateVenueDto);
+        return this.venuesService.update(id, req.user.tenantId, updateVenueDto);
     }
 
     @Delete(':id')
     remove(@Param('id') id: string, @Request() req) {
-        return this.venuesService.remove(id, req.user.userId);
+        return this.venuesService.remove(id, req.user.tenantId);
     }
 }
+

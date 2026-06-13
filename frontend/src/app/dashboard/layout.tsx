@@ -9,6 +9,8 @@ import SubscriptionWidget from "@/components/dashboard/SubscriptionWidget";
 
 import CommandPalette from "@/components/ui/CommandPalette";
 
+import { useVenue } from "@/context/VenueContext";
+
 export default function DashboardLayout({
     children,
 }: {
@@ -16,6 +18,7 @@ export default function DashboardLayout({
 }) {
     const router = useRouter();
     const pathname = usePathname();
+    const { refreshVenues } = useVenue();
     const [userRole, setUserRole] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -28,6 +31,9 @@ export default function DashboardLayout({
                 
                 localStorage.setItem("fieldiq_user", JSON.stringify(freshUser));
                 setUserRole(freshUser.role);
+                
+                // Refresh venues as well to ensure they are up to date with the current user/tenant
+                refreshVenues();
                 
                 // Logic for redirection based on roles and status
                 handleRoleBasedRedirection(freshUser);

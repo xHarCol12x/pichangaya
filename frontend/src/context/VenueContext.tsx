@@ -60,7 +60,21 @@ export function VenueProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
-        refreshVenues();
+        const token = typeof window !== 'undefined' ? localStorage.getItem("fieldiq_token") : null;
+        if (token && venues.length === 0) {
+            refreshVenues();
+        }
+    }, []);
+
+    // Listen for storage changes (like login)
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'fieldiq_token' && e.newValue) {
+                refreshVenues();
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
     const setSelectedVenueId = (id: string) => {

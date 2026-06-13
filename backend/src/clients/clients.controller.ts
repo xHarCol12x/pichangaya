@@ -12,23 +12,24 @@ export class ClientsController {
     @Get()
     findAll(@Request() req, @Query('venueId') venueId?: string) {
         if (venueId) {
-            return this.clientsService.findByVenue(venueId, req.user.userId);
+            return this.clientsService.findByVenue(venueId, req.user.tenantId);
         }
-        return this.clientsService.findByOwner(req.user.userId);
+        return this.clientsService.findByTenant(req.user.tenantId);
     }
 
     @Post()
     create(@Body() createClientDto: CreateClientDto, @Request() req) {
-        return this.clientsService.create(req.user.userId, createClientDto);
+        return this.clientsService.create(req.user.tenantId, createClientDto);
     }
 
     @Patch(':id')
     update(@Param('id') id: string, @Body() updateClientDto: UpdateClientDto, @Request() req) {
-        return this.clientsService.update(id, req.user.userId, updateClientDto);
+        return this.clientsService.update(id, req.user.tenantId, updateClientDto);
     }
 
     @Delete(':id')
     remove(@Param('id') id: string, @Request() req) {
-        return this.clientsService.remove(id, req.user.userId);
+        return this.clientsService.remove(id, req.user.tenantId);
     }
 }
+

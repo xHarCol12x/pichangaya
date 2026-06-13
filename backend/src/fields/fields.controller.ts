@@ -12,28 +12,29 @@ export class FieldsController {
     @Get()
     findAll(@Request() req, @Query('venueId') venueId?: string) {
         if (venueId) {
-            return this.fieldsService.findByVenue(venueId, req.user.userId);
+            return this.fieldsService.findByVenue(venueId, req.user.tenantId);
         }
-        return this.fieldsService.findAllByOwner(req.user.userId);
+        return this.fieldsService.findAllByTenant(req.user.tenantId);
     }
 
     @Get(':id')
     findOne(@Param('id') id: string, @Request() req) {
-        return this.fieldsService.findOne(id, req.user.userId);
+        return this.fieldsService.findOne(id, req.user.tenantId);
     }
 
     @Post()
     create(@Body() createFieldDto: CreateFieldDto, @Request() req) {
-        return this.fieldsService.create(req.user.userId, createFieldDto);
+        return this.fieldsService.create(req.user.tenantId, createFieldDto);
     }
 
     @Patch(':id')
     update(@Param('id') id: string, @Body() updateFieldDto: UpdateFieldDto, @Request() req) {
-        return this.fieldsService.update(id, req.user.userId, updateFieldDto);
+        return this.fieldsService.update(id, req.user.tenantId, updateFieldDto);
     }
 
     @Delete(':id')
     remove(@Param('id') id: string, @Request() req) {
-        return this.fieldsService.remove(id, req.user.userId);
+        return this.fieldsService.remove(id, req.user.tenantId);
     }
 }
+

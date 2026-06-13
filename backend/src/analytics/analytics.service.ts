@@ -10,14 +10,22 @@ export class AnalyticsService {
         private httpService: HttpService,
     ) { }
 
-    async getDashboardStats() {
+    async getDashboardStats(tenantId: string) {
         const totalRevenue = await this.prisma.payment.aggregate({
-            where: { status: 'SUCCESS' },
+            where: { 
+                status: 'SUCCESS',
+                user: { memberships: { some: { tenantId } } }
+            },
             _sum: { amount: true },
         });
 
-        const totalBookings = await this.prisma.booking.count();
-        const totalUsers = await this.prisma.user.count();
+        const totalBookings = await this.prisma.booking.count({
+            where: { field: { venue: { tenantId } }, deletedAt: null }
+        });
+
+        const totalClients = await this.prisma.client.count({
+            where: { venue: { tenantId }, deletedAt: null }
+        });
 
         // Mock occupancy rate for the dashboard
         const occupancyRate = 0.74;
@@ -25,14 +33,18 @@ export class AnalyticsService {
         return {
             revenue: totalRevenue._sum.amount || 0,
             bookings: totalBookings,
-            users: totalUsers,
+            users: totalClients, // renamed to clients in UI context usually
             occupancy: occupancyRate,
         };
     }
 
-    async getAiPrediction() {
-        // Fetch last 14 days of booking data
+    async getAiPrediction(tenantId: string) {
+        // Fetch last 14 days of booking data for this tenant
         const bookings = await this.prisma.booking.findMany({
+            where: { 
+                field: { venue: { tenantId } },
+                deletedAt: null
+            },
             orderBy: { startTime: 'asc' },
             take: 50, // Simplified for demo
         });
@@ -66,3 +78,4 @@ export class AnalyticsService {
         }
     }
 }
+

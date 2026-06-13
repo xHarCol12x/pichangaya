@@ -70,8 +70,17 @@ export class NotificationsService {
         return results;
     }
 
-    /** Broadcast a push to ALL subscriptions of users who own a given venue (used from bookings) */
-    async notifyVenueOwner(venueOwnerId: string, payload: { title: string; body: string; url?: string }) {
-        return this.sendToUser(venueOwnerId, payload);
+    /** Broadcast a push to ALL subscriptions of users who are OWNERS/ADMINS of a given tenant */
+    async notifyTenantAdmins(tenantId: string, payload: { title: string; body: string; url?: string }) {
+        const members = await this.prisma.tenantMembership.findMany({
+            where: { tenantId, role: { in: ['OWNER', 'ADMIN'] } },
+            select: { userId: true }
+        });
+
+        const results = await Promise.all(
+            members.map(member => this.sendToUser(member.userId, payload))
+        );
+        return results.flat();
     }
 }
+

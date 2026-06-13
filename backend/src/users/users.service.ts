@@ -99,35 +99,18 @@ export class UsersService {
     }
 
     async findTenants() {
-        return this.prisma.user.findMany({
-            where: { role: 'ADMIN' },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                isActive: true,
-                plan: true,
-                subscriptionEndsAt: true,
-                createdAt: true,
-                featureOverrides: true,
-                _count: { select: { venues: true } }
+        return this.prisma.tenant.findMany({
+            include: {
+                _count: { select: { venues: true, members: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
     }
 
     async findTenantById(id: string) {
-        return this.prisma.user.findUnique({
+        return this.prisma.tenant.findUnique({
             where: { id },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                isActive: true,
-                plan: true,
-                subscriptionEndsAt: true,
-                createdAt: true,
-                updatedAt: true,
+            include: {
                 venues: {
                     select: {
                         id: true,
@@ -136,20 +119,17 @@ export class UsersService {
                         _count: { select: { fields: true } }
                     }
                 },
-                bookings: {
-                    select: {
-                        id: true,
-                        totalPrice: true,
-                        status: true,
-                        createdAt: true,
-                    },
-                    orderBy: { createdAt: 'desc' },
-                    take: 5,
+                members: {
+                    include: {
+                        user: {
+                            select: { id: true, email: true, name: true, role: true }
+                        }
+                    }
                 },
                 _count: {
                     select: {
                         venues: true,
-                        bookings: true,
+                        members: true,
                     }
                 }
             }
@@ -161,16 +141,14 @@ export class UsersService {
         isActive?: boolean;
         subscriptionEndsAt?: string | null;
         extendDays?: number;
-        featureOverrides?: any;
     }) {
-        const user = await this.prisma.user.findUnique({ where: { id } });
-        if (!user) throw new Error('Tenant not found');
+        const tenant = await this.prisma.tenant.findUnique({ where: { id } });
+        if (!tenant) throw new Error('Tenant not found');
 
         const updateData: any = {};
 
         if (data.plan !== undefined) updateData.plan = data.plan;
         if (data.isActive !== undefined) updateData.isActive = data.isActive;
-        if (data.featureOverrides !== undefined) updateData.featureOverrides = data.featureOverrides;
 
         if (data.subscriptionEndsAt !== undefined) {
             updateData.subscriptionEndsAt = data.subscriptionEndsAt
@@ -179,20 +157,19 @@ export class UsersService {
         }
 
         if (data.extendDays && data.extendDays > 0) {
-            const base = user.subscriptionEndsAt && user.subscriptionEndsAt > new Date()
-                ? user.subscriptionEndsAt
+            const base = tenant.subscriptionEndsAt && tenant.subscriptionEndsAt > new Date()
+                ? tenant.subscriptionEndsAt
                 : new Date();
             const extended = new Date(base);
             extended.setDate(extended.getDate() + data.extendDays);
             updateData.subscriptionEndsAt = extended;
         }
 
-        return this.prisma.user.update({
+        return this.prisma.tenant.update({
             where: { id },
             data: updateData,
             select: {
                 id: true,
-                email: true,
                 name: true,
                 isActive: true,
                 plan: true,
@@ -201,6 +178,7 @@ export class UsersService {
             }
         });
     }
+
 
     async findOne(email: string): Promise<User | null> {
         return this.prisma.user.findUnique({ where: { email } });
