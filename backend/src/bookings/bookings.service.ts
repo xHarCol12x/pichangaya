@@ -1,15 +1,15 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Booking } from '@prisma/client';
+import { Booking, Prisma } from '@prisma/client';
 
 @Injectable()
 export class BookingsService {
     constructor(private prisma: PrismaService) { }
 
-    async findAllForOwner(ownerId: string): Promise<Booking[]> {
+    async findAllForTenant(tenantId: string): Promise<Booking[]> {
         return this.prisma.booking.findMany({
             where: { 
-                field: { venue: { ownerId } },
+                field: { venue: { tenantId } },
                 deletedAt: null 
             },
             include: { user: true, field: { include: { venue: true } }, client: true },
@@ -27,15 +27,12 @@ export class BookingsService {
         });
     }
 
-    async findOne(id: string, ownerId: string): Promise<Booking | null> {
+    async findOne(id: string, tenantId: string): Promise<Booking | null> {
         const booking = await this.prisma.booking.findFirst({
             where: {
                 id,
                 deletedAt: null,
-                OR: [
-                    { userId: ownerId },
-                    { field: { venue: { ownerId } } }
-                ]
+                field: { venue: { tenantId } }
             },
             include: { user: true, field: { include: { venue: true } }, client: true },
         });
@@ -45,13 +42,23 @@ export class BookingsService {
         return booking;
     }
 
-    async create(ownerId: string, data: { startTime: string; endTime: string; totalPrice: number; status: string; paymentMethod?: string; fieldId: string; clientId?: string | null }): Promise<Booking> {
-        const field = await this.prisma.field.findUnique({
-            where: { id: data.fieldId },
-            include: { venue: true }
+    async create(userId: string, tenantId: string, data: { startTime: string; endTime: string; totalPrice: number; status: string; paymentMethod?: string; fieldId: string; clientId?: string | null }): Promise<Booking> {
+        const startTime = new Date(data.startTime);
+        const endTime = new Date(data.endTime);
+
+        if (endTime <= startTime) {
+            throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio.');
+        }
+
+        const field = await this.prisma.field.findFirst({
+            where: {
+                id: data.fieldId,
+                deletedAt: null,
+                venue: { tenantId, deletedAt: null },
+            },
         });
-        if (!field || field.deletedAt) {
-            throw new NotFoundException('La cancha seleccionada no existe.');
+        if (!field) {
+            throw new NotFoundException('La cancha seleccionada no existe o no pertenece a tu organización.');
         }
 
         const hasClientId = data.clientId && data.clientId !== '';
@@ -60,53 +67,51 @@ export class BookingsService {
             const client = await this.prisma.client.findFirst({
                 where: { 
                     id: data.clientId!, 
-                    venue: { ownerId },
+                    venue: { tenantId },
                     deletedAt: null
                 }
             });
             if (!client) {
-                throw new NotFoundException('El cliente seleccionado no existe o no te pertenece.');
+                throw new NotFoundException('El cliente seleccionado no existe o no pertenece a tu organización.');
             }
         }
 
-        // Collision check with deletedAt: null
-        const existing = await this.prisma.booking.findFirst({
-            where: {
-                fieldId: data.fieldId,
-                startTime: { lt: new Date(data.endTime) },
-                endTime: { gt: new Date(data.startTime) },
-                status: { in: ['CONFIRMED', 'PENDING'] },
-                deletedAt: null,
-            },
-        });
+        return this.prisma.$transaction(async (tx) => {
+            const existing = await tx.booking.findFirst({
+                where: {
+                    fieldId: data.fieldId,
+                    startTime: { lt: endTime },
+                    endTime: { gt: startTime },
+                    status: { in: ['CONFIRMED', 'PENDING'] },
+                    deletedAt: null,
+                },
+            });
 
-        if (existing) {
-            throw new ConflictException('Esta cancha ya está reservada para ese horario.');
-        }
-
-        return this.prisma.booking.create({
-            data: {
-                startTime: new Date(data.startTime),
-                endTime: new Date(data.endTime),
-                totalPrice: data.totalPrice,
-                status: data.status,
-                paymentMethod: data.paymentMethod,
-                field: { connect: { id: data.fieldId } },
-                user: { connect: { id: ownerId } },
-                ...(hasClientId ? { client: { connect: { id: data.clientId! } } } : {})
+            if (existing) {
+                throw new ConflictException('Esta cancha ya esta reservada para ese horario.');
             }
-        });
+
+            return tx.booking.create({
+                data: {
+                    startTime,
+                    endTime,
+                    totalPrice: data.totalPrice,
+                    status: data.status,
+                    paymentMethod: data.paymentMethod,
+                    field: { connect: { id: data.fieldId } },
+                    user: { connect: { id: userId } },
+                    ...(hasClientId ? { client: { connect: { id: data.clientId! } } } : {})
+                }
+            });
+        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     }
 
-    async update(id: string, ownerId: string, data: { startTime?: string; endTime?: string; totalPrice?: number; status?: string; paymentMethod?: string; fieldId?: string; clientId?: string | null }): Promise<Booking> {
+    async update(id: string, tenantId: string, data: { startTime?: string; endTime?: string; totalPrice?: number; status?: string; paymentMethod?: string; fieldId?: string; clientId?: string | null }): Promise<Booking> {
         const existing = await this.prisma.booking.findFirst({
             where: {
                 id,
                 deletedAt: null,
-                OR: [
-                    { userId: ownerId },
-                    { field: { venue: { ownerId } } }
-                ]
+                field: { venue: { tenantId } }
             }
         });
         if (!existing) {
@@ -114,11 +119,15 @@ export class BookingsService {
         }
 
         if (data.fieldId && data.fieldId !== existing.fieldId) {
-            const field = await this.prisma.field.findUnique({ 
-                where: { id: data.fieldId } 
+            const field = await this.prisma.field.findFirst({
+                where: {
+                    id: data.fieldId,
+                    deletedAt: null,
+                    venue: { tenantId, deletedAt: null },
+                }
             });
-            if (!field || field.deletedAt) {
-                throw new NotFoundException('La cancha especificada no existe.');
+            if (!field) {
+                throw new NotFoundException('La cancha especificada no existe o no pertenece a tu organización.');
             }
         }
 
@@ -127,41 +136,63 @@ export class BookingsService {
                 const client = await this.prisma.client.findFirst({ 
                     where: { 
                         id: data.clientId, 
-                        venue: { ownerId },
+                        venue: { tenantId },
                         deletedAt: null
                     } 
                 });
                 if (!client) {
-                    throw new NotFoundException('El cliente especificado no te pertenece.');
+                    throw new NotFoundException('El cliente especificado no pertenece a tu organización.');
                 }
             }
         }
 
-        return this.prisma.booking.update({
-            where: { id },
-            data: {
-                ...(data.startTime ? { startTime: new Date(data.startTime) } : {}),
-                ...(data.endTime ? { endTime: new Date(data.endTime) } : {}),
-                ...(data.totalPrice !== undefined ? { totalPrice: data.totalPrice } : {}),
-                ...(data.status ? { status: data.status } : {}),
-                ...(data.paymentMethod ? { paymentMethod: data.paymentMethod } : {}),
-                ...(data.fieldId ? { field: { connect: { id: data.fieldId } } } : {}),
-                ...(data.clientId === null || data.clientId === ''
-                    ? { client: { disconnect: true } }
-                    : (data.clientId ? { client: { connect: { id: data.clientId } } } : {}))
-            },
-        });
+        const nextFieldId = data.fieldId || existing.fieldId;
+        const nextStartTime = data.startTime ? new Date(data.startTime) : existing.startTime;
+        const nextEndTime = data.endTime ? new Date(data.endTime) : existing.endTime;
+
+        if (nextEndTime <= nextStartTime) {
+            throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio.');
+        }
+
+        return this.prisma.$transaction(async (tx) => {
+            const collision = await tx.booking.findFirst({
+                where: {
+                    id: { not: id },
+                    fieldId: nextFieldId,
+                    startTime: { lt: nextEndTime },
+                    endTime: { gt: nextStartTime },
+                    status: { in: ['CONFIRMED', 'PENDING'] },
+                    deletedAt: null,
+                },
+            });
+
+            if (collision) {
+                throw new ConflictException('Esta cancha ya esta reservada para ese horario.');
+            }
+
+            return tx.booking.update({
+                where: { id },
+                data: {
+                    ...(data.startTime ? { startTime: nextStartTime } : {}),
+                    ...(data.endTime ? { endTime: nextEndTime } : {}),
+                    ...(data.totalPrice !== undefined ? { totalPrice: data.totalPrice } : {}),
+                    ...(data.status ? { status: data.status } : {}),
+                    ...(data.paymentMethod ? { paymentMethod: data.paymentMethod } : {}),
+                    ...(data.fieldId ? { field: { connect: { id: data.fieldId } } } : {}),
+                    ...(data.clientId === null || data.clientId === ''
+                        ? { client: { disconnect: true } }
+                        : (data.clientId ? { client: { connect: { id: data.clientId } } } : {}))
+                },
+            });
+        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     }
 
-    async remove(id: string, ownerId: string): Promise<Booking> {
+    async remove(id: string, tenantId: string): Promise<Booking> {
         const existing = await this.prisma.booking.findFirst({
             where: {
                 id,
                 deletedAt: null,
-                OR: [
-                    { userId: ownerId },
-                    { field: { venue: { ownerId } } }
-                ]
+                field: { venue: { tenantId } }
             }
         });
         if (!existing) {

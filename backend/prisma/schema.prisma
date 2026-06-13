@@ -25,10 +25,64 @@ model User {
   emailNotifications        Boolean              @default(true)
   featureOverrides          Json?                @default("{}")
   bookings                  Booking[]
-  venues                    Venue[]
   passwordResetTokens       PasswordResetToken[]
   tenantInvoices            TenantInvoice[]
   pushSubscriptions         PushSubscription[]
+  sessions                  Session[]
+  payments                  Payment[]            @relation("UserPayments")
+  subscriptions             Subscription[]       @relation("UserSubscriptions")
+  memberships               TenantMembership[]
+}
+
+model Tenant {
+  id                 String             @id @default(uuid())
+  name               String
+  isActive           Boolean            @default(true)
+  plan               String             @default("FREE_TRIAL")
+  subscriptionEndsAt DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  venues             Venue[]
+  members            TenantMembership[]
+}
+
+model TenantMembership {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  role      String   @default("MEMBER") // OWNER, ADMIN, MEMBER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  userId    String
+  planCode  String
+  startDate DateTime @default(now())
+  endDate   DateTime?
+  status    String   // e.g., "ACTIVE", "EXPIRED", "CANCELLED"
+  createdAt DateTime @default(now())
+  user      User     @relation("UserSubscriptions", fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  tokenHash    String   @unique
+  userId       String
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Venue {
@@ -36,15 +90,15 @@ model Venue {
   name        String
   address     String
   description String?
-  ownerId     String
+  tenantId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime?
   fields      Field[]
   clients     Client[]
-  owner       User     @relation(fields: [ownerId], references: [id])
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([ownerId])
+  @@index([tenantId])
 }
 
 model Field {
@@ -58,7 +112,7 @@ model Field {
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
   bookings     Booking[]
-  venue        Venue     @relation(fields: [venueId], references: [id])
+  venue        Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
 }
@@ -73,7 +127,7 @@ model Client {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  venue     Venue     @relation(fields: [venueId], references: [id])
+  venue     Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
   bookings  Booking[]
 
   @@index([venueId])
@@ -110,8 +164,20 @@ model Payment {
   amount        Float
   status        String
   transactionId String?
+  userId        String?
+  planCode      String?
   createdAt     DateTime @default(now())
   booking       Booking?
+  user          User?    @relation("UserPayments", fields: [userId], references: [id])
+}
+
+model ProcessedWebhook {
+  id            String   @id @default(uuid())
+  webhookId     String   @unique
+  source        String   // e.g., "MERCADOPAGO"
+  type          String?
+  payload       Json?
+  createdAt     DateTime @default(now())
 }
 
 model AnalyticsLog {

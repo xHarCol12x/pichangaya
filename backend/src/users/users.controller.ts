@@ -5,6 +5,8 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 
+import { UpdateSettingsDto } from './dto/update-settings.dto';
+
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
@@ -24,7 +26,7 @@ export class UsersController {
 
     // PATCH /users/settings — actualizar ajustes del usuario (ej: dashboardLayout)
     @Patch('settings')
-    updateSettings(@Request() req: any, @Body() body: { featureOverrides?: any }) {
+    updateSettings(@Request() req: any, @Body() body: UpdateSettingsDto) {
         return this.usersService.updateMySettings(req.user.userId, body);
     }
 

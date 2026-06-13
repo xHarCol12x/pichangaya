@@ -12,6 +12,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TasksModule } from './tasks/tasks.module';
 import { MercadoPagoModule } from './modules/mercadopago/mercadopago.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { ClientsModule } from './clients/clients.module';
 import { PlansModule } from './plans/plans.module';
 import { AuditModule } from './audit/audit.module';
@@ -29,6 +30,7 @@ import { AiToolsModule } from './ai-tools/ai-tools.module';
     BookingsModule,
     AnalyticsModule,
     TasksModule,
+    BillingModule,
     MercadoPagoModule,
     ClientsModule,
     PlansModule,

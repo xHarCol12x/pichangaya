@@ -32,35 +32,18 @@ export class UsersService {
                 subscriptionEndsAt: true,
                 featureOverrides: true,
                 plan: true,
+                themePreference: true,
+                memberships: {
+                    include: {
+                        tenant: true
+                    }
+                }
             }
         });
         if (!user) return null;
 
-        let isActuallyActive = user.isActive;
-        if (isActuallyActive && user.subscriptionEndsAt) {
-            const now = new Date();
-            if (new Date(user.subscriptionEndsAt) <= now) {
-                isActuallyActive = false;
-            }
-        }
-
-        let planDetails: any = null;
-        try {
-            if (user.plan) {
-                const planObj = await this.prisma.subscriptionPlan.findUnique({ where: { code: user.plan } });
-                if (planObj) {
-                    planDetails = {
-                        code: planObj.code,
-                        name: planObj.name,
-                        limitVenues: planObj.limitVenues,
-                        limitFields: planObj.limitFields,
-                        permissions: planObj.permissions
-                    };
-                }
-            }
-        } catch (e) {
-            console.error('[STABILITY-LOG] Error fetching plan details in findMe:', e);
-        }
+        const isActuallyActive = this.calculateEffectiveStatus(user);
+        const planPermissions = await this.resolvePlanPermissions(user.plan);
 
         // Parse featureOverrides if it's a string
         let overrides = user.featureOverrides || {};
@@ -76,8 +59,43 @@ export class UsersService {
             ...user,
             isActive: isActuallyActive,
             featureOverrides: overrides,
-            planDetails
+            planPermissions,
+            tenants: user.memberships.map(m => ({
+                id: m.tenantId,
+                name: m.tenant.name,
+                role: m.role,
+                isActive: m.tenant.isActive,
+                plan: m.tenant.plan
+            }))
         };
+    }
+
+    /**
+     * Centralized logic to determine if a user is active based on isActive flag and subscription date.
+     */
+    calculateEffectiveStatus(user: { isActive: boolean; subscriptionEndsAt: Date | null }): boolean {
+        if (!user.isActive) return false;
+        if (user.subscriptionEndsAt) {
+            const now = new Date();
+            if (new Date(user.subscriptionEndsAt) <= now) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Resolves permissions for a given plan code.
+     */
+    async resolvePlanPermissions(planCode: string | null): Promise<any> {
+        if (!planCode) return {};
+        try {
+            const planObj = await this.prisma.subscriptionPlan.findUnique({ where: { code: planCode } });
+            return planObj?.permissions || {};
+        } catch (e) {
+            console.error('[STABILITY-LOG] Error fetching plan permissions:', e);
+            return {};
+        }
     }
 
     async findTenants() {
@@ -196,13 +214,24 @@ export class UsersService {
         return this.prisma.user.create({ data });
     }
 
-    async updateMySettings(id: string, data: { featureOverrides?: any }) {
+    async updateMySettings(id: string, data: { featureOverrides?: any; themePreference?: string }) {
+        const updateData: Prisma.UserUpdateInput = {};
+
+        if (data.featureOverrides !== undefined) {
+            updateData.featureOverrides = data.featureOverrides;
+        }
+
+        if (data.themePreference !== undefined) {
+            updateData.themePreference = data.themePreference;
+        }
+
         return this.prisma.user.update({
             where: { id },
-            data: { featureOverrides: data.featureOverrides },
+            data: updateData,
             select: {
                 id: true,
                 featureOverrides: true,
+                themePreference: true,
                 updatedAt: true,
             }
         });

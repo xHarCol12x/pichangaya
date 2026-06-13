@@ -17,80 +17,68 @@ export default function DashboardLayout({
     const router = useRouter();
     const pathname = usePathname();
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem("fieldiq_token");
-        if (token) {
-            import('@/lib/api').then(({ users }) => {
-                users.getMe().then(response => {
-                    const freshUser = response.data;
-                    localStorage.setItem("fieldiq_user", JSON.stringify(freshUser));
-                    setUserRole(freshUser.role);
-                }).catch(err => {
-                    console.error("Error refreshing user data:", err);
-                    if (err.response?.status === 401) {
-                        router.push("/login");
-                    }
-                });
-            });
-        }
-    }, []);
+        const checkAuth = async () => {
+            try {
+                const { users } = await import('@/lib/api');
+                const response = await users.getMe();
+                const freshUser = response.data;
+                
+                localStorage.setItem("fieldiq_user", JSON.stringify(freshUser));
+                setUserRole(freshUser.role);
+                
+                // Logic for redirection based on roles and status
+                handleRoleBasedRedirection(freshUser);
+            } catch (err) {
+                console.error("Auth check failed:", err);
+                router.push("/login");
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    useEffect(() => {
-        const token = localStorage.getItem("fieldiq_token");
-        const userStr = localStorage.getItem("fieldiq_user");
+        checkAuth();
+    }, [pathname]);
 
-        if (!token || !userStr) {
-            router.push("/login");
+    const handleRoleBasedRedirection = (user: any) => {
+        // Handle return from MercadoPago
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentStatus = urlParams.get('status');
+
+        if (paymentStatus === 'success' || paymentStatus === 'approved') {
+            window.location.href = '/dashboard';
             return;
         }
 
-        try {
-            const user = JSON.parse(userStr);
-            setUserRole(user.role);
-
-            // Handle return from MercadoPago
-            const urlParams = new URLSearchParams(window.location.search);
-            const paymentStatus = urlParams.get('status');
-
-            if (paymentStatus === 'success' || paymentStatus === 'approved') {
-                // Fetch fresh user data from backend because the webhook just activated them
-                import('@/lib/api').then(({ default: api }) => {
-                    api.get("/users/me").then(response => {
-                        const freshUser = response.data;
-                        localStorage.setItem("fieldiq_user", JSON.stringify(freshUser));
-                        // Force a clean reload to dashboard without query params
-                        window.location.href = '/dashboard';
-                    }).catch(console.error);
-                });
-                return; // Wait for the reload
+        if (user.role === 'SUPER_ADMIN') {
+            if (!pathname.startsWith('/dashboard/super-admin') && !pathname.startsWith('/dashboard/settings')) {
+                router.push('/dashboard/super-admin');
             }
+        } else if (user.role === 'ADMIN') {
+            const now = new Date();
+            const isExpired = user.subscriptionEndsAt && new Date(user.subscriptionEndsAt) <= now;
 
-            // Navigate based on Roles and Active Status
-            if (user.role === 'SUPER_ADMIN') {
-                if (!pathname.startsWith('/dashboard/super-admin') && !pathname.startsWith('/dashboard/settings')) {
-                    router.push('/dashboard/super-admin');
+            if (!user.isActive || isExpired) {
+                if (!pathname.startsWith('/dashboard/billing')) {
+                    router.push('/dashboard/billing');
                 }
-            } else if (user.role === 'ADMIN') {
-                const now = new Date();
-                const isExpired = user.subscriptionEndsAt && new Date(user.subscriptionEndsAt) <= now;
-
-                if (!user.isActive || isExpired) {
-                    // Subscription expired or account suspended
-                    if (!pathname.startsWith('/dashboard/billing')) {
-                        router.push('/dashboard/billing');
-                    }
-                } else {
-                    // Active subscription but tried to enter restricted super-admin area
-                    if (pathname.startsWith('/dashboard/super-admin')) {
-                        router.push('/dashboard');
-                    }
+            } else {
+                if (pathname.startsWith('/dashboard/super-admin')) {
+                    router.push('/dashboard');
                 }
             }
-        } catch (error) {
-            router.push('/login');
         }
-    }, [router, pathname]);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0e0e0e]">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-[#0e0e0e] text-slate-900 dark:text-white transition-colors duration-300 selection:bg-accent/30 selection:text-white animate-in fade-in duration-1000 relative w-full">

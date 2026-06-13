@@ -116,7 +116,10 @@ function BillingContent() {
 
             const response = await axios.post(
                 `${API_URL}/mercadopago/create-preference`,
-                { planName: plan.name, price: plan.priceMensual },
+                { 
+                    planCode: plan.code,
+                    interval: 'mensual' 
+                },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 

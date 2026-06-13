@@ -22,7 +22,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     async validate(payload: any) {
         const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
-            select: { id: true, email: true, role: true, isActive: true, subscriptionEndsAt: true }
+            select: { 
+                id: true, 
+                email: true, 
+                role: true, 
+                isActive: true, 
+                subscriptionEndsAt: true,
+                memberships: {
+                    select: { tenantId: true, role: true },
+                    take: 1
+                }
+            }
         });
 
         if (!user) {
@@ -36,6 +46,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException('Tu cuenta está inactiva o tu suscripción ha expirado. Por favor renueva tu plan.');
         }
 
-        return { userId: user.id, email: user.email, role: user.role };
+        // Use tenantId from payload if provided (for multi-tenant support) 
+        // or default to the first membership
+        const tenantId = payload.tenantId || user.memberships[0]?.tenantId;
+
+        return { 
+            userId: user.id, 
+            email: user.email, 
+            role: user.role,
+            tenantId: tenantId
+        };
     }
 }

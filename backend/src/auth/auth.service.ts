@@ -4,7 +4,7 @@ import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcryptjs';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -38,34 +38,52 @@ export class AuthService {
 
             console.log(`[STABILITY-LOG] Password matches. Success for: ${email}`);
             
-            return {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                plan: user.plan,
-                isActive: user.isActive,
-                subscriptionEndsAt: user.subscriptionEndsAt,
-                featureOverrides: user.featureOverrides
-            };
+            return user;
         } catch (err) {
             console.error('[STABILITY-LOG] ERROR in validateUser:', err.message, err.stack);
             throw err;
         }
     }
 
-    async login(user: any) {
+    private hashToken(token: string): string {
+        return createHash('sha256').update(token).digest('hex');
+    }
+
+    async createSession(userId: string, userAgent?: string, ip?: string) {
+        const refreshToken = randomUUID();
+        const tokenHash = this.hashToken(refreshToken);
+        
+        // Session valid for 7 days
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        await this.prisma.session.create({
+            data: {
+                userId,
+                tokenHash,
+                userAgent,
+                ipAddress: ip,
+                expiresAt,
+            },
+        });
+
+        return refreshToken;
+    }
+
+    async login(user: any, userAgent?: string, ip?: string) {
         console.log(`[STABILITY-LOG] Starting login construction for user: ${user.email}`);
         try {
-            let isActuallyActive = user.isActive;
-            // Logic for subscription expiry
-            if (isActuallyActive && user.subscriptionEndsAt) {
-                const now = new Date();
-                if (new Date(user.subscriptionEndsAt) <= now) {
-                    console.log(`[STABILITY-LOG] User subscription expired: ${user.email}`);
-                    isActuallyActive = false;
-                }
-            }
+            // Fetch user with memberships to get tenant info
+            const userWithMemberships = await this.prisma.user.findUnique({
+                where: { id: user.id },
+                include: { memberships: { include: { tenant: true } } }
+            });
+
+            const isActuallyActive = this.usersService.calculateEffectiveStatus(user);
+            const memberships = userWithMemberships?.memberships || [];
+            
+            // For now, we use the first tenant as the default context
+            const defaultTenant = memberships[0]?.tenant;
 
             const payload = {
                 email: user.email,
@@ -73,41 +91,30 @@ export class AuthService {
                 role: user.role,
                 plan: user.plan,
                 isActive: isActuallyActive,
-                subscriptionEndsAt: user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt).toISOString() : null
+                subscriptionEndsAt: user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt).toISOString() : null,
+                tenantId: defaultTenant?.id || null,
+                tenantRole: memberships[0]?.role || null
             };
 
             console.log(`[STABILITY-LOG] Payload constructed, fetching plan permissions...`);
-            let planObjPermissions = {};
-            try {
-                if (user.plan) {
-                    const planObj = await this.prisma.subscriptionPlan.findUnique({ where: { code: user.plan } });
-                    planObjPermissions = planObj?.permissions || {};
-                    console.log(`[STABILITY-LOG] Plan found: ${user.plan}`);
-                } else {
-                    console.warn(`[STABILITY-LOG] User has no plan code: ${user.email}`);
-                }
-            } catch (e) {
-                console.error('[STABILITY-LOG] Error fetching plan permissions during login:', e);
-            }
+            const planObjPermissions = await this.usersService.resolvePlanPermissions(user.plan);
 
             // Ensure featureOverrides is an object
             let featureOverrides = user.featureOverrides || {};
             if (typeof featureOverrides === 'string') {
                 try {
                     featureOverrides = JSON.parse(featureOverrides);
-                    console.log(`[STABILITY-LOG] Parsed featureOverrides from string for: ${user.email}`);
                 } catch (e) {
-                    console.error('[STABILITY-LOG] Failed to parse featureOverrides string:', e);
                     featureOverrides = {};
                 }
             }
 
-            console.log(`[STABILITY-LOG] Signing JWT...`);
-            const token = this.jwtService.sign(payload);
-            console.log(`[STABILITY-LOG] JWT Signed successfully.`);
+            const accessToken = this.jwtService.sign(payload);
+            const refreshToken = await this.createSession(user.id, userAgent, ip);
 
             return {
-                access_token: token,
+                access_token: accessToken,
+                refresh_token: refreshToken,
                 user: {
                     id: user.id,
                     email: user.email,
@@ -126,23 +133,46 @@ export class AuthService {
         }
     }
 
-    async impersonate(userIdToImpersonate: string) {
+    async refresh(token: string, userAgent?: string, ip?: string) {
+        const tokenHash = this.hashToken(token);
+        const session = await this.prisma.session.findUnique({
+            where: { tokenHash },
+            include: { user: true },
+        });
+
+        if (!session || session.expiresAt < new Date()) {
+            if (session) await this.prisma.session.delete({ where: { id: session.id } });
+            throw new UnauthorizedException('Sesión expirada o inválida');
+        }
+
+        // Rotate token: delete old, create new
+        await this.prisma.session.delete({ where: { id: session.id } });
+        
+        return this.login(session.user, userAgent, ip);
+    }
+
+    async logout(token: string) {
+        const tokenHash = this.hashToken(token);
+        await this.prisma.session.deleteMany({
+            where: { tokenHash },
+        });
+    }
+
+    async impersonate(userIdToImpersonate: string, userAgent?: string, ip?: string) {
         const user = await this.usersService.findById(userIdToImpersonate);
         if (!user) {
             throw new NotFoundException('Usuario no encontrado');
         }
-        return this.login(user); // returns token and user data for the target user
+        return this.login(user, userAgent, ip);
     }
 
-    async register(data: any) {
-        // Check if email already exists
+    async register(data: any, userAgent?: string, ip?: string) {
         const existingUser = await this.usersService.findOne(data.email).catch(() => null);
         if (existingUser) {
             throw new ConflictException('Este correo ya tiene una cuenta registrada.');
         }
 
         const hashedPassword = await bcrypt.hash(data.password, 10);
-
         let subscriptionEndsAt: Date | null = null;
         let plan = data.plan ? data.plan.toUpperCase() : 'FREE_TRIAL';
         let isActive = true;
@@ -152,9 +182,7 @@ export class AuthService {
             date.setDate(date.getDate() + 7);
             subscriptionEndsAt = date;
             plan = 'FREE_TRIAL';
-            isActive = true;
         } else {
-            // Paid plans start as inactive until payment confirmation (webhook)
             isActive = false;
         }
 
@@ -162,21 +190,17 @@ export class AuthService {
             email: data.email,
             password: hashedPassword,
             name: data.name,
-            // Public registration always creates a tenant-level account.
             role: 'ADMIN',
             plan: plan as any,
             subscriptionEndsAt: subscriptionEndsAt,
             isActive: isActive
         });
 
-        // Send welcome email (non-blocking)
         try {
             await this.emailService.sendWelcomeEmail(user.name || 'Usuario', user.email);
-        } catch (err) {
-            console.error('Failed to send welcome email:', err);
-        }
+        } catch (err) {}
 
-        return this.login(user);
+        return this.login(user, userAgent, ip);
     }
 
     async forgotPassword(email: string): Promise<void> {
