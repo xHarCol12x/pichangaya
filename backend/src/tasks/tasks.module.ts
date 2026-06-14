@@ -3,6 +3,6 @@ import { TasksService } from './tasks.service';
 import { PrismaService } from '../prisma.service';
 
 @Module({
-    providers: [TasksService, PrismaService],
+  providers: [TasksService, PrismaService],
 })
-export class TasksModule { }
+export class TasksModule {}

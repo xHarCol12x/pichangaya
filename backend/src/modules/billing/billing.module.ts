@@ -4,7 +4,7 @@ import { PrismaService } from '../../prisma.service';
 
 @Global()
 @Module({
-    providers: [BillingService, PrismaService],
-    exports: [BillingService],
+  providers: [BillingService, PrismaService],
+  exports: [BillingService],
 })
-export class BillingModule { }
+export class BillingModule {}

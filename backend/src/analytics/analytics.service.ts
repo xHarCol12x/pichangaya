@@ -5,77 +5,76 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AnalyticsService {
-    constructor(
-        private prisma: PrismaService,
-        private httpService: HttpService,
-    ) { }
+  constructor(
+    private prisma: PrismaService,
+    private httpService: HttpService,
+  ) {}
 
-    async getDashboardStats(tenantId: string) {
-        const totalRevenue = await this.prisma.payment.aggregate({
-            where: { 
-                status: 'SUCCESS',
-                user: { memberships: { some: { tenantId } } }
-            },
-            _sum: { amount: true },
-        });
+  async getDashboardStats(tenantId: string) {
+    const totalRevenue = await this.prisma.payment.aggregate({
+      where: {
+        status: 'SUCCESS',
+        user: { memberships: { some: { tenantId } } },
+      },
+      _sum: { amount: true },
+    });
 
-        const totalBookings = await this.prisma.booking.count({
-            where: { field: { venue: { tenantId } }, deletedAt: null }
-        });
+    const totalBookings = await this.prisma.booking.count({
+      where: { field: { venue: { tenantId } }, deletedAt: null },
+    });
 
-        const totalClients = await this.prisma.client.count({
-            where: { venue: { tenantId }, deletedAt: null }
-        });
+    const totalClients = await this.prisma.client.count({
+      where: { venue: { tenantId }, deletedAt: null },
+    });
 
-        // Mock occupancy rate for the dashboard
-        const occupancyRate = 0.74;
+    // Mock occupancy rate for the dashboard
+    const occupancyRate = 0.74;
 
-        return {
-            revenue: totalRevenue._sum.amount || 0,
-            bookings: totalBookings,
-            users: totalClients, // renamed to clients in UI context usually
-            occupancy: occupancyRate,
-        };
+    return {
+      revenue: totalRevenue._sum.amount || 0,
+      bookings: totalBookings,
+      users: totalClients, // renamed to clients in UI context usually
+      occupancy: occupancyRate,
+    };
+  }
+
+  async getAiPrediction(tenantId: string) {
+    // Fetch last 14 days of booking data for this tenant
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        field: { venue: { tenantId } },
+        deletedAt: null,
+      },
+      orderBy: { startTime: 'asc' },
+      take: 50, // Simplified for demo
+    });
+
+    // Group bookings by date
+    const groupedData = bookings.reduce((acc, curr) => {
+      const date = curr.startTime.toISOString().split('T')[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+
+    const historicalData = Object.entries(groupedData).map(([date, count]) => ({
+      date,
+      bookings: count,
+    }));
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post('http://ai-service:8000/predict', {
+          historical_data: historicalData,
+        }),
+      );
+      return response.data;
+    } catch (error) {
+      // Fallback mock if AI service is not reachable
+      return {
+        prediction: 0.85,
+        trend: 'up',
+        status: 'fallback',
+      };
     }
-
-    async getAiPrediction(tenantId: string) {
-        // Fetch last 14 days of booking data for this tenant
-        const bookings = await this.prisma.booking.findMany({
-            where: { 
-                field: { venue: { tenantId } },
-                deletedAt: null
-            },
-            orderBy: { startTime: 'asc' },
-            take: 50, // Simplified for demo
-        });
-
-        // Group bookings by date
-        const groupedData = bookings.reduce((acc, curr) => {
-            const date = curr.startTime.toISOString().split('T')[0];
-            acc[date] = (acc[date] || 0) + 1;
-            return acc;
-        }, {});
-
-        const historicalData = Object.entries(groupedData).map(([date, count]) => ({
-            date,
-            bookings: count,
-        }));
-
-        try {
-            const response = await firstValueFrom(
-                this.httpService.post('http://ai-service:8000/predict', {
-                    historical_data: historicalData,
-                }),
-            );
-            return response.data;
-        } catch (error) {
-            // Fallback mock if AI service is not reachable
-            return {
-                prediction: 0.85,
-                trend: 'up',
-                status: 'fallback'
-            };
-        }
-    }
+  }
 }
-

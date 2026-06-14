@@ -9,16 +9,15 @@ import { Role } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN, Role.SUPER_ADMIN)
 export class AnalyticsController {
-    constructor(private readonly analyticsService: AnalyticsService) { }
+  constructor(private readonly analyticsService: AnalyticsService) {}
 
-    @Get('dashboard')
-    getDashboardStats(@Request() req) {
-        return this.analyticsService.getDashboardStats(req.user.tenantId);
-    }
+  @Get('dashboard')
+  getDashboardStats(@Request() req) {
+    return this.analyticsService.getDashboardStats(req.user.tenantId);
+  }
 
-    @Get('prediction')
-    getAiPrediction(@Request() req) {
-        return this.analyticsService.getAiPrediction(req.user.tenantId);
-    }
+  @Get('prediction')
+  getAiPrediction(@Request() req) {
+    return this.analyticsService.getAiPrediction(req.user.tenantId);
+  }
 }
-
