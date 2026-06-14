@@ -41,4 +41,4 @@ import { AiToolsModule } from './ai-tools/ai-tools.module';
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
-export class AppModule { }
+export class AppModule {}
