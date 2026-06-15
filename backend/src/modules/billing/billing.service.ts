@@ -11,19 +11,20 @@ export class BillingService {
         private audit: AuditService
     ) { }
 
-    async activatePlan(userId: string, planCode: string, paymentData: { amount: number; transactionId: string; source: string }) {
-        this.logger.log(`Activando plan ${planCode} para usuario ${userId}`);
+    async activatePlanForTenant(tenantId: string, planCode: string, paymentData: { amount: number; transactionId: string; source: string; userId: string }) {
+        this.logger.log(`Activando plan ${planCode} para tenant ${tenantId}`);
 
-        const user = await this.prisma.user.findUnique({ where: { id: userId } });
-        if (!user) throw new NotFoundException('Usuario no encontrado');
+        const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+        if (!tenant) throw new NotFoundException('Tenant no encontrado');
 
         const now = new Date();
-        const nextMonth = new Date(now.setMonth(now.getMonth() + 1));
+        const nextMonth = new Date();
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
 
         return await this.prisma.$transaction(async (tx) => {
-            // 1. Update User status and current plan
-            const updatedUser = await tx.user.update({
-                where: { id: userId },
+            // 1. Update Tenant status and current plan
+            const updatedTenant = await tx.tenant.update({
+                where: { id: tenantId },
                 data: {
                     plan: planCode,
                     isActive: true,
@@ -31,13 +32,14 @@ export class BillingService {
                 }
             });
 
-            // 2. Record the payment
+            // 2. Record the payment linked to the user who paid and potentially the tenant
+            // Note: Currently Payment model is linked to User in schema.prisma
             await tx.payment.create({
                 data: {
                     amount: paymentData.amount,
-                    status: 'APPROVED',
+                    status: 'SUCCESS',
                     transactionId: paymentData.transactionId,
-                    userId: userId,
+                    userId: paymentData.userId,
                     planCode: planCode
                 }
             });
@@ -45,7 +47,7 @@ export class BillingService {
             // 3. Create a Subscription history record
             await tx.subscription.create({
                 data: {
-                    userId: userId,
+                    userId: paymentData.userId,
                     planCode: planCode,
                     startDate: new Date(),
                     endDate: nextMonth,
@@ -56,27 +58,21 @@ export class BillingService {
             // 4. Audit the activation
             await this.audit.log(
                 'PLAN_ACTIVATED',
-                userId,
-                'User',
-                userId,
+                paymentData.userId,
+                'Tenant',
+                tenantId,
                 { planCode, transactionId: paymentData.transactionId, source: paymentData.source }
             );
 
-            return updatedUser;
+            return updatedTenant;
         });
     }
 
-    async getBillingHistory(userId: string) {
+    async getBillingHistory(tenantId: string) {
         return this.prisma.payment.findMany({
-            where: { userId },
-            orderBy: { createdAt: 'desc' }
-        });
-    }
-
-    async getActiveSubscription(userId: string) {
-        return this.prisma.subscription.findFirst({
-            where: { userId, status: 'ACTIVE' },
+            where: { user: { memberships: { some: { tenantId } } } },
             orderBy: { createdAt: 'desc' }
         });
     }
 }
+

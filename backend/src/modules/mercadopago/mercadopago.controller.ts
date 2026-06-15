@@ -13,14 +13,15 @@ export class MercadoPagoController {
         @Body('planCode') planCode: string, 
         @Body('interval') interval: 'mensual' | 'anual'
     ) {
-        return this.mpService.createPreference(req.user.userId, planCode, interval);
+        return this.mpService.createPreference(req.user.userId, req.user.tenantId, planCode, interval);
     }
 
     @UseGuards(JwtAuthGuard)
     @Post('create-subscription')
     async createSubscription(@Req() req, @Body('planCode') planCode: string) {
-        return this.mpService.createSubscription(req.user.userId, planCode);
+        return this.mpService.createSubscription(req.user.userId, req.user.tenantId, planCode);
     }
+
 
     @Post('webhook')
     async handleWebhook(@Body() data: any, @Req() req: any) {

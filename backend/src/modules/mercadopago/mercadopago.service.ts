@@ -18,7 +18,7 @@ export class MercadoPagoService {
         });
     }
 
-    async createPreference(userId: string, planCode: string, interval: 'mensual' | 'anual' = 'mensual') {
+    async createPreference(userId: string, tenantId: string, planCode: string, interval: 'mensual' | 'anual' = 'mensual') {
         try {
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             if (!user) throw new NotFoundException('Usuario no encontrado');
@@ -51,9 +51,10 @@ export class MercadoPagoService {
                     },
                     auto_return: 'approved',
                     notification_url: `${process.env.BACKEND_URL || 'https://tu-ngrok-url.ngrok.io'}/mercadopago/webhook`,
-                    external_reference: userId,
+                    external_reference: tenantId, // Using tenantId as external_reference
                     metadata: {
                         user_id: userId,
+                        tenant_id: tenantId,
                         plan_code: plan.code,
                         interval: interval
                     }
@@ -71,7 +72,7 @@ export class MercadoPagoService {
         }
     }
 
-    async createSubscription(userId: string, planCode: string) {
+    async createSubscription(userId: string, tenantId: string, planCode: string) {
         try {
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             if (!user) throw new NotFoundException('Usuario no encontrado');
@@ -92,7 +93,7 @@ export class MercadoPagoService {
                     },
                     payer_email: user.email,
                     status: 'pending',
-                    external_reference: userId,
+                    external_reference: tenantId, // Using tenantId
                 }
             });
 
@@ -109,12 +110,6 @@ export class MercadoPagoService {
 
     async handleWebhook(data: any, headers?: any) {
         this.logger.log(`Webhook de MP recibido: ${JSON.stringify(data)}`);
-
-        // Signature validation (Optional, if MP_WEBHOOK_SECRET is provided)
-        const secret = process.env.MP_WEBHOOK_SECRET;
-        if (secret && headers && headers['x-signature']) {
-            this.logger.log('Validando firma de webhook...');
-        }
 
         const webhookId = data.id?.toString() || data.data?.id?.toString();
         if (webhookId) {
@@ -134,14 +129,16 @@ export class MercadoPagoService {
                 const paymentInfo = await mpPayment.get({ id: paymentId });
 
                 if (paymentInfo.status === 'approved') {
-                    const userId = paymentInfo.external_reference || paymentInfo.metadata?.user_id;
+                    const tenantId = paymentInfo.external_reference || paymentInfo.metadata?.tenant_id;
+                    const userId = paymentInfo.metadata?.user_id;
                     const planCode = paymentInfo.metadata?.plan_code || 'PRO';
 
-                    if (userId) {
-                        await this.billing.activatePlan(userId, planCode, {
+                    if (tenantId && userId) {
+                        await this.billing.activatePlanForTenant(tenantId, planCode, {
                             amount: paymentInfo.transaction_amount || 0,
                             transactionId: paymentId.toString(),
-                            source: 'MERCADOPAGO'
+                            source: 'MERCADOPAGO',
+                            userId: userId
                         });
 
                         // Mark webhook as processed
@@ -151,7 +148,7 @@ export class MercadoPagoService {
                                     webhookId,
                                     source: 'MERCADOPAGO',
                                     type: data.type || data.topic,
-                                    payload: data
+                                    payload: data as any
                                 }
                             });
                         }
@@ -164,4 +161,5 @@ export class MercadoPagoService {
 
         return { received: true };
     }
+
 }

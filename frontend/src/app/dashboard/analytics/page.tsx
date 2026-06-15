@@ -52,7 +52,10 @@ const peakHours = [
     { hour: '22:00', load: 40 },
 ];
 
+import { useVenue } from "@/context/VenueContext";
+
 const AnalyticsPage = () => {
+    const { venues: contextVenues, isLoadingVenues } = useVenue();
     const [isLoading, setIsLoading] = useState(true);
     const [hasAccess, setHasAccess] = useState(false);
     const [hasVenue, setHasVenue] = useState(false);
@@ -67,13 +70,14 @@ const AnalyticsPage = () => {
                 }
                 const userObj = JSON.parse(userStr);
 
-                const [uRes, vRes] = await Promise.all([
+                // We use the venues from context or fetch them if not ready
+                // For safety and immediate check, we fetch me and venues
+                const [uRes] = await Promise.all([
                     users.getMe().catch(() => ({ data: {} })),
-                    venues.getAll().catch(() => ({ data: [] }))
                 ]);
 
-                const userVenues = vRes.data?.filter((v: any) => v.ownerId === userObj.id) || [];
-                setHasVenue(userVenues.length > 0);
+                // The backend already filters venues by tenant
+                setHasVenue(contextVenues.length > 0);
 
                 const plan = String(uRes.data?.plan || userObj.plan || 'basic').toLowerCase();
                 const featureOverrides = uRes.data?.featureOverrides || userObj?.featureOverrides || {};
@@ -88,8 +92,12 @@ const AnalyticsPage = () => {
                 setIsLoading(false);
             }
         };
-        checkAccess();
-    }, []);
+        
+        if (!isLoadingVenues) {
+            checkAccess();
+        }
+    }, [isLoadingVenues, contextVenues]);
+
 
     if (isLoading) {
         return (
@@ -124,88 +132,88 @@ const AnalyticsPage = () => {
     }
 
     return (
-        <div className="space-y-8 animate-in zoom-in-95 duration-700">
-            <header className="flex justify-between items-start">
+        <div className="space-y-6 sm:space-y-8 animate-in zoom-in-95 duration-700 w-full overflow-hidden px-1 sm:px-0">
+            <header className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div>
-                    <div className="flex items-center gap-2 text-accent font-black uppercase tracking-[0.2em] text-[10px] mb-2">
+                    <div className="flex items-center gap-2 text-[#cafd00] font-black uppercase tracking-[0.2em] text-[9px] sm:text-[10px] mb-2">
                         <Sparkles className="w-3 h-3" /> AI Powered Intelligence
                     </div>
-                    <h1 className="text-4xl font-black text-white">Análisis Predictivo</h1>
-                    <p className="text-slate-400 mt-2">Predicciones avanzadas basadas en redes neuronales para tu club</p>
+                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase">Análisis Predictivo</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs sm:text-sm">Predicciones avanzadas basadas en historial de reservas.</p>
                 </div>
-                <div className="flex gap-3">
-                    <button className="glass px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-colors">7 Días</button>
-                    <button className="bg-white/10 px-4 py-2 rounded-xl text-xs font-bold text-white border border-white/10">30 Días</button>
+                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 self-start sm:self-center">
+                    <button className="px-4 py-1.5 rounded-lg text-[10px] font-bold text-slate-400 hover:text-white transition-all">7 Días</button>
+                    <button className="bg-white/10 px-4 py-1.5 rounded-lg text-[10px] font-bold text-white border border-white/10 shadow-sm">30 Días</button>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                 {/* Main Forecasting Chart */}
-                <div className="lg:col-span-2 glass p-8 rounded-[3rem] border border-white/5 relative overflow-hidden">
-                    <div className="flex items-center justify-between mb-8">
+                <div className="lg:col-span-2 glass p-6 sm:p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden bg-white/[0.01]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                         <div>
-                            <h2 className="text-xl font-bold text-white">Proyección de Demanda</h2>
-                            <p className="text-sm text-slate-500 font-medium">Buscando patrones en reservas históricas</p>
+                            <h2 className="text-xl font-bold text-white tracking-tight">Proyección de Demanda</h2>
+                            <p className="text-xs text-slate-500 font-medium">Buscando patrones en reservas históricas</p>
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-slate-600" />
-                                <span className="text-[10px] text-slate-500 font-bold uppercase">Real</span>
+                                <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Real</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-accent" />
-                                <span className="text-[10px] text-slate-500 font-bold uppercase">Predicho</span>
+                                <div className="w-2 h-2 rounded-full bg-[#cafd00]" />
+                                <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">IA</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="h-[350px] w-full">
+                    <div className="h-[280px] sm:h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={forecastData}>
                                 <defs>
                                     <linearGradient id="predictionGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.2} />
-                                        <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#cafd00" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#cafd00" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-                                <XAxis dataKey="Day" stroke="#475569" fontSize={11} axisLine={false} tickLine={false} />
-                                <YAxis stroke="#475569" fontSize={11} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                                <XAxis dataKey="Day" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
+                                <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '16px' }}
-                                    cursor={{ stroke: '#38bdf8', strokeWidth: 1, strokeDasharray: '5 5' }}
+                                    cursor={{ stroke: '#cafd00', strokeWidth: 1, strokeDasharray: '5 5' }}
                                 />
                                 <Area type="monotone" dataKey="actual" stroke="#475569" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
-                                <Area type="monotone" dataKey="predicted" stroke="#38bdf8" strokeWidth={4} fill="url(#predictionGradient)" animationDuration={2000} />
+                                <Area type="monotone" dataKey="predicted" stroke="#cafd00" strokeWidth={4} fill="url(#predictionGradient)" animationDuration={2000} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* AI Insight Summary */}
-                <div className="space-y-6">
-                    <div className="bg-accent/10 border border-accent/20 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                        <div className="absolute -right-4 -top-4 w-32 h-32 bg-accent/20 rounded-full blur-3xl" />
-                        <Zap className="text-accent w-10 h-10 mb-4" />
-                        <h3 className="text-xl font-black text-white mb-2">Picos de Carga</h3>
-                        <p className="text-slate-400 text-sm leading-relaxed mb-6">Se detectó un patrón de saturación los <span className="text-accent font-bold">Jueves a las 19:00</span>. Recomendamos ajustar tarifas dinámicas.</p>
-                        <button className="flex items-center gap-2 text-accent text-xs font-black uppercase tracking-widest hover:gap-3 transition-all">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+                    <div className="bg-[#cafd00]/10 border border-[#cafd00]/20 p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden group">
+                        <div className="absolute -right-4 -top-4 w-32 h-32 bg-[#cafd00]/20 rounded-full blur-3xl" />
+                        <Zap className="text-[#cafd00] w-10 h-10 mb-4" />
+                        <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Picos de Carga</h3>
+                        <p className="text-slate-400 text-sm leading-relaxed mb-6">Saturación detectada los <span className="text-[#cafd00] font-bold underline underline-offset-4 decoration-2">Jueves a las 19:00</span>.</p>
+                        <button className="flex items-center gap-2 text-[#cafd00] text-[10px] font-black uppercase tracking-widest hover:gap-3 transition-all">
                             Aplicar Ajuste <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>
 
-                    <div className="glass p-8 rounded-[2.5rem] border border-white/5 relative">
-                        <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Oportunidades de IA</h3>
+                    <div className="glass p-6 sm:p-8 rounded-[2.5rem] border border-white/5 relative bg-white/[0.01]">
+                        <h3 className="text-[10px] font-black text-[#777575] uppercase tracking-[0.2em] mb-6 border-b border-white/5 pb-4">Oportunidades</h3>
                         <div className="space-y-6">
                             {[
-                                { title: "Plan de Lealtad", desc: "El 20% de usuarios los Lunes son recurrentes.", val: "High Impact" },
-                                { title: "Predicción de Clima", desc: "Posible lluvia el Sábado, baja demanda fútbol.", val: "Risk Low" },
+                                { title: "Plan de Lealtad", desc: "El 20% de usuarios los Lunes son recurrentes." },
+                                { title: "Predicción Clima", desc: "Lluvia probable el Sábado, demanda baja." },
                             ].map((item, i) => (
                                 <div key={i} className="flex items-start gap-4">
-                                    <div className="w-2 h-2 rounded-full bg-accent mt-1.5" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#cafd00] mt-1.5 flex-shrink-0" />
                                     <div>
-                                        <h4 className="text-white font-bold text-sm mb-1">{item.title}</h4>
-                                        <p className="text-slate-500 text-xs leading-snug">{item.desc}</p>
+                                        <h4 className="text-white font-bold text-xs mb-1 uppercase tracking-tight">{item.title}</h4>
+                                        <p className="text-[#adaaaa] text-[11px] leading-snug">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}
@@ -214,21 +222,21 @@ const AnalyticsPage = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 {/* Peak Hours Chart */}
-                <div className="glass p-8 rounded-[3rem] border border-white/5">
-                    <h3 className="text-xl font-bold text-white mb-8 flex items-center gap-2">
+                <div className="glass p-6 sm:p-8 rounded-[2.5rem] border border-white/5 bg-white/[0.01]">
+                    <h3 className="text-xl font-black text-white mb-8 flex items-center gap-2 uppercase tracking-tight">
                         <BarChart3 className="w-5 h-5 text-indigo-400" />
-                        Distribución Horaria Peak
+                        Distribución Peak
                     </h3>
-                    <div className="h-[250px] w-full">
+                    <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={peakHours}>
                                 <XAxis dataKey="hour" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                                 <Tooltip cursor={{ fill: '#ffffff05' }} contentStyle={{ backgroundColor: '#020617', border: 'none' }} />
-                                <Bar dataKey="load" radius={[8, 8, 0, 0]}>
+                                <Bar dataKey="load" radius={[6, 6, 0, 0]}>
                                     {peakHours.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.load > 80 ? '#f43f5e' : entry.load > 50 ? '#38bdf8' : '#334155'} />
+                                        <Cell key={`cell-${index}`} fill={entry.load > 80 ? '#f43f5e' : entry.load > 50 ? '#cafd00' : '#334155'} />
                                     ))}
                                 </Bar>
                             </BarChart>
@@ -237,40 +245,40 @@ const AnalyticsPage = () => {
                 </div>
 
                 {/* Efficiency Grid */}
-                <div className="grid grid-cols-2 gap-6">
-                    <div className="glass p-6 rounded-[2rem] border border-white/5 flex flex-col justify-between">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-4">
+                <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                    <div className="glass p-5 sm:p-6 rounded-[2rem] border border-white/5 flex flex-col justify-between bg-white/[0.01]">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-4 border border-emerald-500/20">
                             <TrendingUp className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Crecimiento IA</p>
-                            <p className="text-2xl font-black text-white">+24.5%</p>
-                            <p className="text-[10px] text-emerald-500 font-bold">Mes vs Mes</p>
+                            <p className="text-[9px] text-[#777575] font-black uppercase tracking-widest mb-1">Crecimiento</p>
+                            <p className="text-2xl font-black text-white font-space-grotesk">+24.5%</p>
+                            <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-tight">Mes vs Mes</p>
                         </div>
                     </div>
 
-                    <div className="glass p-6 rounded-[2rem] border border-white/5 flex flex-col justify-between">
-                        <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400 mb-4">
+                    <div className="glass p-5 sm:p-6 rounded-[2rem] border border-white/5 flex flex-col justify-between bg-white/[0.01]">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4 border border-indigo-500/20">
                             <BrainCircuit className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Precisión Modelo</p>
-                            <p className="text-2xl font-black text-white">98.2%</p>
-                            <p className="text-[10px] text-slate-500 font-bold">Rendimiento Alto</p>
+                            <p className="text-[9px] text-[#777575] font-black uppercase tracking-widest mb-1">Precisión</p>
+                            <p className="text-2xl font-black text-white font-space-grotesk">98.2%</p>
+                            <p className="text-[9px] text-indigo-400 font-bold uppercase tracking-tight">Rendimiento</p>
                         </div>
                     </div>
 
-                    <div className="glass p-6 rounded-[2rem] border border-white/5 col-span-2 flex items-center justify-between">
+                    <div className="glass p-5 sm:p-6 rounded-[2rem] border border-white/5 col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/[0.01]">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#cafd00] border border-white/5">
                                 <Calendar className="w-6 h-6" />
                             </div>
                             <div>
-                                <h4 className="text-white font-bold">Carga de Datos</h4>
-                                <p className="text-xs text-slate-500">Última actualización: hace 4 min</p>
+                                <h4 className="text-white font-bold text-sm uppercase tracking-tight">Carga de Datos</h4>
+                                <p className="text-[10px] text-slate-500 font-mono">Última actualización: hace 4 min</p>
                             </div>
                         </div>
-                        <button className="px-6 py-2 rounded-xl border border-white/10 text-slate-300 text-xs font-bold hover:bg-white/5 transition-colors">Sincronizar</button>
+                        <button className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-white/10 text-[#adaaaa] text-[10px] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white transition-all active:scale-95">Sincronizar</button>
                     </div>
                 </div>
             </div>

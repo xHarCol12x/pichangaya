@@ -1,10 +1,12 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcryptjs';
 import { randomUUID, createHash } from 'crypto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +15,9 @@ export class AuthService {
         private jwtService: JwtService,
         private prisma: PrismaService,
         private emailService: EmailService,
+        @InjectQueue('email-queue') private emailQueue: Queue,
     ) { }
+
 
     async validateUser(email: string, pass: string): Promise<any> {
         console.log(`[STABILITY-LOG] Validation attempt for: ${email}`);
@@ -197,8 +201,14 @@ export class AuthService {
         });
 
         try {
-            await this.emailService.sendWelcomeEmail(user.name || 'Usuario', user.email);
-        } catch (err) {}
+            await this.emailQueue.add('send-email', {
+                type: 'welcome',
+                to: user.email,
+                data: { name: user.name || 'Usuario' }
+            });
+        } catch (err) {
+            console.error('[STABILITY-LOG] Error queueing welcome email:', err);
+        }
 
         return this.login(user, userAgent, ip);
     }
@@ -219,8 +229,18 @@ export class AuthService {
         });
 
         const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-        await this.emailService.sendPasswordResetEmail(user.email, resetLink);
+        
+        try {
+            await this.emailQueue.add('send-email', {
+                type: 'password-reset',
+                to: user.email,
+                data: { link: resetLink }
+            });
+        } catch (err) {
+            console.error('[STABILITY-LOG] Error queueing reset email:', err);
+        }
     }
+
 
     async resetPassword(token: string, newPassword: string): Promise<void> {
         const record = await this.prisma.passwordResetToken.findUnique({ where: { token } });

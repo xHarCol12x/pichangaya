@@ -18,6 +18,10 @@ import { PlansModule } from './plans/plans.module';
 import { AuditModule } from './audit/audit.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AiToolsModule } from './ai-tools/ai-tools.module';
+import { QueuesModule } from './queues/queues.module';
+import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -37,8 +41,26 @@ import { AiToolsModule } from './ai-tools/ai-tools.module';
     AuditModule,
     NotificationsModule,
     AiToolsModule,
+    QueuesModule,
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'redis',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      },
+    }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [
+    AppService, 
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule { }

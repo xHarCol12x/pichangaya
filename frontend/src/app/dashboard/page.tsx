@@ -19,7 +19,7 @@ import gsap from "gsap";
 
 import FieldMiniMap from "@/components/fields/FieldMiniMap";
 import { Toaster, toast } from "sonner";
-import { Edit3, Check, Lock } from "lucide-react";
+import { Edit2, Check, Lock } from "lucide-react";
 import dynamic from "next/dynamic";
 const ResponsiveGridLayout = dynamic(
     () => import("react-grid-layout").then((mod: any) => mod.ResponsiveGridLayout),
@@ -34,6 +34,7 @@ import {
 } from "@/components/dashboard/widgets";
 import { getDashboardCache, setDashboardCache } from "@/lib/dashboardCache";
 import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
+import { useVenue } from "@/context/VenueContext";
 
 
 
@@ -150,6 +151,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 const DashboardPage = () => {
+    const { venues: contextVenues, isLoadingVenues, selectedVenueId } = useVenue();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [allBookings, setAllBookings] = useState<any[]>([]);
@@ -309,18 +311,14 @@ const DashboardPage = () => {
         try {
             const userStr = localStorage.getItem("fieldiq_user");
             const userObj = userStr ? JSON.parse(userStr) : null;
-            const userId = userObj?.id || null;
 
-            const [bRes, fRes, uRes, vRes] = await Promise.all([
+            const [bRes, fRes, uRes] = await Promise.all([
                 bookingsApi.getAll().catch(() => ({ data: [] })),
                 fieldsApi.getAll().catch(() => ({ data: [] })),
                 users.getMe().catch(() => ({ data: {} })), // Fetch plan info
-                venues.getAll().catch(() => ({ data: [] }))
             ]);
 
-            const userVenues = vRes.data?.filter((v: any) => v.ownerId === userId) || [];
-            setMyVenues(userVenues);
-
+            setMyVenues(contextVenues);
             setAllBookings(bRes.data || []);
             setAllFields(fRes.data || []);
 
@@ -347,8 +345,8 @@ const DashboardPage = () => {
 
             // Load clients for quick booking
             let clientsData: any[] = [];
-            if (userVenues.length > 0) {
-                const cRes = await clientsApi.getAll(userVenues[0].id).catch(() => ({ data: [] }));
+            if (contextVenues.length > 0) {
+                const cRes = await clientsApi.getAll(contextVenues[0].id).catch(() => ({ data: [] }));
                 clientsData = cRes.data || [];
                 setAllClientsList(clientsData);
             }
@@ -357,7 +355,7 @@ const DashboardPage = () => {
             setDashboardCache({
                 bookings: bRes.data || [],
                 fields: fRes.data || [],
-                venues: userVenues,
+                venues: contextVenues,
                 user: uRes.data || {},
                 clients: clientsData,
             });
@@ -445,14 +443,19 @@ const DashboardPage = () => {
         if (stored) {
             try { setUserName(JSON.parse(stored).name?.split(" ")[0] || "Admin"); } catch (_) { }
         }
-        loadData();
-    }, []);
+        if (!isLoadingVenues) {
+            loadData();
+        }
+    }, [isLoadingVenues, contextVenues]);
+
 
     // ── 1. Filtro Maestro de Fechas ──────────────────────────────────────────
     const dateFilteredBookings = useMemo(() => {
-        if (globalDateRange === "ALL") return allBookings;
+        const bookingsArray = Array.isArray(allBookings) ? allBookings : [];
+        if (globalDateRange === "ALL") return bookingsArray;
 
-        return allBookings.filter(b => {
+        return bookingsArray.filter(b => {
+            if (!b.startTime) return false;
             const bDate = new Date(b.startTime);
             if (globalDateRange === "TODAY") return isToday(b.startTime);
 
@@ -476,6 +479,7 @@ const DashboardPage = () => {
 
     // ── 2. Métricas Derivadas (Usando el filtro maestro) ─────────────────────
     const stats = useMemo(() => {
+        const fieldsArray = Array.isArray(allFields) ? allFields : [];
         const confirmed = dateFilteredBookings.filter(b => b.status?.toUpperCase() === "CONFIRMED");
         const pending = dateFilteredBookings.filter(b => b.status?.toUpperCase() === "PENDING");
         const todayBookings = dateFilteredBookings.filter(b => isToday(b.startTime));
@@ -488,19 +492,20 @@ const DashboardPage = () => {
         const fieldIdsWithBookingToday = new Set(
             confirmed.filter(b => isToday(b.startTime)).map(b => b.fieldId || b.field?.id)
         );
-        const occupancy = allFields.length > 0 ? Math.round((fieldIdsWithBookingToday.size / allFields.length) * 100) : 0;
+        const occupancy = fieldsArray.length > 0 ? Math.round((fieldIdsWithBookingToday.size / fieldsArray.length) * 100) : 0;
 
         return { confirmed, pending, todayBookings, revenue, todayRevenue, occupancy };
     }, [dateFilteredBookings, allFields]);
 
     // ── 3. Próximas Reservas (Usando el filtro maestro) ──────────────────────
     const filteredUpcoming = useMemo(() => {
+        const fieldsArray = Array.isArray(allFields) ? allFields : [];
         let base = dateFilteredBookings
             .filter(b => isFuture(b.startTime) && b.status?.toUpperCase() !== "CANCELLED")
             .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
             .map(b => ({
                 ...b,
-                field: allFields.find(f => f.id === (b.fieldId || b.field?.id)) || { name: "Cancha" },
+                field: fieldsArray.find(f => f.id === (b.fieldId || b.field?.id)) || { name: "Cancha" },
             }));
 
         if (bookingFilter !== "ALL") {
@@ -558,7 +563,8 @@ const DashboardPage = () => {
 
     // ── Prediction mock (en producción conectar a endpoint de IA) ───────────
     const prediction = useMemo(() => {
-        const weekend = allBookings.filter(b => {
+        const bookingsArray = Array.isArray(allBookings) ? allBookings : [];
+        const weekend = bookingsArray.filter(b => {
             const d = new Date(b.startTime);
             return d.getDay() === 6 || d.getDay() === 0;
         });
@@ -570,8 +576,11 @@ const DashboardPage = () => {
 
     // ── Live Fields Computation (En Juego Ahora) ───────────
     const liveFields = useMemo(() => {
-        return allFields.map(field => {
-            const activeBooking = allBookings.find(b => {
+        const bookingsArray = Array.isArray(allBookings) ? allBookings : [];
+        const fieldsArray = Array.isArray(allFields) ? allFields : [];
+
+        return fieldsArray.map(field => {
+            const activeBooking = bookingsArray.find(b => {
                 if (b.status?.toUpperCase() === "CANCELLED") return false;
                 const matchesField = b.fieldId === field.id || b.field?.id === field.id;
                 if (!matchesField) return false;
@@ -676,108 +685,89 @@ const DashboardPage = () => {
     }
 
     return (
-        <>
-            <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 w-full">
+        <div className="w-full max-w-full overflow-x-hidden">
+            <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-700 w-full px-1 sm:px-0">
                 <Toaster theme="dark" position="bottom-right" richColors closeButton />
 
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div>
-                        <h1 className="text-5xl font-black text-white font-space-grotesk tracking-tighter mb-2 uppercase">
-                            HOLA, {userName}
-                        </h1>
-                        <p className="text-foreground/40 flex items-center gap-2 text-sm font-space-grotesk uppercase tracking-widest">
-                            <span className="w-2 h-2 bg-[#cafd00] rounded-full animate-pulse shadow-[0_0_10px_#cafd00]" />
-                            Centro de Comando // ACTIVO
-                            <span className="ml-2 text-[10px] text-[#cafd00] bg-[#cafd00]/10 border border-[#cafd00]/30 px-2 py-0.5 rounded-full font-mono">HUD v4.0</span>
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-white/5 md:border-none">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-3xl sm:text-5xl font-black text-white font-space-grotesk tracking-tighter uppercase truncate max-w-[260px] xs:max-w-none">
+                                HOLA, {userName}
+                            </h1>
+                            <div className="px-2 py-0.5 rounded-md bg-[#cafd00]/10 border border-[#cafd00]/30 text-[#cafd00] text-[10px] font-black uppercase tracking-widest animate-pulse hidden xs:block">
+                                {plan}
+                            </div>
+                        </div>
+                        <p className="text-foreground/40 flex items-center gap-2 text-xs sm:text-sm font-space-grotesk uppercase tracking-widest overflow-hidden">
+                            <span className="w-2 h-2 bg-[#cafd00] rounded-full animate-pulse shadow-[0_0_10px_#cafd00] flex-shrink-0" />
+                            <span className="truncate">Centro de Comando // {myVenues.find(v => v.id === selectedVenueId)?.name || 'ACTIVO'}</span>
                         </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-1 bg-foreground/5 p-1 rounded-xl border border-border mr-2">
+
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between sm:justify-start">
+                        <div className="flex items-center gap-1 bg-foreground/5 p-1 rounded-xl border border-border overflow-x-auto no-scrollbar max-w-[220px] xs:max-w-none">
                             {[
                                 { id: "TODAY", label: "Hoy" },
-                                { id: "WEEK", label: "Esta Semana" },
-                                { id: "MONTH", label: "Este Mes" },
-                                { id: "ALL", label: "Histórico" }
+                                { id: "WEEK", label: "Sem." },
+                                { id: "MONTH", label: "Mes" },
+                                { id: "ALL", label: "Hist." }
                             ].map(r => (
                                 <button
                                     key={r.id}
                                     onClick={() => setGlobalDateRange(r.id)}
-                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${globalDateRange === r.id ? "bg-accent text-accent-foreground shadow-md" : "text-foreground/50 hover:text-foreground hover:bg-foreground/5"}`}
+                                    className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap ${globalDateRange === r.id ? "bg-accent text-accent-foreground shadow-md" : "text-foreground/50 hover:text-foreground hover:bg-foreground/5"}`}
                                 >
                                     {r.label}
                                 </button>
                             ))}
                         </div>
-                        <button
-                            onClick={() => setShowQuickBooking(true)}
-                            className="bg-foreground text-background px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform text-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Reserva Rápida
-                        </button>
 
-                        {isEditMode ? (
-                            <div className="flex flex-wrap items-center gap-3 animate-in fade-in zoom-in duration-300">
-                                {/* Device Selector */}
-                                <div className="flex items-center gap-1 bg-foreground/5 p-1 rounded-xl border border-divider mr-2">
-                                    <button
-                                        onClick={() => setEditBreakpoint("lg")}
-                                        className={`p-2 rounded-lg transition-all ${editBreakpoint === "lg" ? "bg-accent text-accent-foreground shadow-md" : "text-foreground/40 hover:text-foreground hover:bg-foreground/5"}`}
-                                        title="Vista PC"
-                                    >
-                                        <Monitor className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setEditBreakpoint("sm")}
-                                        className={`p-2 rounded-lg transition-all ${editBreakpoint === "sm" ? "bg-accent text-accent-foreground shadow-md" : "text-foreground/40 hover:text-foreground hover:bg-foreground/5"}`}
-                                        title="Vista Móvil"
-                                    >
-                                        <Smartphone className="w-4 h-4" />
-                                    </button>
-                                </div>
-
-                                <button
-                                    onClick={handleCancelLayout}
-                                    className="px-5 py-2.5 rounded-xl font-bold border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-all text-sm"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleSaveLayout}
-                                    className="bg-emerald-500 text-slate-950 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all text-sm"
-                                >
-                                    <Check className="w-4 h-4" />
-                                    Guardar Tablero
-                                </button>
-                            </div>
-                        ) : (
+                        <div className="flex items-center gap-2">
                             <button
-                                onClick={toggleEditMode}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all text-sm ${(plan !== 'pro' && plan !== 'enterprise' && plan !== 'super_admin' && plan !== 'admin') ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                                onClick={() => setShowQuickBooking(true)}
+                                className="bg-foreground text-background px-3 sm:px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform text-xs sm:text-sm"
                             >
-                                <Edit3 className="w-4 h-4" />
-                                Personalizar
+                                <Plus className="w-4 h-4" />
+                                <span className="hidden xs:inline">Reserva</span> Rápida
                             </button>
-                        )}
+
+                            {isEditMode ? (
+                                <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-300">
+                                    <button onClick={handleSaveLayout} className="bg-emerald-500 hover:bg-emerald-600 text-white p-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95" title="Guardar"><Check className="w-5 h-5" /></button>
+                                    <button onClick={handleCancelLayout} className="bg-red-500 hover:bg-red-600 text-white p-2.5 rounded-xl shadow-lg shadow-red-500/20 transition-all active:scale-95" title="Cancelar"><X className="w-5 h-5" /></button>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={toggleEditMode} 
+                                    className={`p-2.5 rounded-xl border border-border bg-foreground/5 text-foreground/40 hover:text-foreground hover:bg-foreground/10 transition-all ${(plan !== 'pro' && plan !== 'enterprise' && plan !== 'super_admin' && plan !== 'admin') ? 'opacity-50 grayscale cursor-not-allowed' : ''}`} 
+                                    title="Personalizar Tablero"
+                                >
+                                    <Edit2 className="w-5 h-5" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </header>
 
-                {/* ── Mobile: Pure CSS Stack (same pattern as Users/Bookings/Fields pages) ── */}
-                <div className="block lg:hidden space-y-4">
-                    {!isEditMode && (
+                {/* ── Mobile/Tablet Stack View (below lg) ── */}
+                <div className="flex lg:hidden flex-col gap-6 w-full max-w-full pb-20">
+                    {!isEditMode ? (
                         <>
                             <KpiStatsWidget stats={stats} allFieldsLength={allFields.length} />
-                            <RevenueChartWidget globalDateRange={globalDateRange} stats={stats} chartData={chartData} />
+                            <div className="w-full overflow-hidden">
+                                <RevenueChartWidget globalDateRange={globalDateRange} stats={stats} chartData={chartData} />
+                            </div>
                             <AiInsightWidget plan={plan} prediction={prediction} />
                             <LiveFieldsWidget liveFields={liveFields} handleLiveAction={handleLiveAction} setShowQuickBooking={setShowQuickBooking} />
                             <UpcomingBookingsWidget filteredUpcoming={filteredUpcoming} bookingFilter={bookingFilter} setBookingFilter={setBookingFilter} setSelectedBooking={setSelectedBooking} />
                         </>
-                    )}
-                    {isEditMode && (
-                        <div className="py-8 text-center text-foreground/50 text-sm border-2 border-dashed border-border rounded-3xl">
-                            <Smartphone className="w-8 h-8 mx-auto mb-2 text-accent/50" />
-                            <p>La personalización del tablero solo está disponible en pantalla grande (PC/tablet).</p>
-                            <p className="text-xs mt-1 text-foreground/30">El diseño móvil se aplica automáticamente.</p>
+                    ) : (
+                        <div className="py-12 px-6 text-center text-foreground/50 text-sm border-2 border-dashed border-border rounded-[2.5rem] bg-foreground/[0.02]">
+                            <Smartphone className="w-10 h-10 mx-auto mb-4 text-accent/40" />
+                            <p className="font-bold text-white mb-1">Personalización Restringida</p>
+                            <p>El modo edición solo está habilitado para pantallas de PC o Tablet en horizontal.</p>
+                            <p className="text-[10px] mt-4 text-foreground/30 uppercase tracking-widest">El diseño móvil se adapta automáticamente</p>
                         </div>
                     )}
                 </div>
@@ -991,7 +981,8 @@ const DashboardPage = () => {
 
             {/* Modal: Reserva Rápida (Walk-in) */}
             {showQuickBooking && (() => {
-                const qbField = allFields.find(f => f.id === qbForm.fieldId);
+                const fieldsArray = Array.isArray(allFields) ? allFields : [];
+                const qbField = fieldsArray.find(f => f.id === qbForm.fieldId);
                 const qbPrice = qbField ? +(qbField.pricePerHour * qbForm.duration / 60).toFixed(2) : 0;
                 const qbClient = allClientsList.find(c => c.id === qbForm.clientId);
 
@@ -1147,7 +1138,7 @@ const DashboardPage = () => {
                                                 onChange={e => setQbForm({ ...qbForm, fieldId: e.target.value })}
                                                 className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-accent transition-all appearance-none text-sm shadow-sm dark:shadow-none">
                                                 <option value="" disabled>Selecciona...</option>
-                                                {allFields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                                {fieldsArray.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                                             </select>
                                         </div>
                                         <div>
@@ -1227,7 +1218,7 @@ const DashboardPage = () => {
             })()}
 
 
-        </>
+        </div>
     );
 };
 

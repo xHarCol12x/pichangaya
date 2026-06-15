@@ -7,12 +7,14 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { PrismaService } from '../prisma.service';
 import { EmailModule } from '../email/email.module';
+import { QueuesModule } from '../queues/queues.module';
 
 @Module({
     imports: [
         UsersModule,
         PassportModule,
         EmailModule,
+        QueuesModule,
         JwtModule.register({
             secret: process.env.JWT_SECRET || 'super-secret-key',
             signOptions: { expiresIn: '1d' },

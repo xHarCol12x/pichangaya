@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Plus, Edit2, Trash2, Clock, Calendar as CalendarIcon, MapPin, Loader2, DollarSign, Search, Check, AlertCircle, X, CreditCard, Banknote, Smartphone, MessageSquare, Lock, Activity, Info, Phone } from "lucide-react";
+import { Plus, Edit2, Trash2, Clock, Calendar as CalendarIcon, MapPin, Loader2, DollarSign, Search, Check, AlertCircle, X, CreditCard, Banknote, Smartphone, MessageSquare, Lock, Activity, Info, Phone, ChevronRight } from "lucide-react";
 import { bookings as bookingsApi, fields as fieldsApi, venues, clients as clientsApi, users } from "@/lib/api";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import UpgradeModal from "@/components/ui/UpgradeModal";
@@ -11,6 +11,22 @@ import { useVenue } from "@/context/VenueContext";
 import { Navigation } from "lucide-react";
 import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
 
+
+// ─── Status Badge ────────────────────────────────────────────────────────────
+
+const StatusBadge = ({ status }: { status: string }) => {
+    const map: Record<string, { label: string; className: string }> = {
+        CONFIRMED: { label: "Confirmada", className: "bg-emerald-500/10 text-emerald-400" },
+        PENDING: { label: "Pendiente", className: "bg-amber-500/10 text-amber-400" },
+        CANCELLED: { label: "Cancelada", className: "bg-red-500/10 text-red-400" },
+    };
+    const s = map[status] ?? { label: status, className: "bg-slate-500/10 text-slate-400" };
+    return (
+        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${s.className}`}>
+            {s.label}
+        </span>
+    );
+};
 
 export default function BookingsPage() {
     const [bookings, setBookings] = useState<any[]>([]);
@@ -61,25 +77,6 @@ export default function BookingsPage() {
 
     const [form, setForm] = useState(getInitialForm());
 
-    useEffect(() => {
-        if (selectedVenueId) {
-            loadData();
-        } else if (!isLoadingVenues && myVenues.length === 0) {
-            setIsLoading(false);
-        }
-    }, [selectedVenueId, isLoadingVenues, myVenues]);
-
-    const activeField = fields.find(f => f.id === form.fieldId);
-
-
-    // Calculate duration whenever times change
-    useEffect(() => {
-        if (activeField && form.duration) {
-            const price = (activeField.pricePerHour * (form.duration / 60));
-            setForm(prev => ({ ...prev, totalPrice: price }));
-        }
-    }, [form.startTime, form.duration, form.fieldId, fields, activeField]);
-
     const loadData = async () => {
         setIsLoading(true);
         try {
@@ -122,6 +119,25 @@ export default function BookingsPage() {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (selectedVenueId) {
+            loadData();
+        } else if (!isLoadingVenues && myVenues.length === 0) {
+            setIsLoading(false);
+        }
+    }, [selectedVenueId, isLoadingVenues, myVenues]);
+
+    const activeField = fields.find(f => f.id === form.fieldId);
+
+
+    // Calculate duration whenever times change
+    useEffect(() => {
+        if (activeField && form.duration) {
+            const price = (activeField.pricePerHour * (form.duration / 60));
+            setForm(prev => ({ ...prev, totalPrice: price }));
+        }
+    }, [form.startTime, form.duration, form.fieldId, fields, activeField]);
 
 
     const handleSave = async (eOrData: any, optionalId?: string) => {
@@ -305,29 +321,31 @@ export default function BookingsPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Gestión de Reservas</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Administra los turnos de tus canchas con precisión.</p>
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-700 w-full overflow-hidden px-1 sm:px-0">
+            
+            {/* Header - Modern and Compact */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                    <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Reservas</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">Administra los turnos de tus canchas con precisión.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                     {(userPlan === 'pro' || userPlan === 'enterprise' || featureOverrides?.canExportData || planPermissions?.canExportData) ? (
-                        <button className="hidden sm:flex items-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-colors shadow-sm dark:shadow-none">
-                            <span className="text-xs tracking-wider uppercase font-black">CSV</span>
-                            Exportar
+                        <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm active:scale-95">
+                            <span className="text-[10px] tracking-wider uppercase font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 border border-divider">CSV</span>
+                            <span className="text-sm">Exportar</span>
                         </button>
                     ) : (
-                        <button disabled className="hidden sm:flex items-center gap-2 bg-slate-100 dark:bg-slate-900/50 border border-transparent text-slate-400 dark:text-slate-600 px-4 py-2 rounded-xl font-bold cursor-not-allowed">
-                            <Lock className="w-4 h-4" /> Exportar (PRO)
+                        <button disabled className="hidden sm:flex items-center gap-2 bg-slate-100 dark:bg-slate-900/50 border border-transparent text-slate-400 dark:text-slate-600 px-4 py-2.5 rounded-xl font-bold cursor-not-allowed opacity-50">
+                            <Lock className="w-4 h-4" /> <span className="text-sm">Exportar</span>
                         </button>
                     )}
                     <button
                         onClick={openCreateModal}
                         disabled={!canCreateBooking}
-                        className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-slate-950 px-4 py-2 rounded-xl font-medium transition-colors"
+                        className="flex-[2] sm:flex-none flex items-center justify-center gap-2 bg-[#cafd00] text-slate-950 px-6 py-2.5 rounded-xl font-black hover:bg-[#b8e600] transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-[#cafd00]/10 text-sm uppercase tracking-widest"
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-4 h-4 stroke-[3]" />
                         Nueva Reserva
                     </button>
                 </div>
@@ -335,63 +353,64 @@ export default function BookingsPage() {
 
             {fields.length === 0 && (
                 <div className="glass rounded-2xl p-6 text-center border border-amber-500/30 bg-amber-500/5 mb-6">
-                    <p className="text-amber-400">Debes crear al menos una cancha antes de poder registrar reservas.</p>
+                    <p className="text-amber-400 text-sm font-bold flex items-center justify-center gap-2">
+                        <AlertCircle className="w-4 h-4" /> Debes crear al menos una cancha antes de registrar reservas.
+                    </p>
                 </div>
             )}
 
-            {maxBookings < 1000 && (
-                <div className={`glass rounded-2xl p-6 border flex items-center justify-between mb-6 ${currentMonthBookings >= maxBookings ? 'border-red-500/30 bg-red-500/5' : 'border-white/5 bg-slate-900/40'}`}>
-                    <div>
-                        <p className={`text-sm font-bold ${currentMonthBookings >= maxBookings ? 'text-red-400' : 'text-white'}`}>
-                            {currentMonthBookings >= maxBookings ? 'Límite Mensual Alcanzado' : 'Límite Mensual de Reservas'}
-                        </p>
-                        <p className="text-slate-400 text-xs mt-1">Estás usando {currentMonthBookings} de {maxBookings} reservas incluidas en tu plan {userPlan.toUpperCase()}.</p>
-                    </div>
-                </div>
-            )}
-
-            <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+            {/* Bookings Container */}
+            <div className="glass rounded-[2rem] border border-white/5 overflow-hidden bg-slate-950/20 backdrop-blur-sm shadow-2xl">
                 {bookings.length === 0 ? (
-                    <div className="py-20 text-center">
-                        <CalendarIcon className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No hay reservas</h3>
-                        <p className="text-slate-500 dark:text-slate-400">Aún no se han registrado reservas en el sistema.</p>
+                    <div className="py-24 text-center">
+                        <CalendarIcon className="w-16 h-16 text-slate-400 dark:text-slate-800 mx-auto mb-6 animate-pulse" />
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">No hay reservas</h3>
+                        <p className="text-slate-500 dark:text-slate-500 text-sm">Aún no se han registrado reservas en el sistema.</p>
+                        <button onClick={openCreateModal} className="mt-8 text-[#cafd00] text-xs font-black uppercase tracking-[0.2em] hover:underline underline-offset-4">+ Iniciar Primer Turno</button>
                     </div>
                 ) : (
                     <>
-                        {/* --- Mobile Card View (visible on small screens only) --- */}
-                        <div className="block sm:hidden divide-y divide-white/5">
+                        {/* --- Mobile Card View (Pure CSS) --- */}
+                        <div className="block lg:hidden divide-y divide-white/5">
                             {bookings.map((booking) => {
                                 const isCompleted = new Date(booking.endTime) < new Date();
                                 const isCancelled = booking.status === 'CANCELLED';
                                 return (
-                                    <div key={booking.id} className={`p-4 flex flex-col gap-2 ${isCancelled ? 'opacity-50' : isCompleted ? 'opacity-60' : ''}`}>
+                                    <div key={booking.id} className={`p-6 flex flex-col gap-4 ${isCancelled ? 'opacity-50 grayscale' : isCompleted ? 'opacity-70' : 'bg-white/[0.01]'}`}>
                                         <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="w-3.5 h-3.5 text-accent" />
-                                                <span className="font-bold text-white text-sm">{booking.field.name.toUpperCase()}</span>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border ${isCancelled ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-[#cafd00]/10 border-[#cafd00]/20 text-[#cafd00]'}`}>
+                                                    {booking.client?.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                                                </div>
+                                                <div>
+                                                    <p className="text-white font-black text-sm uppercase tracking-tight truncate max-w-[140px]">{booking.client?.name || 'Invitado'}</p>
+                                                    <p className="text-[#adaaaa] text-[10px] font-mono mt-0.5">{booking.client?.phone || 'Sin teléfono'}</p>
+                                                </div>
                                             </div>
-                                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getStatusColor(booking.status)}`}>
+                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${getStatusColor(booking.status)}`}>
                                                 {booking.status === 'CONFIRMED' ? 'Confirmada' : booking.status === 'PENDING' ? 'Pendiente' : 'Cancelada'}
                                             </span>
                                         </div>
-                                        {booking.client && (
-                                            <p className="text-slate-400 text-xs">👤 {booking.client.name} · {booking.client.phone}</p>
-                                        )}
-                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
-                                            <span>🕐 {formatDate(booking.startTime)} - {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                            <span className="text-emerald-400 font-bold">S/ {booking.totalPrice}</span>
-                                            {booking.paymentMethod && <span className="bg-white/5 px-1.5 py-0.5 rounded text-[10px] border border-white/5">{booking.paymentMethod}</span>}
+
+                                        <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">
+                                            <div>
+                                                <span className="text-[9px] text-[#777575] font-black uppercase tracking-widest block mb-1">Cancha y Horario</span>
+                                                <p className="text-white text-xs font-bold truncate">{booking.field.name.toUpperCase()}</p>
+                                                <p className="text-[#adaaaa] text-[10px] font-mono mt-0.5">{formatDate(booking.startTime)} · {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-[9px] text-[#777575] font-black uppercase tracking-widest block mb-1">Inversión</span>
+                                                <p className="text-[#cafd00] text-lg font-black font-space-grotesk leading-none">S/ {booking.totalPrice}</p>
+                                                {booking.paymentMethod && <span className="text-[9px] text-slate-500 uppercase font-black mt-1 block">{booking.paymentMethod}</span>}
+                                            </div>
                                         </div>
 
-                                        <div className="flex gap-2 mt-1">
-                                            <button onClick={() => setBookingToView(booking)} className="text-xs px-2 py-1 rounded-lg bg-white/5 text-slate-400 hover:text-sky-400 transition-colors">Ver</button>
-                                            <button onClick={() => openEditModal(booking)} className="text-xs px-2 py-1 rounded-lg bg-white/5 text-slate-400 hover:text-white transition-colors">Editar</button>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setBookingToView(booking)} className="flex-1 bg-white/5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all active:scale-95 border border-white/5">Ver</button>
+                                            <button onClick={() => openEditModal(booking)} className="flex-1 bg-white/5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all active:scale-95 border border-white/5">Editar</button>
                                             
-                                            {canDeleteBookings ? (
-                                                <button onClick={() => setBookingToDelete(booking)} className="text-xs px-2 py-1 rounded-lg bg-white/5 text-slate-400 hover:text-red-400 transition-colors">Eliminar</button>
-                                            ) : (
-                                                <button disabled className="text-xs px-2 py-1 rounded-lg bg-white/5 text-slate-400/50 cursor-not-allowed" title="Eliminar (Requiere Plan Superior)">Eliminar</button>
+                                            {canDeleteBookings && (
+                                                <button onClick={() => setBookingToDelete(booking)} className="p-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all active:scale-95 border border-red-500/20"><Trash2 className="w-4 h-4" /></button>
                                             )}
                                         </div>
                                     </div>
@@ -399,85 +418,73 @@ export default function BookingsPage() {
                             })}
                         </div>
 
-                        {/* --- Desktop Table View (sm and above) --- */}
-                        <div className="hidden sm:block overflow-x-auto text-left">
-                            <table className="w-full">
+                        {/* --- Desktop Table View (lg and above) --- */}
+                        <div className="hidden lg:block overflow-x-auto text-left no-scrollbar">
+                            <table className="w-full min-w-[1000px]">
                                 <thead>
-                                    <tr className="border-b border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 text-sm">
-                                        <th className="font-medium p-4 pl-6 text-left">Cancha</th>
-                                        <th className="font-medium p-4 text-left">Cliente</th>
-                                        <th className="font-medium p-4 text-left">Horario Inicio</th>
-                                        <th className="font-medium p-4 text-left">Fin</th>
-                                        <th className="font-medium p-4 text-left">Total</th>
-                                        <th className="font-medium p-4 text-left">Pago</th>
-                                        <th className="font-medium p-4 text-left">Estado</th>
-                                        <th className="font-medium p-4 pr-6 text-right">Acciones</th>
+                                    <tr className="border-b border-white/5 text-[#adaaaa] text-[10px] font-black uppercase tracking-[0.2em] bg-white/[0.02]">
+                                        <th className="p-6 pl-8">Cancha</th>
+                                        <th className="p-6">Cliente</th>
+                                        <th className="p-6">Fecha</th>
+                                        <th className="p-6">Horario</th>
+                                        <th className="p-6">Total</th>
+                                        <th className="p-6 text-center">Estado</th>
+                                        <th className="p-6 pr-8 text-right">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                <tbody className="divide-y divide-white/5">
                                     {bookings.map((booking) => {
                                         const isCompleted = new Date(booking.endTime) < new Date();
                                         const isCancelled = booking.status === 'CANCELLED';
-                                        let rowStyle = "hover:bg-white/5 transition-colors group";
-                                        if (isCancelled) rowStyle += " opacity-50 bg-red-500/5";
-                                        else if (isCompleted) rowStyle += " opacity-60 bg-white/[0.02]";
+                                        let rowStyle = "hover:bg-white/[0.03] transition-all group";
+                                        if (isCancelled) rowStyle += " opacity-40 grayscale";
+                                        else if (isCompleted) rowStyle += " opacity-60";
                                         return (
                                             <tr key={booking.id} className={rowStyle}>
-                                                <td className="p-4 pl-6">
-                                                    <div className="flex items-center gap-2">
-                                                        <MapPin className="w-4 h-4 text-accent" />
-                                                        <span className="font-medium text-slate-900 dark:text-white">{booking.field.name.toUpperCase()}</span>
+                                                <td className="p-6 pl-8">
+                                                    <div className="flex items-center gap-3">
+                                                        <MapPin className="w-4 h-4 text-[#cafd00] opacity-50" />
+                                                        <span className="font-black text-white text-sm tracking-tight">{booking.field.name.toUpperCase()}</span>
                                                     </div>
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="p-6">
                                                     {booking.client ? (
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-7 h-7 rounded-lg bg-accent/10 dark:bg-accent/20 flex items-center justify-center text-[10px] font-black text-accent flex-shrink-0">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center text-[10px] font-black text-accent border border-accent/20">
                                                                 {booking.client.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
                                                             </div>
-                                                            <div>
-                                                                <p className="text-slate-900 dark:text-white text-sm font-medium leading-none">{booking.client.name}</p>
-                                                                <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{booking.client.phone}</p>
+                                                            <div className="min-w-0">
+                                                                <p className="text-white text-sm font-bold truncate max-w-[150px] tracking-tight">{booking.client.name}</p>
+                                                                <p className="text-slate-500 font-mono text-[10px] mt-0.5">{booking.client.phone}</p>
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-slate-400 dark:text-slate-600 text-xs">Sin cliente</span>
+                                                        <span className="text-slate-600 text-xs font-bold uppercase tracking-widest">Sin cliente</span>
                                                     )}
                                                 </td>
-                                                <td className="p-4 text-slate-600 dark:text-slate-300">
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock className="w-4 h-4 text-slate-500" />
-                                                        {formatDate(booking.startTime)}
+                                                <td className="p-6 text-slate-300 text-sm font-medium">{formatDate(booking.startTime)}</td>
+                                                <td className="p-6">
+                                                    <div className="flex items-center gap-2 text-white font-mono text-sm">
+                                                        <span className="font-black">{new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        <span className="text-slate-600">→</span>
+                                                        <span className="text-slate-400">{new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                     </div>
                                                 </td>
-                                                <td className="p-4 text-slate-600 dark:text-slate-300">{formatDate(booking.endTime)}</td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-1 font-medium text-slate-900 dark:text-white">
-                                                        <span className="text-emerald-500 dark:text-emerald-400 font-bold">S/</span>
-                                                        {booking.totalPrice}
+                                                <td className="p-6">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white font-black font-space-grotesk text-lg leading-none">S/ {booking.totalPrice}</span>
+                                                        {booking.paymentMethod && <span className="text-[9px] text-[#cafd00] font-black uppercase tracking-widest mt-1">{booking.paymentMethod}</span>}
                                                     </div>
                                                 </td>
-                                                <td className="p-4">
-                                                    {booking.paymentMethod ? (
-                                                        <span className="text-xs font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">{booking.paymentMethod}</span>
-                                                    ) : (
-                                                        <span className="text-slate-400 dark:text-slate-600 text-xs">—</span>
-                                                    )}
+                                                <td className="p-6 text-center">
+                                                    <StatusBadge status={booking.status} />
                                                 </td>
-                                                <td className="p-4">
-                                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${getStatusColor(booking.status)}`}>
-                                                        {booking.status === 'CONFIRMED' ? 'Confirmada' : 'Pendiente'}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 pr-6 text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <button onClick={() => setBookingToView(booking)} className="text-slate-400 hover:text-sky-400 p-1.5 rounded-lg hover:bg-white/10 transition-colors" title="Ver Detalles"><Info className="w-4 h-4" /></button>
-                                                        <button onClick={() => openEditModal(booking)} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors" title="Editar"><Edit2 className="w-4 h-4" /></button>
-                                                        
-                                                        {canDeleteBookings ? (
-                                                            <button onClick={() => setBookingToDelete(booking)} className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-white/10 transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
-                                                        ) : (
-                                                            <button disabled className="text-slate-400/30 p-1.5 rounded-lg cursor-not-allowed" title="Eliminar (Requiere Plan Superior)"><Trash2 className="w-4 h-4" /></button>
+                                                <td className="p-6 pr-8 text-right">
+                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                                                        <button onClick={() => setBookingToView(booking)} className="p-2.5 hover:bg-white/10 rounded-xl text-slate-500 hover:text-white transition-colors" title="Ver"><ChevronRight className="w-4 h-4" /></button>
+                                                        <button onClick={() => openEditModal(booking)} className="p-2.5 hover:bg-white/10 rounded-xl text-slate-500 hover:text-white transition-colors" title="Editar"><Edit2 className="w-4 h-4" /></button>
+                                                        {canDeleteBookings && (
+                                                            <button onClick={() => setBookingToDelete(booking)} className="p-2.5 hover:bg-red-500/20 rounded-xl text-slate-500 hover:text-red-400 transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
                                                         )}
                                                     </div>
                                                 </td>
@@ -542,3 +549,4 @@ export default function BookingsPage() {
         </div >
     );
 }
+

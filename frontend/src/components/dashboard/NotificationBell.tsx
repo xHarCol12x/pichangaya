@@ -59,7 +59,8 @@ const NotificationBell = () => {
     const fetchNotifications = useCallback(async () => {
         try {
             const res = await bookingsApi.getAll();
-            const all = res.data || [];
+            const rawData = res.data;
+            const all = Array.isArray(rawData) ? rawData : [];
             const pending: NotifItem[] = all
                 .filter((b: any) => b.status === "PENDING")
                 .slice(0, 10)
