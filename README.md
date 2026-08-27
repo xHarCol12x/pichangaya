@@ -1,89 +1,93 @@
-# Pichangaya (FieldIQ) ⚽
+# ⚽ Pichangaya (FieldIQ)
 
-## Documentacion tecnica
+<div align="center">
+  <img src="https://img.shields.io/badge/Next.js%2016-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/NestJS%2011-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS">
+  <img src="https://img.shields.io/badge/Python%20FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/n8n-FF6D5A?style=for-the-badge&logo=n8n&logoColor=white" alt="n8n">
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+</div>
 
-- [Arquitectura objetivo](docs/ARCHITECTURE.md): stack recomendado, sesiones, tenants, billing, permisos y deploy.
-- [Plan de migracion](docs/MIGRATION_PLAN.md): fases de implementacion para mejorar el sistema sin romper flujos existentes.
+<br />
 
-Pichangaya (también conocido como FieldIQ) es una plataforma integral para la gestión de canchas deportivas, reservas y relaciones con los clientes. Aprovecha la IA para la predicción de la demanda y proporciona una interfaz moderna y receptiva tanto para los dueños de las canchas como para los jugadores.
+**Pichangaya (FieldIQ)** es una plataforma SaaS de alto rendimiento para la gestión integral de complejos deportivos, reservas de canchas en tiempo real y automatizaciones omnicanal impulsadas por **Inteligencia Artificial y Bots de WhatsApp**.
 
-## 🚀 Características Principales
+---
 
-- **Gestión de Reservas:** Programación y gestión en tiempo real de canchas deportivas.
-- **Predicción de Demanda con IA:** Análisis inteligente de datos históricos para pronosticar tendencias futuras de reservas.
-- **Configuración de Sedes y Canchas:** Configuración flexible para múltiples sedes y diversos tipos de canchas.
-- **Roles y Permisos de Usuario:** Autenticación y autorización seguras para administradores, propietarios y clientes.
-- **Notificaciones Automatizadas:** Integración con WhatsApp (vía Evolution API) y Correo Electrónico (vía Resend) para confirmaciones de reservas y recordatorios.
-- **Panel de Análisis (Analytics):** Información visual sobre el rendimiento de las sedes y estadísticas de reservas.
-- **Automatización de Flujos de Trabajo:** Integrado con n8n para lógica de negocios personalizada y automatizaciones.
+## 🌟 Características Destacadas
 
-## 🏗️ Arquitectura
+- **📅 Reservas en Tiempo Real:** Calendario interactivo y gestión dinámica de horarios de canchas deportivas.
+- **🤖 Agentes Conversacionales en WhatsApp:** Integración con **Evolution API** y **n8n** para consulta de disponibilidad y reservas automáticas vía chat.
+- **📈 Predicción de Demanda con IA:** Microservicio en Python (FastAPI + Scikit-learn) que analiza el historial de reservas para pronosticar demanda y sugerir precios dinámicos.
+- **💳 Pasarelas de Pago Integradas:** Cobros automáticos y generación de enlaces de pago directo con **Mercado Pago** y **Stripe**.
+- **📊 Dashboard de Analíticas:** Paneles visuales interactivos con Recharts, estadísticas de facturación, tasa de ocupación y retención de clientes.
+- **🔔 Notificaciones Multicanal:** Web Push notifications a navegadores y correos transaccionales con **Resend**.
 
-El proyecto está estructurado como un monorepo que contiene varios microservicios:
+---
 
-- **`frontend/`**: Una aplicación web moderna construida con **Next.js 16**, **Tailwind CSS** y **Framer Motion/GSAP** para animaciones fluidas.
-- **`backend/`**: Una API REST robusta potenciada por **NestJS**, utilizando **Prisma ORM** con **PostgreSQL**.
-- **`ai-service/`**: Un servicio especializado para la predicción de la demanda utilizando **Python (FastAPI)** y aprendizaje automático (ML).
-- **`evolution-api/`**: Pasarela de integración con WhatsApp para mensajería en tiempo real.
-- **`n8n/`**: Motor de automatización de flujos de trabajo para conectar diversos servicios y manejar la lógica de negocio.
+## 🏗️ Arquitectura del Sistema
+
+```text
+                               ┌─────────────────────────┐
+                               │   Next.js 16 Frontend   │
+                               │  (React 19 + Tailwind)  │
+                               └────────────┬────────────┘
+                                            │ HTTP / REST
+                                            ▼
+┌─────────────────────────┐    ┌─────────────────────────┐    ┌─────────────────────────┐
+│  FastAPI (Python AI)    │◄───┤    NestJS 11 Backend    ├───►│  PostgreSQL Database    │
+│  (Demand Predictor ML)  │    │  (Prisma ORM + JWT)     │    │  (Prisma Schema)        │
+└─────────────────────────┘    └────────────┬────────────┘    └─────────────────────────┘
+                                            │ Event Triggers
+                                            ▼
+                               ┌─────────────────────────┐
+                               │  Evolution API + n8n    │
+                               │  (WhatsApp Automation)  │
+                               └─────────────────────────┘
+```
+
+---
 
 ## 🛠️ Stack Tecnológico
 
-### Frontend
-- Next.js 16 (App Router)
-- TypeScript
-- Tailwind CSS
-- GSAP & Framer Motion
-- Lucide React (Iconos)
-- Recharts (Analíticas)
+| Capa | Tecnologías Utilizadas |
+|---|---|
+| **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, Recharts, Framer Motion, GSAP |
+| **Backend API** | NestJS 11, Prisma ORM 6, Passport JWT, Schedule (Cron), EventEmitter |
+| **Microservicio IA** | Python 3.10+, FastAPI, Scikit-learn, Pandas |
+| **Integraciones & Bots** | Evolution API (WhatsApp Gateway), n8n Workflow Engine, Resend, Mercado Pago SDK, Stripe SDK |
+| **Infraestructura** | PostgreSQL 15, Docker, Docker Compose, Redis |
 
-### Backend
-- NestJS
-- PostgreSQL
-- Prisma ORM
-- Autenticación JWT
-- Mercado Pago (Pagos)
-- Resend (Email)
-- Web-Push (Notificaciones)
-
-### AI Service
-- Python
-- FastAPI
-- Scikit-learn / Pandas (para predicción de datos)
+---
 
 ## 🚦 Primeros Pasos
 
-### Requisitos Previos
-- Docker y Docker Compose
-- Node.js & pnpm (para desarrollo local)
-- Python 3.10+ (para desarrollo local del servicio de IA)
+### 📋 Requisitos Previos
+- Node.js 20+ y `pnpm`
+- Python 3.10+
+- Docker & Docker Compose
 
-### Configuración e Instalación
+### 🔧 Instalación y Ejecución Local
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/xHarCol12x/pichangaya.git
    cd pichangaya
    ```
 
-2. **Variables de Entorno:**
-   Copia el archivo `.env.example` a `.env` y completa las credenciales requeridas.
+2. **Configurar Variables de Entorno:**
+   Copia el archivo de ejemplo y completa las credenciales:
    ```bash
    cp .env.example .env
    ```
 
-3. **Ejecutar con Docker Compose:**
+3. **Iniciar entorno con Docker Compose:**
    ```bash
    docker-compose up -d
    ```
-   Esto iniciará:
-   - PostgreSQL (Puerto 5432)
-   - Backend (Puerto 3001)
-   - Frontend (Puerto 3000)
-   - AI Service (Puerto 8000)
-   - pgAdmin (Puerto 5050)
 
-4. **Inicializar la Base de Datos:**
+4. **Ejecutar Migraciones y Datos Semilla:**
    ```bash
    cd backend
    pnpm install
@@ -91,18 +95,10 @@ El proyecto está estructurado como un monorepo que contiene varios microservici
    pnpm run seed
    ```
 
-## 📂 Estructura del Proyecto
+---
 
-```text
-pichangaya/
-├── ai-service/       # Servicio Python FastAPI para predicción de demanda
-├── backend/          # API REST NestJS y gestión de base de datos
-├── evolution-api/    # Pasarela de integración con WhatsApp
-├── frontend/         # Aplicación web Next.js
-├── n8n/              # Configuraciones de flujos de trabajo en n8n
-└── docker-compose.yml # Orquestación de todos los servicios
-```
+## 👤 Autor
 
-## 📄 Licencia
-
-Este proyecto es [UNLICENSED](backend/package.json).
+Desarrollado por **Harol Fabricio Colán León**  
+🎓 *Universidad Nacional José Faustino Sánchez Carrión*  
+🔗 [GitHub: @xHarCol12x](https://github.com/xHarCol12x) | [LinkedIn](https://linkedin.com/in/harol-colan)
