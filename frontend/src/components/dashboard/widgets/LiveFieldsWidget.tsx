@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Users, Clock, Plus, CreditCard, CheckCircle2 } from "lucide-react";
+import { LiveField, Booking } from "@/types";
 
 const formatCurrency = (n: number) =>
     `S/ ${n.toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
@@ -14,8 +15,8 @@ export function LiveFieldsWidget({
     handleLiveAction, 
     setShowQuickBooking 
 }: { 
-    liveFields: any[], 
-    handleLiveAction: (action: 'extend'|'pay'|'finish', b: any, p?: number) => void,
+    liveFields: LiveField[], 
+    handleLiveAction: (action: 'extend'|'pay'|'finish', b: Booking, p?: number) => void,
     setShowQuickBooking: (s: boolean) => void 
 }) {
     return (
@@ -35,7 +36,7 @@ export function LiveFieldsWidget({
             ) : (
                 <div className="flex-1 overflow-y-hidden overflow-x-auto snap-x snap-mandatory flex xl:grid xl:grid-cols-2 2xl:grid-cols-3 gap-5 hide-scrollbar pb-2">
                     {liveFields.map(field => {
-                        const b = field.booking;
+                        const b = field.booking as Booking | null;
                         return (
                             <div key={field.id} className={`snap-center w-[85vw] sm:w-[320px] xl:w-auto shrink-0 p-5 rounded-[1.5rem] border transition-all flex flex-col h-full overflow-y-auto hide-scrollbar ${field.isOccupied ? 'bg-[#1a1919] border-[#cafd00]/30 shadow-[0_8px_30px_rgba(202,253,0,0.05)]' : 'bg-[#131313] border-[#484847]/20'}`}>
 
@@ -44,7 +45,7 @@ export function LiveFieldsWidget({
                                     <div>
                                         <h3 className="font-black text-white text-lg font-space-grotesk tracking-tighter uppercase truncate pr-2 leading-tight">{field.name}</h3>
                                         <span className="text-[10px] uppercase font-mono tracking-widest text-[#adaaaa]">
-                                            {field.type || 'Deportiva'} // {field.surface || 'Sintético'}
+                                            {field.type || 'Deportiva'} {'//'} {field.surface || 'Sintético'}
                                         </span>
                                     </div>
                                     {field.isOccupied ? (

@@ -2,8 +2,9 @@
 
 import React from "react";
 import { BrainCircuit, ChevronRight, Zap } from "lucide-react";
+import { PlanType, PredictionData } from "@/types";
 
-export function AiInsightWidget({ plan, prediction }: { plan: string, prediction: any }) {
+export function AiInsightWidget({ plan, prediction }: { plan: PlanType, prediction: PredictionData }) {
     const isPro = plan?.toLowerCase() === "pro" || plan?.toLowerCase() === "enterprise" || plan?.toLowerCase() === "super_admin";
     if (isPro) {
         return (

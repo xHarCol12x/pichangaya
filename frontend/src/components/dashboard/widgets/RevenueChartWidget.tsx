@@ -1,10 +1,11 @@
 "use client";
 import React from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { DashboardStats, ChartDataPoint } from "@/types";
 
 const formatCurrency = (n: number) => `S/ ${n.toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
 
-export function RevenueChartWidget({ globalDateRange, stats, chartData }: { globalDateRange: string, stats: any, chartData: any[] }) {
+export function RevenueChartWidget({ globalDateRange, stats, chartData }: { globalDateRange: string, stats: DashboardStats, chartData: ChartDataPoint[] }) {
     return (
         <div className="bg-[#1a1919] h-full p-6 lg:p-8 rounded-[2rem] border border-[#484847]/20 flex flex-col min-h-[350px]">
             <div className="flex items-center justify-between mb-8 shrink-0">
@@ -52,7 +53,7 @@ export function RevenueChartWidget({ globalDateRange, stats, chartData }: { glob
                             fontSize={10} 
                             tickLine={false} 
                             axisLine={false} 
-                            tickFormatter={v => `S/${v}`} 
+                            tickFormatter={(v: any) => `S/${v}`} 
                             width={50}
                         />
                         <Tooltip
@@ -65,7 +66,7 @@ export function RevenueChartWidget({ globalDateRange, stats, chartData }: { glob
                                 boxShadow: "0 0 20px rgba(0,0,0,0.5)"
                             }}
                             itemStyle={{ color: "#cafd00", fontWeight: "bold", fontFamily: 'Space Grotesk' }}
-                            formatter={(v: any) => [formatCurrency(v), "Ingresos"]}
+                            formatter={(v: any) => [formatCurrency(Number(v || 0)), "Ingresos"]}
                         />
                         <Area 
                             type="monotone" 

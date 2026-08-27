@@ -1,19 +1,30 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { TrendingUp, TrendingDown, CreditCard, CalendarCheck, AlertCircle, Activity } from "lucide-react";
+import { CreditCard, CalendarCheck, AlertCircle, Activity, LucideIcon } from "lucide-react";
 import gsap from "gsap";
+import { DashboardStats } from "@/types";
 
 const formatCurrency = (n: number) =>
     `S/ ${n.toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
 
-const KpiCard = ({ title, value, sub, change, positive, icon: Icon, accent }: any) => {
+interface KpiCardProps {
+    title: string;
+    value: string | number;
+    sub?: string;
+    accent: string;
+    icon: LucideIcon;
+}
+
+const KpiCard = ({ title, value, sub, icon: Icon, accent }: KpiCardProps) => {
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        gsap.fromTo(ref.current,
-            { y: 24, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.7, ease: "power3.out", delay: Math.random() * 0.3 }
-        );
+        if (ref.current) {
+            gsap.fromTo(ref.current,
+                { y: 24, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.7, ease: "power3.out", delay: Math.random() * 0.3 }
+            );
+        }
     }, []);
 
     return (
@@ -31,14 +42,13 @@ const KpiCard = ({ title, value, sub, change, positive, icon: Icon, accent }: an
     );
 };
 
-export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFieldsLength: number }) {
-    // Defensive normalization
-    const revenue = stats?.revenue || 0;
-    const todayRevenue = stats?.todayRevenue || 0;
-    const confirmedCount = Array.isArray(stats?.confirmed) ? stats.confirmed.length : 0;
-    const todayCount = Array.isArray(stats?.todayBookings) ? stats.todayBookings.length : 0;
-    const pendingCount = Array.isArray(stats?.pending) ? stats.pending.length : 0;
-    const occupancy = stats?.occupancy || 0;
+export function KpiStatsWidget({ stats, allFieldsLength }: { stats: DashboardStats, allFieldsLength: number }) {
+    const revenue = stats.revenue;
+    const todayRevenue = stats.todayRevenue;
+    const confirmedCount = stats.confirmed.length;
+    const todayCount = stats.todayBookings.length;
+    const pendingCount = stats.pending.length;
+    const occupancy = stats.occupancy;
 
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -46,8 +56,6 @@ export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFiel
                 title="Ingresos Totales"
                 value={formatCurrency(revenue)}
                 sub={`${formatCurrency(todayRevenue)} hoy`}
-                change="+14.2%"
-                positive={true}
                 icon={CreditCard}
                 accent="#cafd00"
             />
@@ -55,8 +63,6 @@ export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFiel
                 title="Reservas Confirmadas"
                 value={confirmedCount}
                 sub={`${todayCount} para hoy`}
-                change="+8.1%"
-                positive={true}
                 icon={CalendarCheck}
                 accent="#818cf8"
             />
@@ -64,8 +70,6 @@ export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFiel
                 title="Pagos Pendientes"
                 value={pendingCount}
                 sub="Requiere Atención"
-                change={pendingCount > 0 ? `${pendingCount} activos` : "Al día"}
-                positive={pendingCount === 0}
                 icon={AlertCircle}
                 accent="#f59e0b"
             />
@@ -73,12 +77,9 @@ export function KpiStatsWidget({ stats, allFieldsLength }: { stats: any, allFiel
                 title="Ocupación Diaria"
                 value={`${occupancy}%`}
                 sub={`${allFieldsLength} sectores en total`}
-                change="+5.4%"
-                positive={true}
                 icon={Activity}
                 accent="#cafd00"
             />
         </div>
     );
-
 }

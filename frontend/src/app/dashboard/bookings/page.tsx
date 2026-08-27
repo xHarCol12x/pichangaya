@@ -1,66 +1,55 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { Plus, Edit2, Trash2, Clock, Calendar as CalendarIcon, MapPin, Loader2, DollarSign, Search, Check, AlertCircle, X, CreditCard, Banknote, Smartphone, MessageSquare, Lock, Activity, Info, Phone, ChevronRight } from "lucide-react";
-import { bookings as bookingsApi, fields as fieldsApi, venues, clients as clientsApi, users } from "@/lib/api";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { Plus, Edit2, Trash2, Calendar as CalendarIcon, MapPin, Loader2, AlertCircle, ChevronRight, Lock } from "lucide-react";
+import { bookings as bookingsApi, fields as fieldsApi, clients as clientsApi, users } from "@/lib/api";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import BookingFormModal from "@/components/bookings/BookingFormModal";
 import BookingDetailModal from "@/components/bookings/BookingDetailModal";
 import { useVenue } from "@/context/VenueContext";
-import { Navigation } from "lucide-react";
 import NoVenuePlaceholder from "@/components/dashboard/NoVenuePlaceholder";
+import StatusBadge from "@/components/ui/StatusBadge";
 
+// Tipos
+import { Booking, Field, Client, PlanType, ApiResponse, PlanPermissions, UserFeatureOverrides, UserWithPermissions, BookingStatus } from "@/types";
 
-// ─── Status Badge ────────────────────────────────────────────────────────────
-
-const StatusBadge = ({ status }: { status: string }) => {
-    const map: Record<string, { label: string; className: string }> = {
-        CONFIRMED: { label: "Confirmada", className: "bg-emerald-500/10 text-emerald-400" },
-        PENDING: { label: "Pendiente", className: "bg-amber-500/10 text-amber-400" },
-        CANCELLED: { label: "Cancelada", className: "bg-red-500/10 text-red-400" },
-    };
-    const s = map[status] ?? { label: status, className: "bg-slate-500/10 text-slate-400" };
-    return (
-        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${s.className}`}>
-            {s.label}
-        </span>
-    );
-};
+interface BookingForm {
+    fieldId: string;
+    startTime: string;
+    duration: number;
+    status: BookingStatus;
+    totalPrice: number;
+    clientId: string;
+    paymentMethod: string;
+}
 
 export default function BookingsPage() {
-    const [bookings, setBookings] = useState<any[]>([]);
-    const [fields, setFields] = useState<any[]>([]);
-    const [clientsList, setClientsList] = useState<any[]>([]);
-    const [userPlan, setUserPlan] = useState<string>('basic');
-    const [planPermissions, setPlanPermissions] = useState<any>({});
-
-    const [featureOverrides, setFeatureOverrides] = useState<any>({});
-    
-    // Global Venue Context
     const { selectedVenueId, venues: myVenues, isLoadingVenues } = useVenue();
-    const myVenue = myVenues.find(v => v.id === selectedVenueId);
 
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [fields, setFields] = useState<Field[]>([]);
+    const [clientsList, setClientsList] = useState<Client[]>([]);
+    const [userPlan, setUserPlan] = useState<PlanType>('basic');
+    const [planPermissions, setPlanPermissions] = useState<PlanPermissions>({});
+    const [featureOverrides, setFeatureOverrides] = useState<UserFeatureOverrides>({});
+    
     const [isLoading, setIsLoading] = useState(true);
-
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [clientSearch, setClientSearch] = useState("");
-    const [showClientDropdown, setShowClientDropdown] = useState(false);
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [bookingToEdit, setBookingToEdit] = useState<any>(null);
-    const [bookingToDelete, setBookingToDelete] = useState<any>(null);
-    const [bookingToView, setBookingToView] = useState<any>(null);
-    const [isPayingQuick, setIsPayingQuick] = useState(false); // To toggle payment selector in detail view
+    const [bookingToEdit, setBookingToEdit] = useState<Booking | null>(null);
+    const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
+    const [bookingToView, setBookingToView] = useState<Booking | null>(null);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [upgradeMessage, setUpgradeMessage] = useState("");
-    const getInitialForm = () => {
+
+    const getInitialForm = useCallback((): BookingForm => {
         const now = new Date();
-        const start = new Date(now.getTime() + 60 * 60 * 1000); // next hour
+        const start = new Date(now.getTime() + 60 * 60 * 1000);
         start.setMinutes(0, 0, 0);
 
-        // Format for input datetime-local
         const pad = (n: number) => n.toString().padStart(2, '0');
         const formatDateTime = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
@@ -73,39 +62,37 @@ export default function BookingsPage() {
             clientId: "",
             paymentMethod: "",
         };
-    };
+    }, []);
 
-    const [form, setForm] = useState(getInitialForm());
+    const [form, setForm] = useState<BookingForm>(getInitialForm());
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
+        if (!selectedVenueId) return;
         setIsLoading(true);
         try {
-            const userStr = localStorage.getItem("fieldiq_user");
+            const userStr = typeof window !== 'undefined' ? localStorage.getItem("fieldiq_user") : null;
             const userObj = userStr ? JSON.parse(userStr) : null;
 
             const [fieldsRes, bookingsRes, uRes] = await Promise.all([
-                fieldsApi.getAll(selectedVenueId!),
-                bookingsApi.getAll().catch(() => ({ data: [] })),
-                users.getMe().catch(() => ({ data: {} }))
+                fieldsApi.getAll(selectedVenueId) as Promise<ApiResponse<Field[]>>,
+                bookingsApi.getAll().catch(() => ({ data: [] })) as Promise<ApiResponse<Booking[]>>,
+                users.getMe().catch(() => ({ data: {} })) as Promise<ApiResponse<UserWithPermissions>>
             ]);
 
-            setUserPlan(String(uRes.data?.plan || userObj?.plan || 'basic').toLowerCase());
+            setUserPlan(String(uRes.data?.plan || userObj?.plan || 'basic').toLowerCase() as PlanType);
             setFeatureOverrides(uRes.data?.featureOverrides || userObj?.featureOverrides || {});
             setPlanPermissions(uRes.data?.planPermissions || userObj?.planPermissions || {});
 
-            // Filter bookings by fields of this venue
-            const venueFieldIds = fieldsRes.data.map((f: any) => f.id);
-            const venueBookings = bookingsRes.data.filter((b: any) => venueFieldIds.includes(b.fieldId));
+            const venueFieldIds = fieldsRes.data.map((f: Field) => f.id);
+            const venueBookings = bookingsRes.data.filter((b: Booking) => venueFieldIds.includes(b.fieldId));
 
-            // Load clients for the selected venue
-            const cRes = await clientsApi.getAll(selectedVenueId!).catch(() => ({ data: [] }));
+            const cRes = await clientsApi.getAll(selectedVenueId).catch(() => ({ data: [] })) as ApiResponse<Client[]>;
             setClientsList(cRes.data || []);
 
-            // Map bookings with their corresponding field data
-            const enrichedBookings = venueBookings.map((b: any) => ({
+            const enrichedBookings = venueBookings.map((b: Booking) => ({
                 ...b,
-                field: fieldsRes.data.find((f: any) => f.id === b.fieldId) || { name: "Cancha eliminada" }
-            })).sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+                field: fieldsRes.data.find((f: Field) => f.id === b.fieldId) || { name: "Cancha eliminada" } as Field
+            })).sort((a: Booking, b: Booking) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
 
             setFields(fieldsRes.data);
             setBookings(enrichedBookings);
@@ -118,80 +105,81 @@ export default function BookingsPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedVenueId, form.fieldId]);
 
     useEffect(() => {
         if (selectedVenueId) {
-            loadData();
+            const fetch = async () => { await loadData(); };
+            fetch();
         } else if (!isLoadingVenues && myVenues.length === 0) {
-            setIsLoading(false);
+            const timer = setTimeout(() => setIsLoading(false), 0);
+            return () => clearTimeout(timer);
         }
-    }, [selectedVenueId, isLoadingVenues, myVenues]);
+    }, [selectedVenueId, isLoadingVenues, myVenues, loadData]);
 
-    const activeField = fields.find(f => f.id === form.fieldId);
+    const activeField = useMemo(() => fields.find(f => f.id === form.fieldId), [fields, form.fieldId]);
 
 
-    // Calculate duration whenever times change
     useEffect(() => {
         if (activeField && form.duration) {
             const price = (activeField.pricePerHour * (form.duration / 60));
-            setForm(prev => ({ ...prev, totalPrice: price }));
+            const timer = setTimeout(() => {
+                setForm(prev => {
+                    if (Math.abs(prev.totalPrice - price) < 0.01) return prev;
+                    return { ...prev, totalPrice: price };
+                });
+            }, 0);
+            return () => clearTimeout(timer);
         }
-    }, [form.startTime, form.duration, form.fieldId, fields, activeField]);
+    }, [form.duration, activeField]);
 
 
-    const handleSave = async (eOrData: any, optionalId?: string) => {
-        // Detect if it's a form event or direct data from the modal
-        const isEvent = eOrData && typeof eOrData.preventDefault === 'function';
-        if (isEvent) eOrData.preventDefault();
+    const handleSave = async (eOrData: React.FormEvent | BookingForm, optionalId?: string) => {
+        const isEvent = (e: React.FormEvent | BookingForm): e is React.FormEvent => !!(e && (e as React.FormEvent).preventDefault);
+        if (isEvent(eOrData)) eOrData.preventDefault();
 
-        const formData = isEvent ? form : eOrData;
-        const targetId = isEvent ? bookingToEdit?.id : optionalId;
+        const formData: BookingForm = isEvent(eOrData) ? form : eOrData;
+        const targetId = isEvent(eOrData) ? bookingToEdit?.id : optionalId;
 
         setIsSubmitting(true);
         try {
             const startDate = new Date(formData.startTime);
             const endDate = new Date(startDate.getTime() + formData.duration * 60000);
 
-            const payload: any = {
+            const payload = {
                 fieldId: formData.fieldId,
                 startTime: startDate.toISOString(),
                 endTime: endDate.toISOString(),
                 status: formData.status,
                 totalPrice: Number(formData.totalPrice),
                 paymentMethod: formData.paymentMethod || undefined,
+                clientId: formData.clientId || undefined
             };
 
-            if (formData.clientId) {
-                payload.clientId = formData.clientId;
-            } else if (targetId && bookingToEdit?.clientId) {
-                payload.clientId = null;
-            }
-
-            const fieldObj = fields.find((f: any) => f.id === formData.fieldId) || { name: "Cancha" };
-            const clientObj = clientsList.find((c: any) => c.id === formData.clientId) || null;
+            const fieldObj = fields.find((f: Field) => f.id === formData.fieldId) || { name: "Cancha" } as Field;
+            const clientObj = clientsList.find((c: Client) => c.id === formData.clientId) || null;
 
             if (targetId) {
                 await bookingsApi.update(targetId, payload);
                 setBookings(prev => prev.map(b =>
                     b.id === targetId
-                        ? { ...b, startTime: startDate.toISOString(), endTime: endDate.toISOString(), status: formData.status, totalPrice: Number(formData.totalPrice), paymentMethod: formData.paymentMethod || null, field: fieldObj, client: clientObj }
+                        ? { ...b, startTime: startDate.toISOString(), endTime: endDate.toISOString(), status: formData.status, totalPrice: Number(formData.totalPrice), paymentMethod: formData.paymentMethod || undefined, field: fieldObj, client: clientObj as Client }
                         : b
                 ));
             } else {
                 const res = await bookingsApi.create(payload);
-                const newBooking = { ...res.data, field: fieldObj, client: clientObj };
+                const newBooking = { ...res.data, field: fieldObj, client: clientObj as Client };
                 setBookings(prev => [newBooking, ...prev]);
             }
 
             setIsModalOpen(false);
             setBookingToEdit(null);
             setForm(getInitialForm());
-            // Background sync to ensure server-shaped data
-            setTimeout(() => loadData(), 800);
-        } catch (error: any) {
+            setTimeout(() => { const f = async () => { await loadData(); }; f(); }, 800);
+        } catch (error: unknown) {
             console.error("Error saving booking", error);
-            const msg = error.response?.data?.message || error.message || "Verifica conflictos de horario";
+            const err = error as { response?: { data?: { message?: string } }, message?: string };
+            const msg = err.response?.data?.message || err.message || "Verifica conflictos de horario";
             alert("Error al guardar la reserva: " + msg);
         } finally {
             setIsSubmitting(false);
@@ -205,7 +193,7 @@ export default function BookingsPage() {
             await bookingsApi.delete(bookingToDelete.id);
             setBookings(prev => prev.filter(b => b.id !== bookingToDelete.id));
             setBookingToDelete(null);
-            setTimeout(() => loadData(), 500);
+            setTimeout(() => { const f = async () => { await loadData(); }; f(); }, 500);
         } catch (error) {
             console.error("Error deleting booking", error);
         } finally {
@@ -213,34 +201,6 @@ export default function BookingsPage() {
         }
     };
 
-    const handleQuickPay = async (method: string) => {
-        if (!bookingToView) return;
-        setIsSubmitting(true);
-        try {
-            await bookingsApi.update(bookingToView.id, {
-                status: 'CONFIRMED',
-                paymentMethod: method
-            });
-            const updated = { ...bookingToView, status: 'CONFIRMED', paymentMethod: method };
-            setBookingToView(updated);
-            setBookings(prev => prev.map(b => b.id === bookingToView.id ? updated : b));
-            setIsPayingQuick(false);
-            setTimeout(() => loadData(), 500);
-        } catch (error) {
-            console.error("Error on quick pay", error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const userStr = typeof window !== 'undefined' ? localStorage.getItem("fieldiq_user") : null;
-    const user = userStr ? JSON.parse(userStr) : null;
-    const planDetails = user?.planDetails;
-    
-    // In a real scenario, limits should come from planDetails. But we have a fallback for safety.
-    const maxBookings = planDetails?.limitBookings ?? ((userPlan === 'basic') ? 200 : (userPlan === 'free_trial' || userPlan === 'starter') ? 50 : 9999);
-
-    // Count current month bookings to enforce limits
     const currentMonthBookings = useMemo(() => {
         const now = new Date();
         return bookings.filter(b => {
@@ -249,12 +209,19 @@ export default function BookingsPage() {
         }).length;
     }, [bookings]);
 
-    const canCreateBooking = currentMonthBookings < maxBookings;
+    const canCreateBooking = useMemo(() => {
+        const userStr = typeof window !== 'undefined' ? localStorage.getItem("fieldiq_user") : null;
+        const user = userStr ? JSON.parse(userStr) : null;
+        const planDetails = user?.planDetails;
+        const maxBookings = planDetails?.limitBookings ?? ((userPlan === 'basic') ? 200 : (userPlan === 'free_trial' || userPlan === 'starter') ? 50 : 9999);
+        return currentMonthBookings < maxBookings;
+    }, [currentMonthBookings, userPlan]);
+
     const canDeleteBookings = userPlan === 'pro' || userPlan === 'enterprise' || featureOverrides?.canDeleteBookings === true || planPermissions?.canDeleteBookings === true;
 
     const openCreateModal = () => {
         if (!canCreateBooking) {
-            setUpgradeMessage(`solo permite un máximo de ${maxBookings} reservas por mes. Mejora a PRO para reservas ilimitadas.`);
+            setUpgradeMessage(`Su plan actual solo permite un máximo de reservas por mes. Mejora a PRO para reservas ilimitadas.`);
             setIsUpgradeModalOpen(true);
             return;
         }
@@ -267,7 +234,7 @@ export default function BookingsPage() {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (booking: any) => {
+    const openEditModal = (booking: Booking) => {
         setBookingToEdit(booking);
 
         const formatDateTimeLocal = (isoString: string) => {
@@ -292,7 +259,7 @@ export default function BookingsPage() {
         setIsModalOpen(true);
     };
 
-    const formatDate = (isoString: string) => {
+    const formatDateStr = (isoString: string) => {
         return new Date(isoString).toLocaleDateString('es-ES', {
             weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
@@ -323,7 +290,6 @@ export default function BookingsPage() {
     return (
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-700 w-full overflow-hidden px-1 sm:px-0">
             
-            {/* Header - Modern and Compact */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Reservas</h1>
@@ -342,10 +308,10 @@ export default function BookingsPage() {
                     )}
                     <button
                         onClick={openCreateModal}
-                        disabled={!canCreateBooking}
+                        disabled={!canCreateBooking || isSubmitting}
                         className="flex-[2] sm:flex-none flex items-center justify-center gap-2 bg-[#cafd00] text-slate-950 px-6 py-2.5 rounded-xl font-black hover:bg-[#b8e600] transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-[#cafd00]/10 text-sm uppercase tracking-widest"
                     >
-                        <Plus className="w-4 h-4 stroke-[3]" />
+                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 stroke-[3]" />}
                         Nueva Reserva
                     </button>
                 </div>
@@ -359,7 +325,6 @@ export default function BookingsPage() {
                 </div>
             )}
 
-            {/* Bookings Container */}
             <div className="glass rounded-[2rem] border border-white/5 overflow-hidden bg-slate-950/20 backdrop-blur-sm shadow-2xl">
                 {bookings.length === 0 ? (
                     <div className="py-24 text-center">
@@ -370,7 +335,6 @@ export default function BookingsPage() {
                     </div>
                 ) : (
                     <>
-                        {/* --- Mobile Card View (Pure CSS) --- */}
                         <div className="block lg:hidden divide-y divide-white/5">
                             {bookings.map((booking) => {
                                 const isCompleted = new Date(booking.endTime) < new Date();
@@ -395,8 +359,8 @@ export default function BookingsPage() {
                                         <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">
                                             <div>
                                                 <span className="text-[9px] text-[#777575] font-black uppercase tracking-widest block mb-1">Cancha y Horario</span>
-                                                <p className="text-white text-xs font-bold truncate">{booking.field.name.toUpperCase()}</p>
-                                                <p className="text-[#adaaaa] text-[10px] font-mono mt-0.5">{formatDate(booking.startTime)} · {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                <p className="text-white text-xs font-bold truncate">{booking.field?.name.toUpperCase()}</p>
+                                                <p className="text-[#adaaaa] text-[10px] font-mono mt-0.5">{formatDateStr(booking.startTime)}</p>
                                             </div>
                                             <div className="text-right">
                                                 <span className="text-[9px] text-[#777575] font-black uppercase tracking-widest block mb-1">Inversión</span>
@@ -410,7 +374,9 @@ export default function BookingsPage() {
                                             <button onClick={() => openEditModal(booking)} className="flex-1 bg-white/5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all active:scale-95 border border-white/5">Editar</button>
                                             
                                             {canDeleteBookings && (
-                                                <button onClick={() => setBookingToDelete(booking)} className="p-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all active:scale-95 border border-red-500/20"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={() => setBookingToDelete(booking)} disabled={isSubmitting} className="p-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all active:scale-95 border border-red-500/20">
+                                                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -418,7 +384,6 @@ export default function BookingsPage() {
                             })}
                         </div>
 
-                        {/* --- Desktop Table View (lg and above) --- */}
                         <div className="hidden lg:block overflow-x-auto text-left no-scrollbar">
                             <table className="w-full min-w-[1000px]">
                                 <thead>
@@ -444,7 +409,7 @@ export default function BookingsPage() {
                                                 <td className="p-6 pl-8">
                                                     <div className="flex items-center gap-3">
                                                         <MapPin className="w-4 h-4 text-[#cafd00] opacity-50" />
-                                                        <span className="font-black text-white text-sm tracking-tight">{booking.field.name.toUpperCase()}</span>
+                                                        <span className="font-black text-white text-sm tracking-tight">{booking.field?.name.toUpperCase()}</span>
                                                     </div>
                                                 </td>
                                                 <td className="p-6">
@@ -462,7 +427,7 @@ export default function BookingsPage() {
                                                         <span className="text-slate-600 text-xs font-bold uppercase tracking-widest">Sin cliente</span>
                                                     )}
                                                 </td>
-                                                <td className="p-6 text-slate-300 text-sm font-medium">{formatDate(booking.startTime)}</td>
+                                                <td className="p-6 text-slate-300 text-sm font-medium">{formatDateStr(booking.startTime)}</td>
                                                 <td className="p-6">
                                                     <div className="flex items-center gap-2 text-white font-mono text-sm">
                                                         <span className="font-black">{new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -484,7 +449,9 @@ export default function BookingsPage() {
                                                         <button onClick={() => setBookingToView(booking)} className="p-2.5 hover:bg-white/10 rounded-xl text-slate-500 hover:text-white transition-colors" title="Ver"><ChevronRight className="w-4 h-4" /></button>
                                                         <button onClick={() => openEditModal(booking)} className="p-2.5 hover:bg-white/10 rounded-xl text-slate-500 hover:text-white transition-colors" title="Editar"><Edit2 className="w-4 h-4" /></button>
                                                         {canDeleteBookings && (
-                                                            <button onClick={() => setBookingToDelete(booking)} className="p-2.5 hover:bg-red-500/20 rounded-xl text-slate-500 hover:text-red-400 transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                                                            <button onClick={() => setBookingToDelete(booking)} disabled={isSubmitting} className="p-2.5 hover:bg-red-500/20 rounded-xl text-slate-500 hover:text-red-400 transition-colors" title="Eliminar">
+                                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </td>
@@ -498,13 +465,14 @@ export default function BookingsPage() {
                 )}
             </div>
 
-            {/* Premium Booking Modal Extracted */}
+            {/* Modals */}
             {isModalOpen && (
                 <BookingFormModal
                     onClose={() => setIsModalOpen(false)}
-                    onSaved={(savedData) => {
+                    onSaved={() => {
                         setIsModalOpen(false);
-                        loadData(); // Re-fetch the refreshed bookings list
+                        const fetch = async () => { await loadData(); };
+                        fetch();
                     }}
                     fields={fields}
                     clientsList={clientsList}
@@ -514,32 +482,28 @@ export default function BookingsPage() {
                 />
             )}
 
-            {/* View Booking Details Modal Extracted */}
-            {
-                bookingToView && (
-                    <BookingDetailModal
-                        booking={bookingToView}
-                        onClose={() => setBookingToView(null)}
-                        onPay={async (id, method) => {
-                            await bookingsApi.update(id, { paymentMethod: method });
-                            loadData(); // Re-fetch all
-                        }}
-                    />
-                )
-            }
+            {bookingToView && (
+                <BookingDetailModal
+                    booking={bookingToView}
+                    onClose={() => setBookingToView(null)}
+                    onPay={async (id, method) => {
+                        await bookingsApi.update(id, { paymentMethod: method });
+                        const f = async () => { await loadData(); }; f();
+                    }}
+                />
+            )}
 
             <ConfirmModal
                 isOpen={!!bookingToDelete}
                 onClose={() => setBookingToDelete(null)}
                 onConfirm={handleDelete}
                 title="¿Eliminar reserva?"
-                message="Estás a punto de eliminar esta reserva permanentemente. Si fue un error, podrías simplemente cambiar su estado a 'Cancelada'."
+                message="Estás a punto de eliminar esta reserva permanentemente."
                 confirmText="Sí, eliminar"
                 cancelText="Mantener reserva"
                 type="danger"
             />
 
-            {/* Premium Upgrade Modal */}
             <UpgradeModal
                 isOpen={isUpgradeModalOpen}
                 onClose={() => setIsUpgradeModalOpen(false)}
@@ -549,4 +513,3 @@ export default function BookingsPage() {
         </div >
     );
 }
-

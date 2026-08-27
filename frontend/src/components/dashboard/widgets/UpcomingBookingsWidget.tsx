@@ -1,21 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarX, Clock, MapPin, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
-
-export const StatusBadge = ({ status }: { status: string }) => {
-    const map: Record<string, { label: string; className: string }> = {
-        CONFIRMED: { label: "Confirmada", className: "bg-emerald-500/10 text-emerald-400" },
-        PENDING: { label: "Pendiente", className: "bg-amber-500/10 text-amber-400" },
-        CANCELLED: { label: "Cancelada", className: "bg-red-500/10 text-red-400" },
-    };
-    const s = map[status] ?? { label: status, className: "bg-slate-500/10 text-slate-400" };
-    return (
-        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${s.className}`}>
-            {s.label}
-        </span>
-    );
-};
+import { CalendarX, Clock, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Booking } from "@/types";
 
 const formatCurrency = (n: number) => `S/ ${n.toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
 const formatTime = (iso: string) => new Date(iso).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
@@ -32,13 +20,13 @@ export function UpcomingBookingsWidget({
     setBookingFilter,
     setSelectedBooking
 }: {
-    filteredUpcoming: any[];
+    filteredUpcoming: Booking[];
     bookingFilter: string;
     setBookingFilter: (f: string) => void;
-    setSelectedBooking: (b: any) => void;
+    setSelectedBooking: (b: Booking) => void;
 }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 3; // Reducido para Bento Box
+    const ITEMS_PER_PAGE = 3; 
     const totalPages = Math.ceil(filteredUpcoming.length / ITEMS_PER_PAGE);
     const paginatedBookings = filteredUpcoming.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -78,7 +66,7 @@ export function UpcomingBookingsWidget({
                                         <div className="w-6 h-6 rounded-lg bg-[#cafd00]/10 flex items-center justify-center shrink-0">
                                             <MapPin className="w-3 h-3 text-[#cafd00]" />
                                         </div>
-                                        <span className="font-bold text-white text-base font-space-grotesk uppercase tracking-tight truncate leading-tight block w-full">{b.field.name}</span>
+                                        <span className="font-bold text-white text-base font-space-grotesk uppercase tracking-tight truncate leading-tight block w-full">{b.field?.name || "Cancha"}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 text-[#adaaaa] ml-8 whitespace-nowrap">
                                         <span className="text-[10px] uppercase tracking-widest font-mono">{formatDate(b.startTime)}</span>
